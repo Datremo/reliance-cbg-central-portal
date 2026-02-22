@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { 
   Plus, Trash2, Calendar, MapPin, Users, Shield, LogOut, 
-  Filter, CheckCircle, Smartphone, Monitor, Activity, 
-  X, Search, ChevronDown, Download, Edit2, Save, Sun, Moon, Lock, Mail,RefreshCw, Copy, BookOpen, Briefcase, Phone, Menu
+  Filter, CheckCircle, Smartphone, Monitor, Activity,  Leaf, Zap,Eye, EyeOff, Clock,
+  X, Search, ChevronDown, Download, Edit2, Save, Sun, Moon, Lock, Mail,RefreshCw, Copy, BookOpen, Briefcase, Phone, Menu, Unlock, ArrowRight
 } from 'lucide-react';
 
 const SITES_BY_STATE = {
@@ -37,12 +37,13 @@ export default function App() {
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
   const [theme, setTheme] = useState('light');
-  const [deletingRecord, setDeletingRecord] = useState(null); // ✨ NEW STATE
-  const [viewingRecord, setViewingRecord] = useState(null); // ✨ NEW STATE
-  const [contacts, setContacts] = useState([]); // ✨ NEW CONTACTS STATE
+  const [deletingRecord, setDeletingRecord] = useState(null); 
+  const [viewingRecord, setViewingRecord] = useState(null); 
+  const [contacts, setContacts] = useState([]); // CONTACTS STATE
   const [editingContact, setEditingContact] = useState(null);
   const [deletingContact, setDeletingContact] = useState(null);
-  const [viewingContact, setViewingContact] = useState(null); // ✨ NEW STATE!
+  const [viewingContact, setViewingContact] = useState(null); 
+  const [isUnlocking, setIsUnlocking] = useState(false);
   const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light');
 
   
@@ -67,22 +68,15 @@ export default function App() {
   }, []);
 
   const fetchProfile = async (userId) => {
-  
-    // it defaults to making 'satna@rbg.local' a supervisor and 'shubham' an admin!
+    // Only fetching real roles from the vault!
     const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
     
     if (data) {
       setUserProfile(data);
     } else {
-      // Mock profile if table is missing during your testing phase
-      const email = session?.user?.email || '';
-      if (email.toLowerCase().includes('admin') || email.toLowerCase().includes('shubham')) {
-      setUserProfile({ role: 'admin', name: 'Shubham (Admin)', site: 'All' });
-    } else {
-        const siteMatch = email.split('@')[0];
-        const formattedSite = siteMatch.charAt(0).toUpperCase() + siteMatch.slice(1);
-        setUserProfile({ role: 'supervisor', name: `${formattedSite} Sup`, site: formattedSite });
-      }
+      // If someone logs in but the Admin hasn't given them a role in the database, kick them out!
+      alert("Security Protocol: Your account has not been assigned a role by the System Administrator.");
+      supabase.auth.signOut(); // Instantly logs them back out!
     }
   };
 
@@ -90,7 +84,7 @@ export default function App() {
   useEffect(() => {
     if (userProfile) {
       fetchDeployments();
-      if (userProfile.role === 'admin') fetchContacts(); // Safe inside the shield! 🛡️
+      if (userProfile.role === 'admin') fetchContacts(); // Safe inside the shield! 
     }
   }, [userProfile]);
 
@@ -113,10 +107,10 @@ export default function App() {
         if (a.date !== b.date) return new Date(b.date || "") - new Date(a.date || "");
         if (a.site !== b.site) return (a.site || "").localeCompare(b.site || "");
         
-        // 1. Sort by shift first
+        // 1.Sort by shift first
         if (a.shift !== b.shift) return (shiftOrder[a.shift] || 4) - (shiftOrder[b.shift] || 4);
         
-        // ✨ 2. THE MAGIC: Force 'SS' to the absolute top of their shift!
+        
         const aIsSS = (a.designation || "").includes('SS');
         const bIsSS = (b.designation || "").includes('SS');
         if (aIsSS && !bIsSS) return -1;
@@ -135,7 +129,7 @@ export default function App() {
     if (!error) setContacts(data || []);
   };
 
-  // ✨ 3. CSV IMPORT MAGIC (Zero Cloud Storage Used! 💨)
+  // ✨ 3. CSV IMPORT (Zero Cloud Storage Used!
   const handleCSVImport = async (file) => {
     if (!file) return;
     const reader = new FileReader();
@@ -170,7 +164,7 @@ export default function App() {
       }
 
       if (newContacts.length > 0) {
-        // ✨ THE UPSERT MAGIC: 'onConflict' uses the unique phone number we just locked!
+        // ✨ THE UPSERT : 'onConflict' uses the unique phone number we just locked!
         const { error } = await supabase.from('contacts').upsert(newContacts, { onConflict: 'phone' });
         if (error) alert(`Vault Rejection: ${error.message}`);
         else {
@@ -220,7 +214,7 @@ export default function App() {
     }
   };
 
-  // ✨ NEW DELETE FUNCTION
+  // DELETE FUNCTION
   const confirmDelete = async () => {
     if (!deletingRecord) return;
     const { error } = await supabase.from('deployments').delete().eq('id', deletingRecord.id);
@@ -232,8 +226,8 @@ export default function App() {
   };
 
   // --- LOGIN SCREEN ---
-  if (!session || !userProfile) {
-    return <AuthScreen theme={theme} toggleTheme={toggleTheme} />;
+  if (!session || !userProfile || isUnlocking) {
+    return <AuthScreen theme={theme} toggleTheme={toggleTheme} setIsUnlocking={setIsUnlocking} />;
   }
 
   return (
@@ -277,142 +271,311 @@ export default function App() {
 }
 
 // ==========================================
-// 🔐 AUTHENTICATION SCREEN
+// 🔐 AUTHENTICATION SCREEN (CINEMATIC VAULT)
 // ==========================================
-function AuthScreen({ theme, toggleTheme }) {
+function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [time, setTime] = useState(new Date());
+
+  // ✨ The Cinematic Login States!
+  const [loginPhase, setLoginPhase] = useState('idle'); // 'idle' -> 'loading' -> 'unlocked'
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setLoginPhase('loading');
     setErrorMsg('');
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setErrorMsg(error.message);
-    setLoading(false);
+
+    if (error) {
+      setErrorMsg(error.message);
+      setLoginPhase('idle');
+    } else {
+      // 🎬 MOVIE MAGIC STARTS HERE!
+      setIsUnlocking(true); // Tells App.jsx to keep this screen mounted!
+      setLoginPhase('unlocked');
+
+      // We wait exactly 2 seconds for the lock to glow and the screen to fade to white!
+      setTimeout(() => {
+        setIsUnlocking(false); // Releases the gatekeeper to the main App!
+      }, 2000);
+    }
   };
 
   return (
-    <div className={theme === 'dark' ? 'dark' : ''}>
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 sm:p-6 transition-colors duration-300">
-        <button onClick={toggleTheme} className="absolute top-6 right-6 p-3 bg-white dark:bg-slate-900 rounded-full shadow-md text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-all z-50">
-          {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-        </button>
+    <div className={`relative min-h-screen flex items-center justify-center overflow-hidden transition-all duration-1000 ${loginPhase === 'unlocked' ? 'bg-white dark:bg-white' : (theme === 'dark' ? 'bg-[#0B1120]' : 'bg-slate-50')}`}>
 
-        <div className="bg-white dark:bg-slate-900 p-8 sm:p-12 rounded-2xl shadow-xl dark:shadow-2xl dark:shadow-black w-full max-w-md relative overflow-hidden transition-all">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
-          
-          <div className="mb-8 flex flex-col items-center">
-            <div className="bg-indigo-50 dark:bg-slate-950 text-indigo-600 dark:text-indigo-400 w-16 h-16 rounded-xl flex items-center justify-center mb-6 shadow-sm border border-indigo-100 dark:border-slate-800">
-              <Shield size={32} strokeWidth={1.5} />
+      {/* ✨ GORGEOUS BACKGROUND IMAGE WITH SHADOW & OVERLAY ✨ */}
+      <div className={`absolute inset-0 z-0 transition-opacity duration-1000 ${loginPhase === 'unlocked' ? 'opacity-0' : 'opacity-100'}`}>
+        <img src="/background.webp" alt="Background" className="w-full h-full object-cover opacity-50 dark:opacity-30 mix-blend-luminosity" onError={(e) => e.target.style.display='none'} />
+        {/* This creates the dark/light cinematic vignette over the image */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-50/80 via-transparent to-slate-200/90 dark:from-slate-950/90 dark:via-[#0B1120]/60 dark:to-[#0B1120]/95 backdrop-blur-[2px]"></div>
+      </div>
+
+      {/* Secret CSS Engine */}
+      <style>
+        {`
+          @keyframes gradient-flow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+          .animate-gradient-flow { background-size: 200% 200%; animation: gradient-flow 4s ease infinite; }
+          @keyframes unlock-pop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1.2); } }
+          .animate-unlock-pop { animation: unlock-pop 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+          @keyframes laser-sweep { 0% { transform: translateX(-100%); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateX(200%); opacity: 0; } }
+          .animate-laser { animation: laser-sweep 3s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+        `}
+      </style>
+
+      {/* 🔝 TOP NAVIGATION: Logo & Theme Toggle */}
+      <div className={`absolute top-0 left-0 w-full p-6 sm:p-8 flex justify-between items-start z-50 transition-opacity duration-500 ${loginPhase === 'unlocked' ? 'opacity-0' : 'opacity-100'}`}>
+         {/* 🖼️ BRANDING LOGO (biologo.webp) */}
+         <img src="/biologo.webp" alt="Reliance Logo" className="h-10 sm:h-12 w-auto object-contain drop-shadow-xl transition-transform hover:scale-105" onError={(e) => e.target.style.display='none'} />
+
+         {/* 🌓 THEME TOGGLE */}
+         <button onClick={toggleTheme} className="p-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_15px_rgba(0,0,0,0.5)] border border-white/50 dark:border-slate-700/50 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all hover:rotate-12">
+           {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+         </button>
+      </div>
+
+      {/* 💎 CENTERED: THE 3D GLASS CARD */}
+      <div className={`relative w-full max-w-md mx-4 p-4 sm:p-6 z-10 transition-all duration-1000 ${loginPhase === 'unlocked' ? 'scale-110 opacity-0' : 'scale-100 opacity-100'}`}>
+
+        {/* Soft Background Energy Clouds floating around the card */}
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-[10%] left-[0%] w-[80%] h-[80%] bg-emerald-500/30 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-[100px] animate-pulse"></div>
+          <div className="absolute bottom-[0%] right-[0%] w-[70%] h-[70%] bg-green-400/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-[100px] animate-pulse" style={{ animationDelay: '2s' }}></div>
+        </div>
+
+        {/* 🪟 THE PREMIUM CARD WRAPPER */}
+        <div className="relative group mt-8 lg:mt-0">
+
+          {/* ✨ THE BREATHING AURA */}
+          <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-teal-300 to-green-500 rounded-[2.5rem] blur-xl opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-500 animate-gradient-flow z-0"></div>
+
+          {/* 🧊 THE GLASS CARD CONTENT */}
+          <div className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl border border-white/60 dark:border-slate-700/50 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-8 sm:p-10 z-10 overflow-hidden">
+
+            {/* The Laser Scanner */}
+            <div className="absolute top-0 left-0 w-1/2 h-[2px] bg-gradient-to-r from-transparent via-emerald-400 to-transparent animate-laser"></div>
+
+            {/* Hidden Watermark Lock */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden rounded-[2.5rem]">
+               <Lock size={280} className="text-slate-200/30 dark:text-slate-700/20 transform -rotate-12 translate-x-10 translate-y-10" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Reliance CBG Central</h1>
-            <p className="text-slate-500 font-medium text-sm mt-1">Secure Deployment Access</p>
+
+            <div className="mb-10 flex flex-col items-center text-center relative z-10">
+
+              {/* ✨ EMBOSSED 3D SHIELD ICON */}
+              <div className="relative mb-6">
+                <div className="absolute inset-0 bg-emerald-500/30 blur-2xl animate-pulse rounded-full"></div>
+                <div className="relative w-20 h-20 bg-gradient-to-br from-white to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-2xl flex items-center justify-center shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_10px_20px_rgba(0,0,0,0.1)] dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),0_10px_20px_rgba(0,0,0,0.4)] border border-slate-200/50 dark:border-slate-700/50 transform rotate-3 hover:rotate-6 transition-transform duration-500 group">
+                  <Shield size={36} className="text-emerald-600 dark:text-emerald-400 drop-shadow-md group-hover:scale-110 transition-transform duration-300" />
+                </div>
+              </div>
+
+              <div className="relative inline-block">
+                 <h1 className="text-3xl font-black tracking-tight mb-2 text-transparent bg-clip-text bg-gradient-to-b from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 drop-shadow-[0_2px_2px_rgba(0,0,0,0.1)] dark:drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+                   Reliance <span className="bg-clip-text text-transparent bg-gradient-to-b from-emerald-500 to-green-600 dark:from-emerald-400 dark:to-green-500">CBG Central</span>
+                 </h1>
+              </div>
+
+              {/* SLEEK & ELEGANT SUBTITLE */}
+              <p className="text-slate-500/80 dark:text-slate-400/80 font-bold text-[10px] flex items-center gap-2 justify-center uppercase tracking-[0.25em] mt-3">
+                 <Shield size={13} className="text-emerald-500" /> Secure Deployment Access
+              </p>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-6 relative z-10">
+              {errorMsg && <div className="p-4 bg-red-50/80 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl text-xs text-red-600 dark:text-red-400 font-bold text-center">{errorMsg}</div>}
+
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Site ID / Email</label>
+                <div className="relative group/input">
+                  <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/input:text-emerald-500 transition-colors z-10" />
+                  {/* ✨ DEEP CARVED INPUT */}
+                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={loginPhase !== 'idle'}
+                    className="w-full pl-11 pr-4 py-3.5 bg-slate-50/80 dark:bg-[#0B1120]/80 border border-slate-200/50 dark:border-slate-800/50 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_3px_8px_rgba(0,0,0,0.6)]"
+                    placeholder="auth@reliance-cbg.com" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Secure Passkey</label>
+                <div className="relative group/input">
+                  <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/input:text-emerald-500 transition-colors z-10" />
+                  {/* ✨ DEEP CARVED INPUT */}
+                  <input type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)} disabled={loginPhase !== 'idle'}
+                    className="w-full pl-11 pr-12 py-3.5 bg-slate-50/80 dark:bg-[#0B1120]/80 border border-slate-200/50 dark:border-slate-800/50 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_3px_8px_rgba(0,0,0,0.6)]"
+                    placeholder="••••••••" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-500 z-10">
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* ✨ FLOWING ENERGY BUTTON */}
+              <button type="submit" disabled={loginPhase !== 'idle'} className="w-full py-4 mt-2 bg-gradient-to-r from-emerald-600 via-green-400 to-emerald-600 animate-gradient-flow text-white rounded-xl font-black tracking-widest uppercase text-xs transition-transform transform hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/30 flex justify-center items-center relative overflow-hidden">
+                <span className="flex items-center gap-2 drop-shadow-md z-10">
+                  {loginPhase === 'loading' ? <><RefreshCw size={16} className="animate-spin" /> VERIFYING ENCRYPTION...</> : 'AUTHORIZE ACCESS'}
+                </span>
+              </button>
+            </form>
           </div>
-          
-          <form onSubmit={handleLogin} className="space-y-5">
-            {errorMsg && <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg text-xs text-red-600 dark:text-red-400 font-semibold text-center">{errorMsg}</div>}
-            
-            <div>
-              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Node ID / Email</label>
-              <div className="relative">
-                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-9 pr-3 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-semibold text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors" placeholder="xyz@cbg.com" />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5">Security Passkey</label>
-              <div className="relative">
-                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-9 pr-3 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-semibold text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors" placeholder="••••••••" />
-              </div>
-            </div>
-
-            <button type="submit" disabled={loading} className="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold transition-all flex justify-center items-center shadow-lg shadow-indigo-900/20 mt-6">
-              {loading ? 'AUTHENTICATING...' : 'SECURE LOGIN'}
-            </button>
-          </form>
         </div>
       </div>
+
+      {/* 🔓 THE GLOWING UNLOCK ANIMATION (Appears on top when success!) */}
+      <div className={`absolute inset-0 z-[100] flex flex-col items-center justify-center pointer-events-none transition-all duration-700 ${loginPhase === 'unlocked' ? 'opacity-100' : 'opacity-0 scale-50'}`}>
+         <div className="w-32 h-32 bg-emerald-100 dark:bg-emerald-900/40 rounded-full flex items-center justify-center animate-unlock-pop shadow-[0_0_150px_rgba(16,185,129,0.8)] border border-emerald-400/50">
+            <Unlock size={64} className="text-emerald-600 dark:text-emerald-400" />
+         </div>
+         <h2 className="mt-8 text-2xl font-black tracking-widest text-emerald-600 dark:text-emerald-400 uppercase drop-shadow-md">Vault Unlocked</h2>
+      </div>
+
     </div>
   );
 }
-
 // ==========================================
 // 📱 SUPERVISOR VIEW (SHARED KIOSK MODE)
 // ==========================================
 function SupervisorMobileView({ userProfile, deployments, isLoading, fetchDeployments, onLogout, onEdit, onDelete, onView, theme, toggleTheme }) {
   const [activeTab, setActiveTab] = useState('form');
   
-  // ✨ The Identity Tracker States
-  const [fillerName, setFillerName] = useState('');
-  const [showNamePrompt, setShowNamePrompt] = useState(true);
+  // 🎬 THE CINEMATIC INTRO STATES (1: Portal Welcome, 2: Identity Scan, 3: Personal Welcome, 0: Dashboard)
+  const [introStage, setIntroStage] = useState(1);
   const [customName, setCustomName] = useState('');
-
-  // 🪄 THE MAGIC TRICK: Split the names by comma!
-  // If userProfile.name is "Mayank, Rahul", this array becomes ["Mayank", "Rahul"]
-  const allowedSupervisors = userProfile.name ? userProfile.name.split(',').map(n => n.trim()) : [];
-
-  const selectName = (name) => {
-    setFillerName(name.toUpperCase());
-    setShowNamePrompt(false);
-  };
-
   const handleCustomSubmit = (e) => {
     e.preventDefault();
     if(customName.trim().length > 0) {
       selectName(customName.trim());
     }
   };
+  const [fillerName, setFillerName] = useState('');
+  
+  const allowedSupervisors = userProfile.name ? userProfile.name.split(',').map(n => n.trim()) : [];
+
+  // Auto-advance the first screen after 2.5 seconds
+  useEffect(() => {
+    if (introStage === 1) {
+      const timer = setTimeout(() => setIntroStage(2), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [introStage]);
+
+  const selectName = (name) => {
+    setFillerName(name.toUpperCase());
+    setIntroStage(3); // Go to white welcome screen!
+    // Show white screen for 2 seconds, then dissolve into the app!
+    setTimeout(() => setIntroStage(0), 2000);
+  };
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-slate-50 dark:bg-slate-950 max-w-md mx-auto shadow-2xl relative border-x border-slate-200 dark:border-slate-900 transition-colors">
       
       {/* ✨ THE MANDATORY VIP SELECTION POP-UP */}
-      {showNamePrompt && (
-        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div className="h-2 bg-gradient-to-r from-indigo-500 to-purple-600 w-full"></div>
-            <div className="p-6">
-              <div className="w-12 h-12 rounded-full bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 mb-4 mx-auto shadow-inner border border-indigo-100 dark:border-indigo-500/20">
-                <Users size={24} />
-              </div>
-              <h2 className="text-xl font-black text-slate-900 dark:text-white text-center mb-1">Who is on duty?</h2>
-              <p className="text-xs text-slate-500 text-center mb-6">Tap your name to unlock the {userProfile.site} portal.</p>
+      <style>
+        {`
+          @keyframes fade-zoom { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
+          .animate-fade-zoom { animation: fade-zoom 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        `}
+      </style>
+
+      {/* 🎬 THE MOVIE SEQUENCE OVERLAY */}
+      {introStage > 0 && (
+        <div className={`fixed inset-0 z-[100] flex items-center justify-center p-6 transition-colors duration-1000 ${introStage === 3 ? 'bg-white dark:bg-slate-950' : 'bg-slate-950'}`}>
+          
+          {/* STAGE 1: Premium Boot Splash */}
+          {introStage === 1 && (
+            <div className="text-center animate-fade-zoom relative">
+              {/* ✨ Glowing Energy Aura behind the logo! */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl animate-pulse z-0"></div>
               
-              {/* 🔘 DYNAMIC BUTTONS FOR EACH SUPERVISOR */}
-              <div className="space-y-3 max-h-[40vh] overflow-y-auto custom-scrollbar">
+              <div className="relative mb-8 z-10">
+                 {/* 🖼️ THE PNG LOGO! (With a genius fallback just in case!) */}
+                 <img src="/biologo.webp" alt="Reliance Logo" className="w-28 h-28 mx-auto object-contain drop-shadow-[0_10px_20px_rgba(16,185,129,0.3)] transition-all hover:scale-105" 
+                      onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+                 
+                 {/* 🛡️ The Fallback Shield (Only shows if logo.png is missing) */}
+                 <div className="hidden w-24 h-24 mx-auto bg-gradient-to-br from-emerald-400 to-green-600 rounded-3xl flex-col items-center justify-center shadow-[0_10px_30px_rgba(16,185,129,0.4)] border border-white/20">
+                    <Shield size={48} className="text-white drop-shadow-md" />
+                 </div>
+              </div>
+
+              <h1 className="text-4xl font-black text-white tracking-widest uppercase mb-2 drop-shadow-lg relative z-10">
+                Reliance <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-300">CBG</span>
+              </h1>
+              <h2 className="text-[11px] font-bold text-slate-400 tracking-[0.4em] uppercase mb-12 relative z-10">
+                Secure Deployment Network
+              </h2>
+              
+              {/* Sleek Hacker-style Loading Indicator */}
+              <div className="flex justify-center items-center gap-3 relative z-10">
+                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div>
+                 <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Establishing Secure Uplink...</span>
+              </div>
+            </div>
+          )}
+
+          {/* STAGE 2: Identity Scan */}
+          {introStage === 2 && (
+            <div className="w-full max-w-sm animate-fade-zoom">
+              <div className="text-center mb-8">
+                 <div className="w-16 h-16 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4 mx-auto border border-indigo-500/30 shadow-[0_0_30px_rgba(99,102,241,0.2)]">
+                    <Users size={32} />
+                 </div>
+                 <h2 className="text-2xl font-black text-white tracking-wide mb-1">IDENTITY SCAN</h2>
+                 <p className="text-xs text-indigo-300 uppercase tracking-widest font-semibold">Select Authorized Officer</p>
+              </div>
+
+              <div className="space-y-3 max-h-[50vh] overflow-y-auto custom-scrollbar pr-2">
                 {allowedSupervisors.map((name, idx) => (
-                  <button 
-                    key={idx}
-                    onClick={() => selectName(name)}
-                    className="w-full py-4 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:hover:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/30 rounded-xl font-black text-sm uppercase transition-all shadow-sm flex justify-center items-center gap-2"
-                  >
-                    <CheckCircle size={18} /> {name}
+                  <button key={idx} onClick={() => selectName(name)} className="w-full py-5 bg-white/5 hover:bg-indigo-500/20 border border-white/10 hover:border-indigo-400/50 rounded-2xl font-black text-sm text-white uppercase transition-all flex justify-between items-center px-6 group shadow-lg">
+                    {name} <ArrowRight size={18} className="text-indigo-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                   </button>
                 ))}
               </div>
-
-              {/* ⌨️ MANUAL FALLBACK (Just in case someone new is filling in!) */}
-              <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-5">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center mb-3">Not on the list?</p>
+              {/* ⌨️ MANUAL FALLBACK */}
+              <div className="mt-6 pt-5 border-t border-indigo-500/20">
+                <p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest text-center mb-3">Not on the list?</p>
                 <form onSubmit={handleCustomSubmit} className="flex gap-2">
-                  <input type="text" placeholder="Type name..." value={customName} onChange={(e) => setCustomName(e.target.value)} className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-xs font-bold outline-none focus:border-indigo-500 uppercase" />
-                  <button type="submit" className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 rounded-lg font-bold text-xs hover:opacity-80 transition-opacity">GO</button>
+                  <input type="text" placeholder="Enter Full Name..." value={customName} onChange={(e) => setCustomName(e.target.value)} className="flex-1 bg-black/20 border border-indigo-500/30 rounded-xl py-3 px-4 text-xs font-bold text-white outline-none focus:border-indigo-400 uppercase placeholder:text-indigo-300/50 shadow-inner" />
+                  <button type="submit" className="bg-indigo-500 text-white px-5 rounded-xl font-black text-xs hover:bg-indigo-400 transition-colors shadow-lg shadow-indigo-500/25">GO</button>
                 </form>
               </div>
-
             </div>
-          </div>
+          )}
+
+          {/* STAGE 3: Personal Welcome (White Screen) */}
+          {introStage === 3 && (
+            <div className="text-center animate-fade-zoom">
+              <div className="w-24 h-24 mx-auto bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mb-6 shadow-xl border border-emerald-200 dark:border-emerald-800">
+                 <CheckCircle size={48} className="text-emerald-500" />
+              </div>
+              <h1 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Welcome,</h1>
+              <h2 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">{fillerName}</h2>
+              <p className="mt-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest animate-pulse">Accessing Secure Dashboard...</p>
+            </div>
+          )}
         </div>
       )}
 
+
       <div className="bg-white/90 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-5 py-4 flex justify-between items-center sticky top-0 z-40">
-        <div>
-          <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">{userProfile.site} Node</h1>
+        <div className="flex items-center gap-3">
+          
+          {/* ✨ PREMIUM SHIELD BOX ADDED HERE! */}
+          <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20 shadow-sm shrink-0">
+             <Shield size={20} className="drop-shadow-sm" />
+          </div>
+          </div>
+
+          <div>
+            <h1 className="text-lg font-black tracking-tight text-slate-900 dark:text-slate-100">{userProfile.site} <span className="text-emerald-600 dark:text-emerald-400">Site</span></h1>
           {/* ✨ SHOWS THE SELECTED SUPERVISOR NAME! */}
           <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-widest mt-0.5">
             {fillerName ? `Officer: ${fillerName}` : 'Active Deployment'}
