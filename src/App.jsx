@@ -134,6 +134,56 @@ export default function App() {
     const { data, error } = await supabase.from('contacts').select('*').order('name', { ascending: true });
     if (!error) setContacts(data || []);
   };
+
+  // ✨ 3. CSV IMPORT MAGIC (Zero Cloud Storage Used! 💨)
+  const handleCSVImport = async (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target.result;
+      const rows = text.split('\n').map(r => r.trim()).filter(r => r);
+      // Grabs the first row and makes it lowercase to match database columns
+      const headers = rows[0].split(',').map(h => h.trim().toLowerCase());
+
+      const newContacts = [];
+      for (let i = 1; i < rows.length; i++) {
+        // Smart split that ignores commas inside quotes!
+        const values = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
+        let contact = {};
+        headers.forEach((header, index) => { contact[header] = values[index] || null; });
+
+        if (contact.phone) {
+          const cleanPhone = contact.phone.replace(/\D/g, '');
+          if (cleanPhone.length === 10) {
+            newContacts.push({
+              name: contact.name ? contact.name.toUpperCase() : "UNKNOWN",
+              phone: cleanPhone,
+              designation: contact.designation ? contact.designation.toUpperCase() : "OTHER",
+              state_name: contact.state_name || null,
+              site: contact.site || null,
+              email: contact.email || null,
+              company: contact.company || null,
+              notes: contact.notes || null
+            });
+          }
+        }
+      }
+
+      if (newContacts.length > 0) {
+        // ✨ THE UPSERT MAGIC: 'onConflict' uses the unique phone number we just locked!
+        const { error } = await supabase.from('contacts').upsert(newContacts, { onConflict: 'phone' });
+        if (error) alert(`Vault Rejection: ${error.message}`);
+        else {
+          alert(`Boom! 💥 Successfully synced ${newContacts.length} contacts!`);
+          fetchContacts(); // Instantly refreshes your screen!
+        }
+      } else {
+        alert("Couldn't find any valid 10-digit phone numbers! Check your CSV headers.");
+      }
+    };
+    reader.readAsText(file);
+  };
+
   // --- 🔥 SAVE EDIT ---
   const saveEdit = async (updatedRecord) => {
     const { id, created_at, ...updateData } = updatedRecord;
@@ -203,7 +253,8 @@ export default function App() {
   onAddContact={() => setEditingContact({ name: '', phone: '', designation: '', state_name: '', site: '', email: '', company: '' })} 
   onEditContact={setEditingContact} 
   onDeleteContact={setDeletingContact} 
-  onViewContact={setViewingContact} // ✨ HANDING OVER THE SUPERPOWER
+  onViewContact={setViewingContact}
+  onImportCSV={handleCSVImport} 
   theme={theme} 
   toggleTheme={toggleTheme} 
 />
@@ -621,7 +672,7 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
 // ==========================================
 // 🖥️ ADMIN VIEW (MASTER PORTAL)
 // ==========================================
-function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLogout, onEdit, onView, onDelete, onAddContact, onEditContact, onDeleteContact, onViewContact, theme, toggleTheme }) {
+function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLogout, onEdit, onView, onDelete, onAddContact, onEditContact, onDeleteContact, onViewContact, onImportCSV, theme, toggleTheme }) {
   // ✨ TAB STATE TO SWITCH BETWEEN DEPLOYMENTS & CONTACTS
   const [activeTab, setActiveTab] = useState('deployments'); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -843,9 +894,18 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
                     className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold text-slate-800 dark:text-slate-300 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all shadow-sm"
                   />
                 </div>
-                <button onClick={onAddContact} className="w-full md:w-auto py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-900/20 transition-all shrink-0">
-                  <Plus size={18} /> ADD NEW CONTACT
+                <div className="flex gap-2 w-full md:w-auto">
+                  <button onClick={onAddContact} className="flex-1 md:flex-none py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-900/20 transition-all shrink-0">
+                  <Plus size={16} /> ADD CONTACT
                 </button>
+                {/* Secret invisible file input that triggers when you click the label! */}
+                <input type="file" accept=".csv" id="csv-upload" className="hidden" onChange={(e) => { onImportCSV(e.target.files[0]); e.target.value = null; }} />
+                <label htmlFor="csv-upload" className="flex-1 md:flex-none py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/20 transition-all cursor-pointer">
+                  <Download size={16} className="rotate-180" /> IMPORT CSV
+                </label>
+                
+                </div>
+
               </div>
 
               {/* Contacts Grid */}
