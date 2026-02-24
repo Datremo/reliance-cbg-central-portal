@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { 
   Plus, Trash2, Calendar, MapPin, Users, Shield, LogOut, 
-  Filter, CheckCircle, Smartphone, Monitor, Activity,  Leaf, Zap,Eye, EyeOff, Clock,
+  Filter, CheckCircle, Smartphone, Monitor, Activity,  Leaf, Zap,Eye, EyeOff, Clock,BarChart2, PieChart, TrendingUp, Target,
   X, Search, ChevronDown, Download, Edit2, Save, Sun, Moon, Lock, Mail,RefreshCw, Copy, BookOpen, Briefcase, Phone, Menu, Unlock, ArrowRight
 } from 'lucide-react';
-
+// 👑 THE 26 VIP COMMISSIONED SITES
+const COMMISSIONED_SITES = [
+  "Vadodara", "Jhajjar 1", "Panipat", "Nagpur", "Nanded", "Hoshiarpur", "Barabanki", "Prayagraj 1", "Satna", "Kakinada 1", "Kota", "Indore", "Nagothane", "Bhopal", "Malegaon", "Raipur", "Jabalpur", "Dhenkanal 1", "Kurkumbh", "Bilaspur", "Hapur", "Nellore", "Akola", "Haidergarh", "Kakinada 2", "Kurnool"
+];
 const SITES_BY_STATE = {
   "Madhya Pradesh": ["Satna", "Balaghat", "Jabalpur", "Bhopal", "Indore", "Sehore"],
   "Maharashtra": ["Kurkumbh", "Nagothane", "Malegaon", "Akola", "Nagpur", "Solapur", "Nanded", "Yavatmal"],
@@ -593,7 +596,7 @@ function SupervisorMobileView({ userProfile, deployments, isLoading, fetchDeploy
       <div className="flex-1 w-full overflow-y-auto pb-24">
         {activeTab === 'form' ? (
           /* ✨ WE PASS THE FILLER NAME INTO THE FORM HERE! */
-          <DeploymentMobileForm userProfile={userProfile} fetchDeployments={fetchDeployments} setActiveTab={setActiveTab} fillerName={fillerName} />
+          <DeploymentMobileForm userProfile={userProfile} fetchDeployments={fetchDeployments} setActiveTab={setActiveTab} fillerName={fillerName} deployments={deployments}/>
         ) : (
           <SupervisorMobileHistory deployments={deployments} isLoading={isLoading} onEdit={onEdit} onDelete={onDelete} onView={onView}/>
         )}
@@ -613,7 +616,7 @@ function SupervisorMobileView({ userProfile, deployments, isLoading, fetchDeploy
   );
 }
 
-function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fillerName }) {
+function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fillerName, deployments}) {
   const today = new Date().toISOString().split('T')[0];
   const [date, setDate] = useState(today);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -623,6 +626,38 @@ function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fil
 
   const addPerson = () => setPersonnel([...personnel, { id: Date.now(), shift: "Day Shift", designation: "SG - Security Guard", name: "", phone: "", location: "Main Gate", customLocation: "" }]);
   const updatePerson = (id, field, value) => setPersonnel(personnel.map(p => p.id === id ? { ...p, [field]: value } : p));
+  // ✨ THE TIME-TRAVEL MAGIC WAND!
+  const handleAutoFill = () => {
+    // 1. Calculate exactly what yesterday's date was!
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    // 2. Search the vault for yesterday's logs at this specific site
+    const yesterdayLogs = (deployments || []).filter(d => d.date === yesterdayStr);
+
+    if (yesterdayLogs.length === 0) {
+      alert("Oops! 🥺 I couldn't find any deployments from yesterday to copy!");
+      return;
+    }
+
+    // 3. Map the old data into our brand new form boxes!
+    const copiedPersonnel = yesterdayLogs.map((log, index) => {
+      const isStandardLocation = LOCATIONS.includes(log.location);
+      return {
+        id: Date.now() + index, // Gives them fresh unique IDs so React doesn't panic!
+        shift: log.shift || "Day Shift",
+        designation: log.designation || "SG - Security Guard",
+        name: log.name || "",
+        phone: log.phone || "",
+        location: isStandardLocation ? log.location : "Other",
+        customLocation: isStandardLocation ? "" : log.location
+      };
+    });
+
+    // 4. BAM! Populate the form instantly!
+    setPersonnel(copiedPersonnel);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -650,10 +685,17 @@ function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fil
     }
   };
 
-  return (
+   return (
     <form onSubmit={handleSubmit} className="p-4 space-y-5">
+      
+      {/* ✨ THE MAGIC WAND BUTTON */}
+      <button type="button" onClick={handleAutoFill} className="w-full py-3.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 rounded-xl text-xs font-black uppercase tracking-widest flex justify-center items-center gap-2 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all shadow-sm group">
+        <Copy size={16} className="group-hover:scale-110 transition-transform" /> 
+        Auto-Fill Yesterday's Shift
+      </button>
+
       <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Reporting Date</label>
+
         <div className="relative">
           <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-bold outline-none [color-scheme:light] dark:[color-scheme:dark]" />
@@ -830,41 +872,150 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
   );
 }
 // ==========================================
-// 🖥️ ADMIN VIEW
-// ==========================================
-// ==========================================
-// 🖥️ ADMIN VIEW (MASTER PORTAL)
+// 🖥️ ADMIN VIEW (MASTER PORTAL + COMMAND CENTER)
 // ==========================================
 function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLogout, onEdit, onView, onDelete, onAddContact, onEditContact, onDeleteContact, onViewContact, onImportCSV, theme, toggleTheme }) {
   // ✨ TAB STATE TO SWITCH BETWEEN DEPLOYMENTS & CONTACTS
   const [activeTab, setActiveTab] = useState('deployments'); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
   // Deployment Filters
   const [filterState, setFilterState] = useState("All");
   const [filterSite, setFilterSite] = useState("All");
   const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
   const [filterShift, setFilterShift] = useState("All");
   const [filterDesignation, setFilterDesignation] = useState("All");
+  const [filterLocation, setFilterLocation] = useState("All"); // ✨ NEW: Location Filter
   const [searchTerm, setSearchTerm] = useState(""); 
+  const [siteTier, setSiteTier] = useState("All"); // ✨ NEW: VIP Toggle
 
   // Contact Omni-Search
   const [contactSearchTerm, setContactSearchTerm] = useState("");
 
   const availableSites = filterState === "All" ? SITES : SITES_BY_STATE[filterState] || [];
   
-  // Safe Deployment Filter
+  // 🧠 1. THE MASTER FILTER ENGINE
   const filteredData = deployments.filter(d => {
     const stateMatch = filterState === "All" || (SITES_BY_STATE[filterState] && SITES_BY_STATE[filterState].includes(d.site));
     const siteMatch = filterSite === "All" || d.site === filterSite;
     const dateMatch = filterDate === "" || d.date === filterDate;
     const shiftMatch = filterShift === "All" || d.shift === filterShift;
     const designationMatch = filterDesignation === "All" || (d.designation && d.designation.startsWith(filterDesignation));
+    const locationMatch = filterLocation === "All" || d.location === filterLocation;
     
     const safeName = d.name || ""; 
     const searchMatch = searchTerm === "" || safeName.toLowerCase().includes(searchTerm.toLowerCase());
     
-    return stateMatch && siteMatch && dateMatch && shiftMatch && designationMatch && searchMatch;
+    // ✨ VIP Tier Logic
+    const isCommissioned = COMMISSIONED_SITES.includes(d.site);
+    const tierMatch = siteTier === "All" || (siteTier === "Commissioned" ? isCommissioned : !isCommissioned);
+
+    return stateMatch && siteMatch && dateMatch && shiftMatch && designationMatch && locationMatch && searchMatch && tierMatch;
   });
+
+// 🫀 2. THE LIVE HEARTBEAT STATS
+  const totalBoots = filteredData.length;
+  
+  // ✨ NEW: Phantom Roster (AWOL) Engine
+  const activeSiteNames = new Set(filteredData.map(d => d.site));
+  const expectedSites = availableSites.filter(s => {
+    if (siteTier === 'Commissioned') return COMMISSIONED_SITES.includes(s);
+    if (siteTier === 'Project') return !COMMISSIONED_SITES.includes(s);
+    return true;
+  });
+  const awolSites = expectedSites.filter(s => !activeSiteNames.has(s));
+
+  // ✨ NEW: MTCC Active Node Tracker (With specific counts per site!)
+  const mtccDeployments = filteredData.filter(d => d.location === 'MTCC');
+  const mtccSiteMap = {};
+  mtccDeployments.forEach(d => {
+    mtccSiteMap[d.site] = (mtccSiteMap[d.site] || 0) + 1;
+  });
+  const mtccActiveSitesCount = Object.keys(mtccSiteMap).length;
+  const mtccHoverDetails = Object.entries(mtccSiteMap)
+    .map(([site, count]) => ({ site, count }))
+    .sort((a, b) => b.count - a.count); // Sorts so the heaviest sites show at the top!
+
+  const nightShiftCount = filteredData.filter(d => (d.shift || '').includes('Night')).length;
+  const ssCount = filteredData.filter(d => d.designation && d.designation.startsWith('SS')).length;
+  const sgCount = filteredData.filter(d => d.designation && d.designation.startsWith('SG')).length;
+
+// ✨ NEW: THE 4-PILLAR COMPLIANCE ENGINE (Fatigue, Top-Heavy, Gap, Fraud)
+  let fatigueRisk = 0, topHeavySites = 0, leadershipGap = 0, fraudCount = 0;
+  const phoneShifts = {}; 
+  const siteShiftStats = {};
+
+  filteredData.forEach(d => {
+    const phoneNum = d.phone || "NoPhone";
+    // 1. Fatigue Tracking (Same phone, both Day & Night)
+    if (!phoneShifts[phoneNum]) phoneShifts[phoneNum] = new Set();
+    if (d.shift && d.shift.includes('Day')) phoneShifts[phoneNum].add('Day');
+    if (d.shift && d.shift.includes('Night')) phoneShifts[phoneNum].add('Night');
+
+    // 2. Shift-Specific Site Tracking (Separating Day and Night like you asked!)
+    if (d.shift && !d.shift.includes('Off')) {
+       const shiftType = d.shift.includes('Day') ? 'Day' : 'Night';
+       const key = `${d.site}-${shiftType}`;
+       if (!siteShiftStats[key]) siteShiftStats[key] = { ss: 0, sg: 0, phones: new Set() };
+       
+       if (d.designation && d.designation.includes('SS')) siteShiftStats[key].ss++;
+       if (d.designation && d.designation.includes('SG')) siteShiftStats[key].sg++;
+
+       // 3. Fraud Tracking (Same phone, SAME site, SAME shift)
+       if (siteShiftStats[key].phones.has(phoneNum)) {
+          fraudCount++;
+       } else {
+          siteShiftStats[key].phones.add(phoneNum);
+       }
+    }
+  });
+
+  // Calculate Finals
+  Object.values(phoneShifts).forEach(shifts => { if (shifts.has('Day') && shifts.has('Night')) fatigueRisk++; });
+  Object.values(siteShiftStats).forEach(stat => {
+    if (stat.sg > 0 && stat.ss === 0) leadershipGap++; // Guards deployed, but NO Supervisor!
+    if (stat.ss > 0 && stat.ss >= stat.sg) topHeavySites++; // Too many Supervisors vs Guards!
+  });
+
+  // 📊 3. THE 3D ZONE DEFENSE ENGINE
+  const locCounts = { "Main Gate": 0, "MTCC": 0, "Weigh Bridge": 0, "Other": 0 };
+  filteredData.forEach(d => {
+    const loc = LOCATIONS.includes(d.location) ? d.location : "Other";
+    locCounts[loc] = (locCounts[loc] || 0) + 1;
+  });
+  const maxLocCount = Math.max(...Object.values(locCounts), 1); 
+  
+  const locationData = [
+    { name: "Main Gate", count: locCounts["Main Gate"], color: "from-blue-500 to-cyan-400" },
+    { name: "MTCC", count: locCounts["MTCC"], color: "from-amber-500 to-orange-400" },
+    { name: "Weigh Bridge", count: locCounts["Weigh Bridge"], color: "from-purple-500 to-pink-400" },
+    { name: "Other Posts", count: locCounts["Other"], color: "from-slate-500 to-slate-400" }
+  ];
+
+  // ✨ NEW: 2x2 GOD-MODE METRICS MATH
+  const dayShiftCount = filteredData.filter(d => (d.shift || '').includes('Day')).length;
+  const leaveCount = filteredData.filter(d => (d.shift || '').includes('Off')).length;
+  const rogueCount = filteredData.filter(d => d.location === 'Other').length;
+  
+  const sitePopulation = {};
+  filteredData.forEach(d => { sitePopulation[d.site] = (sitePopulation[d.site] || 0) + 1; });
+  const top5Sites = Object.entries(sitePopulation).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  
+  // 🟢 4. THE EXCEL EXPORT MAGIC WAND
+  const exportToCSV = () => {
+    if (filteredData.length === 0) { alert("Oops! 🥺 No data to export with these filters!"); return; }
+    const headers = ['Date', 'Facility', 'Shift', 'Role', 'Employee Name', 'Phone', 'Location', 'Submitted By'];
+    const csvRows = filteredData.map(row => {
+      const safeLocation = row.location === 'Other' ? row.customLocation : row.location || 'N/A';
+      return `"${row.date || ''}","${row.site || ''}","${row.shift || ''}","${(row.designation||'').split(' - ')[0]}","${row.name || ''}","${row.phone || ''}","${safeLocation}","${row.submittedBy || ''}"`;
+    });
+    const csvContent = [headers.join(','), ...csvRows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `CBG_Deployments_${siteTier}_${filterDate || 'All-Time'}.csv`;
+    link.click();
+  };
 
   // ✨ OMNI-SEARCH LOGIC FOR CONTACTS
   const filteredContacts = (contacts || []).filter(c => {
@@ -937,7 +1088,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
             <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden p-2 -ml-2 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 rounded-lg transition-colors">
               <Menu size={20} />
             </button>
-            <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white truncate max-w-[140px] sm:max-w-none">{activeTab === 'deployments' ? 'Deployment Matrix' : 'Global Contacts'}</h1>
+            <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white truncate max-w-[140px] sm:max-w-none">{activeTab === 'deployments' ? 'Deployment Command' : 'Global Contacts'}</h1>
             <span className="hidden sm:flex bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase items-center gap-1.5 shadow-sm">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> Secure Cloud Vault
             </span>
@@ -952,45 +1103,231 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-4 sm:p-6 custom-scrollbar">
           
           {/* ===================================== */}
-          {/* 🎯 TAB: DEPLOYMENT MATRIX VIEW */}
+          {/* 🎯 TAB: DEPLOYMENT MATRIX VIEW (COMMAND CENTER) */}
           {/* ===================================== */}
           {activeTab === 'deployments' && (
             <>
-              {/* ✨ RESPONSIVE KPI CARDS */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-                <KPICard title="Deployed" value={filteredData.length} />
-                <KPICard title="Facilities" value={new Set(filteredData.map(d => d.site)).size} />
-                <KPICard title="SS Count" value={filteredData.filter(d => (d.designation||"").startsWith('SS')).length} />
-                <KPICard title="SG Count" value={filteredData.filter(d => (d.designation||"").startsWith('SG')).length} />
+              {/* ✨ THE VIP SWITCH */}
+              <div className="mb-6 flex justify-center sm:justify-start">
+                <div className="inline-flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner w-full sm:w-auto">
+                  <button onClick={() => setSiteTier('All')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${siteTier === 'All' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>All 55</button>
+                  <button onClick={() => setSiteTier('Commissioned')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${siteTier === 'Commissioned' ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' : 'text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400'}`}>26 VIP</button>
+                  <button onClick={() => setSiteTier('Project')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${siteTier === 'Project' ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/20' : 'text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400'}`}>Projects</button>
+                </div>
               </div>
 
-              {/* ✨ RESPONSIVE FILTER BAR */}
-              <div className="bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6 flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center">
-                <div className="relative flex items-center w-full sm:w-auto sm:mr-2">
-                  <Search size={14} className="absolute left-3 text-slate-400" />
-                  <input type="text" placeholder="Search Name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9 pr-3 py-2 sm:py-1.5 w-full sm:w-40 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-800 dark:text-slate-300 outline-none focus:border-indigo-500 transition-all" />
+              {/* ✨ RESPONSIVE KPI CARDS */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+                   <div className="absolute -right-4 -top-4 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl group-hover:bg-indigo-500/20 transition-all"></div>
+                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><Users size={12}/> Boots on Ground</p>
+                   <h3 className="text-3xl font-black text-slate-900 dark:text-white">{totalBoots}</h3>
                 </div>
                 
-                {/* Cute little divider line that only shows on desktop! */}
-                <div className="hidden sm:block w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+                {/* ✨ THE NEW AWOL PHANTOM ROSTER CARD (WITH SECRET HOVER DROP!) */}
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-visible group cursor-help z-20">
+                   <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-xl transition-all ${awolSites.length === 0 ? 'bg-emerald-500/10' : 'bg-rose-500/10 group-hover:bg-rose-500/20'}`}></div>
+                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
+                     <Monitor size={12} className={awolSites.length === 0 ? "text-emerald-500" : "text-rose-500"}/> Reporting Pulse
+                   </p>
+                   <h3 className={`text-3xl font-black ${awolSites.length === 0 ? 'text-slate-900 dark:text-white' : 'text-rose-500'}`}>
+                     {awolSites.length} <span className="text-sm text-slate-400 font-bold uppercase tracking-widest">Sites Missing</span>
+                   </h3>
+                   
+                   {/* 🕵️‍♀️ THE MAGIC HOVER REVEAL MENU (NOW SHOWS BOTH!) */}
+                   <div className="absolute top-full left-0 w-64 sm:w-72 mt-2 bg-slate-900 dark:bg-slate-950 border border-slate-700 shadow-2xl rounded-xl p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 max-h-56 overflow-y-auto custom-scrollbar translate-y-2 group-hover:translate-y-0 flex gap-4">
+                     
+                     {/* 🚨 Missing Column */}
+                     <div className="flex-1">
+                       <p className="text-[9px] text-rose-400 font-bold uppercase tracking-widest mb-2 border-b border-slate-700 pb-1 sticky top-0 bg-slate-900 dark:bg-slate-950 z-10">Missing ({awolSites.length})</p>
+                       <ul className="space-y-1.5">
+                         {awolSites.map(site => (
+                           <li key={`awol-${site}`} className="text-[10px] font-medium text-slate-300 flex items-center gap-1.5 before:content-[''] before:w-1.5 before:h-1.5 before:bg-rose-500 before:rounded-full before:shadow-[0_0_5px_rgba(244,63,94,0.8)] truncate">{site}</li>
+                         ))}
+                         {awolSites.length === 0 && <li className="text-[9px] text-slate-500 italic">None! 🎉</li>}
+                       </ul>
+                     </div>
+
+                     {/* 🟢 Present Column */}
+                     <div className="flex-1 border-l border-slate-700/50 pl-4">
+                       <p className="text-[9px] text-emerald-400 font-bold uppercase tracking-widest mb-2 border-b border-slate-700 pb-1 sticky top-0 bg-slate-900 dark:bg-slate-950 z-10">Active ({expectedSites.length - awolSites.length})</p>
+                       <ul className="space-y-1.5">
+                         {expectedSites.filter(s => !awolSites.includes(s)).map(site => (
+                           <li key={`act-${site}`} className="text-[10px] font-medium text-slate-300 flex items-center gap-1.5 before:content-[''] before:w-1.5 before:h-1.5 before:bg-emerald-500 before:rounded-full before:shadow-[0_0_5px_rgba(16,185,129,0.8)] truncate">{site}</li>
+                         ))}
+                         {(expectedSites.length - awolSites.length) === 0 && <li className="text-[9px] text-slate-500 italic">None 🥺</li>}
+                       </ul>
+                     </div>
+
+                   </div>
+                </div>
+
+                {/* ✨ THE NEW MTCC ACTIVE NODES CARD (WITH SECRET HOVER!) */}
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-visible group cursor-help z-10">
+                   <div className="absolute -right-4 -top-4 w-24 h-24 bg-amber-500/10 rounded-full blur-xl group-hover:bg-amber-500/20 transition-all"></div>
+                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><Target size={12} className="text-amber-500"/> MTCC Active Nodes</p>
+                   <h3 className="text-3xl font-black text-slate-900 dark:text-white">{mtccActiveSitesCount} <span className="text-sm text-slate-400 font-bold uppercase tracking-widest">Sites Online</span></h3>
+                   
+                   {/* 🕵️‍♀️ THE MAGIC MTCC HOVER REVEAL */}
+                   {mtccActiveSitesCount > 0 && (
+                     <div className="absolute top-full left-0 w-full mt-2 bg-slate-900 dark:bg-slate-950 border border-slate-700 shadow-2xl rounded-xl p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 max-h-48 overflow-y-auto custom-scrollbar translate-y-2 group-hover:translate-y-0">
+                       <p className="text-[9px] text-amber-400 font-bold uppercase tracking-widest mb-2 border-b border-slate-700 pb-1 flex justify-between"><span>Site</span><span>Guards</span></p>
+                       <ul className="space-y-1.5">
+                         {mtccHoverDetails.map((info, idx) => (
+                           <li key={idx} className="text-xs font-medium text-slate-300 flex justify-between items-center hover:text-amber-300 transition-colors">
+                             <span className="flex items-center gap-2 before:content-[''] before:w-1.5 before:h-1.5 before:bg-amber-500 before:rounded-full">{info.site}</span>
+                             <span className="font-mono font-bold text-amber-400 bg-amber-500/10 px-1.5 rounded">{info.count}</span>
+                           </li>
+                         ))}
+                       </ul>
+                     </div>
+                   )}
+                </div>
+
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+                   <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/20 transition-all"></div>
+                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><TrendingUp size={12} className="text-blue-500"/> Cmd Ratio (SS:SG)</p>
+                   <h3 className="text-3xl font-black text-slate-900 dark:text-white">{ssCount} <span className="text-sm text-slate-400">: {sgCount}</span></h3>
+                </div>
+              </div>
+
+              {/* 📊 TIER 2: CINEMATIC GRAPHS */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 
-                <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
+                {/* ✨ THE PRO ENTERPRISE HISTOGRAM! */}
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center pb-12 relative overflow-hidden">
+                   {/* Subtle tech grid background for that enterprise feel! */}
+                   <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:14px_14px]"></div>
+                   
+                   <h3 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2 mb-8 relative z-10">
+                     <BarChart2 size={16} className="text-blue-500"/> Zone Dominance Matrix
+                   </h3>
+                   
+                   <div className="flex justify-around items-end h-48 border-b-2 border-slate-200 dark:border-slate-700 relative pt-4 z-10">
+                     {locationData.map((loc, idx) => {
+                       const heightPct = maxLocCount > 0 ? (loc.count / maxLocCount) * 100 : 0;
+                       return (
+                         <div key={idx} className="flex flex-col items-center justify-end h-full w-full group relative">
+                           {/* Clean Number Tooltip */}
+                           <span className="absolute -top-8 opacity-0 group-hover:opacity-100 transition-all text-[10px] font-black bg-slate-800 dark:bg-white text-white dark:text-slate-900 px-3 py-1 rounded-md shadow-lg z-20 pointer-events-none transform translate-y-2 group-hover:translate-y-0">
+                             {loc.count}
+                           </span>
+                           
+                           {/* 📊 THE PRO HISTOGRAM BAR */}
+                           <div className="w-8 sm:w-12 bg-slate-100 dark:bg-slate-800/50 rounded-t-md flex items-end h-full relative overflow-hidden">
+                             {/* The Animated Fill */}
+                             <div 
+                               className={`w-full bg-gradient-to-t ${loc.color} rounded-t-md transition-all duration-[1200ms] ease-out shadow-[0_-2px_10px_rgba(0,0,0,0.1)]`} 
+                               style={{ height: `${heightPct}%`, minHeight: '4px' }}
+                             ></div>
+                           </div>
+                           
+                           {/* ✨ THE HORIZONTAL TEXT! */}
+                           <span className="absolute -bottom-10 w-16 sm:w-20 text-center text-[9px] sm:text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-[1.1] drop-shadow-sm flex flex-col items-center justify-start">
+                             {loc.name}
+                           </span>
+                         </div>
+                       );
+                     })}
+                   </div>
+                </div>
+
+                {/* ✨ THE NEW 2x2 GOD-MODE METRICS GRID! */}
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 h-full">
+                  
+                  {/* 1. Shift Balance (Miniature) */}
+                  <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center relative group">
+                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                      <Sun size={10} className="text-amber-500"/> Shift <Moon size={10} className="text-indigo-500 ml-auto"/>
+                    </p>
+                    <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex mb-2 shadow-inner">
+                       <div className="h-full bg-amber-400 transition-all duration-1000" style={{ width: `${totalBoots ? (dayShiftCount / totalBoots) * 100 : 50}%` }}></div>
+                       <div className="h-full bg-indigo-600 transition-all duration-1000" style={{ width: `${totalBoots ? (nightShiftCount / totalBoots) * 100 : 50}%` }}></div>
+                    </div>
+                    <div className="flex justify-between text-[10px] font-black">
+                      <span className="text-amber-500">{dayShiftCount}</span>
+                      <span className="text-indigo-500">{nightShiftCount}</span>
+                    </div>
+                  </div>
+
+                  {/* 2. Leave Liability */}
+                  <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center relative group">
+                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-1.5"><Calendar size={10} className="text-rose-500"/> Bench Count</p>
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white">{leaveCount} <span className="text-[8px] text-slate-400 uppercase tracking-widest font-bold">Off-Duty</span></h3>
+                  </div>
+
+                  {/* 3. Top 5 Density Leaderboard */}
+                  <div className="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col relative group overflow-hidden">
+                     <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5"><Activity size={10} className="text-emerald-500"/> Top 5 Load</p>
+                     <div className="space-y-1.5 overflow-y-auto custom-scrollbar pr-1">
+                       {top5Sites.map(([site, count], idx) => (
+                         <div key={idx} className="flex justify-between items-center text-[9px] font-bold">
+                           <span className="text-slate-700 dark:text-slate-300 truncate max-w-[70px] uppercase">{site}</span>
+                           <span className="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded">{count}</span>
+                         </div>
+                       ))}
+                       {top5Sites.length === 0 && <span className="text-[9px] text-slate-500 italic">No data</span>}
+                     </div>
+                  </div>
+
+                  {/* ✨ THE COMPLIANCE RADAR CARD (4-in-1!) */}
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center relative group overflow-hidden">
+                   <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-xl transition-all ${(fatigueRisk || topHeavySites || leadershipGap || fraudCount) > 0 ? 'bg-rose-500/10 group-hover:bg-rose-500/20' : 'bg-emerald-500/10'}`}></div>
+                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1.5 relative z-10">
+                     <Shield size={12} className={(fatigueRisk || topHeavySites || leadershipGap || fraudCount) > 0 ? "text-rose-500" : "text-emerald-500"}/> Risk & Compliance
+                   </p>
+                   <div className="space-y-1.5 w-full relative z-10">
+                     <div className="flex justify-between items-center text-[10px] font-bold border-b border-slate-100 dark:border-slate-800/50 pb-1">
+                       <span className="text-slate-600 dark:text-slate-400">Fatigue (24h)</span>
+                       <span className={`px-1.5 py-0.5 rounded shadow-sm ${fatigueRisk > 0 ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'}`}>{fatigueRisk}</span>
+                     </div>
+                     <div className="flex justify-between items-center text-[10px] font-bold border-b border-slate-100 dark:border-slate-800/50 pb-1">
+                       <span className="text-slate-600 dark:text-slate-400">Top-Heavy (SS≥SG)</span>
+                       <span className={`px-1.5 py-0.5 rounded shadow-sm ${topHeavySites > 0 ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'}`}>{topHeavySites}</span>
+                     </div>
+                     <div className="flex justify-between items-center text-[10px] font-bold border-b border-slate-100 dark:border-slate-800/50 pb-1">
+                       <span className="text-slate-600 dark:text-slate-400">L-Gap (No SS)</span>
+                       <span className={`px-1.5 py-0.5 rounded shadow-sm ${leadershipGap > 0 ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'}`}>{leadershipGap}</span>
+                     </div>
+                     <div className="flex justify-between items-center text-[10px] font-bold">
+                       <span className="text-slate-600 dark:text-slate-400">Fraud (Dupes)</span>
+                       <span className={`px-1.5 py-0.5 rounded shadow-sm ${fraudCount > 0 ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'}`}>{fraudCount}</span>
+                     </div>
+                   </div>
+                </div>
+
+                </div>
+              </div>
+
+              {/* 🎛️ TIER 3: DATA TABLE & FILTERS */}
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+                <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex flex-wrap gap-3 items-end">
+                  <div className="flex-1 min-w-[200px] sm:min-w-[250px] relative">
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input type="text" placeholder="Search Guard Name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors" />
+                  </div>
                   <FilterSelect label="Date" value={filterDate} onChange={setFilterDate} type="date" />
                   <FilterSelect label="State" value={filterState} onChange={(e) => { setFilterState(e); setFilterSite("All"); }} options={Object.keys(SITES_BY_STATE).sort()} />
                   <FilterSelect label="Site" value={filterSite} onChange={setFilterSite} options={[...availableSites].sort()} />
                   <FilterSelect label="Shift" value={filterShift} onChange={setFilterShift} options={["Day Shift", "Night Shift"]} />
                   <FilterSelect label="Role" value={filterDesignation} onChange={setFilterDesignation} options={["SS", "SG"]} />
+                  {/* ✨ LOCATION FILTER BUILT RIGHT IN! */}
+                  <FilterSelect label="Loc" value={filterLocation} onChange={setFilterLocation} options={LOCATIONS} />
+                  
+                  <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0 ml-auto">
+                    <button onClick={exportToCSV} className="text-xs font-black tracking-widest text-white bg-emerald-600 hover:bg-emerald-500 px-4 py-2.5 rounded-xl transition-all shadow-md shadow-emerald-600/20 flex items-center gap-2 transform hover:-translate-y-0.5">
+                      <Download size={14} /> EXPORT
+                    </button>
+                    <button onClick={() => { setFilterState("All"); setFilterSite("All"); setFilterDate(new Date().toISOString().split('T')[0]); setFilterShift("All"); setFilterDesignation("All"); setFilterLocation("All"); setSearchTerm(""); }} className="text-xs font-black tracking-widest text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 px-4 py-2.5 rounded-xl transition-colors hover:bg-slate-300 dark:hover:bg-slate-700">
+                      CLEAR
+                    </button>
+                  </div>
                 </div>
-                
-                <button onClick={() => { setFilterState("All"); setFilterSite("All"); setFilterDate(new Date().toISOString().split('T')[0]); setFilterShift("All"); setFilterDesignation("All"); setSearchTerm(""); }} className="mt-2 sm:mt-0 sm:ml-auto text-xs font-bold text-indigo-600 dark:text-slate-400 bg-indigo-50 dark:bg-slate-800 px-4 py-2.5 sm:py-1.5 rounded-lg w-full sm:w-auto text-center transition-colors hover:bg-indigo-100 dark:hover:bg-slate-700">
-                  Clear Filters
-                </button>
-              </div>
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden flex flex-col">
-                <div className="overflow-x-auto">
+
+                <div className="overflow-x-auto custom-scrollbar">
                   {isLoading ? (
                     <div className="p-16 text-center font-bold text-indigo-500 animate-pulse">Decrypting secure cloud vault...</div>
                   ) : (
@@ -1002,7 +1339,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
                           <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Shift</th>
                           <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Role</th>
                           <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Personnel</th>
-                          <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Location / Contact</th>
+                          <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Location</th>
                           <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Action</th>
                         </tr>
                       </thead>
@@ -1013,6 +1350,8 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
                           let badgeClass = 'text-orange-700 bg-orange-50 border-orange-200 dark:text-orange-400 dark:bg-orange-500/10 dark:border-orange-500/20';
                           if (safeShift.includes('Off')) badgeClass = 'text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-500/10 dark:border-red-500/20';
                           else if (safeShift.includes('Night')) badgeClass = 'text-indigo-700 bg-indigo-50 border-indigo-200 dark:text-indigo-400 dark:bg-indigo-500/10 dark:border-indigo-500/20';
+                          
+                          const isMTCC = row.location === 'MTCC';
 
                           return (
                             <tr key={idx} onClick={() => onView(row)} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all group cursor-pointer">
@@ -1020,18 +1359,22 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
                               <td className="px-6 py-4"><span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">{row.site || "N/A"}</span></td>
                               <td className="px-6 py-4"><span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${badgeClass}`}>{shiftType || "N/A"}</span></td>
                               <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400 font-semibold">{(row.designation || "N/A").split(' - ')[0]}</td>
-                              <td className="px-6 py-4"><div className="text-sm font-bold uppercase">{row.name || "Unknown"}</div><div className="text-[10px] text-slate-500 uppercase">By: {row.submittedBy || "System"}</div></td>
-                              <td className="px-6 py-4"><div className="text-xs text-slate-600 dark:text-slate-400"><MapPin size={12} className="inline mr-1"/>{row.location || "N/A"}</div><div className="text-xs font-mono font-bold text-slate-500 mt-1">{formatPhone(row.phone)}</div></td>
+                              <td className="px-6 py-4"><div className="text-sm font-bold uppercase text-slate-900 dark:text-white">{row.name || "Unknown"}</div><div className="text-[10px] text-slate-500 uppercase font-mono mt-0.5">{formatPhone(row.phone)}</div></td>
+                              <td className="px-6 py-4">
+                                <span className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold ${isMTCC ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-400' : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'}`}>
+                                  {row.location === 'Other' ? row.customLocation : row.location}
+                                </span>
+                              </td>
                               <td className="px-4 py-4 text-center">
                                 <div className="flex justify-center gap-2">
                                   <button onClick={(e) => { e.stopPropagation(); onEdit(row); }} className="p-1.5 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-950 rounded-md border border-slate-200 dark:border-slate-800"><Edit2 size={14} /></button>
                                   <button onClick={(e) => { e.stopPropagation(); onDelete(row); }} className="p-1.5 text-slate-400 hover:text-red-600 bg-slate-50 dark:bg-slate-950 rounded-md border border-slate-200 dark:border-slate-800"><Trash2 size={14} /></button>
                                 </div>
-                              </td>                      
+                              </td>                    
                             </tr>
                           );
                         })}
-                        {filteredData.length === 0 && <tr><td colSpan="7" className="px-6 py-16 text-center text-slate-500 font-semibold">No records found.</td></tr>}
+                        {filteredData.length === 0 && <tr><td colSpan="7" className="px-6 py-16 text-center text-slate-500 font-semibold italic">No records found for these filters.</td></tr>}
                       </tbody>
                     </table>
                   )}
