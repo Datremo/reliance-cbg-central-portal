@@ -23,7 +23,7 @@ const SITES_BY_STATE = {
   "Telangana": ["Warangal"],
 };
 const SITES = Object.values(SITES_BY_STATE).flat();
-const LOCATIONS = ["Main Gate", "Weigh Bridge", "MTCC", "Other"];
+const LOCATIONS = ["Main Gate", "Weigh Bridge", "MTCC", "Patrolling", "SAP Operator", "Other"];
 const DESIGNATIONS = ["SS - Security Supervisor", "SG - Security Guard"];
 const CONTACT_ROLES = ["State In-Charge", "Plant In-Charge","Safety In-Charge", "Site Store Team", "Operations In-Charge","Microlink", "Other"];
 // ✨ NEW HELPER FUNCTION: Making phone numbers gorgeous (12345 67890)
@@ -978,7 +978,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
   });
 
   // 📊 3. THE 3D ZONE DEFENSE ENGINE
-  const locCounts = { "Main Gate": 0, "MTCC": 0, "Weigh Bridge": 0, "Other": 0 };
+  const locCounts = { "Main Gate": 0, "MTCC": 0, "Weigh Bridge": 0, "Patrolling": 0, "SAP Operator": 0, "Other": 0 };
   filteredData.forEach(d => {
     const loc = LOCATIONS.includes(d.location) ? d.location : "Other";
     locCounts[loc] = (locCounts[loc] || 0) + 1;
@@ -989,6 +989,8 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
     { name: "Main Gate", count: locCounts["Main Gate"], color: "from-blue-500 to-cyan-400" },
     { name: "MTCC", count: locCounts["MTCC"], color: "from-amber-500 to-orange-400" },
     { name: "Weigh Bridge", count: locCounts["Weigh Bridge"], color: "from-purple-500 to-pink-400" },
+    { name: "Patrolling", count: locCounts["Patrolling"], color: "from-indigo-500 to-violet-400" },
+    { name: "SAP Operator", count: locCounts["SAP Operator"], color: "from-teal-500 to-emerald-400" },
     { name: "Other Posts", count: locCounts["Other"], color: "from-slate-500 to-slate-400" }
   ];
 
@@ -1062,7 +1064,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
             <Activity size={18} /> Deployment Matrix
           </button>
           <button onClick={() => { setActiveTab('contacts'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'contacts' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}>
-            <BookOpen size={18} /> Global Contacts
+            <BookOpen size={18} /> Directory
           </button>
         </div>
 
@@ -1088,7 +1090,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
             <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden p-2 -ml-2 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 rounded-lg transition-colors">
               <Menu size={20} />
             </button>
-            <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white truncate max-w-[140px] sm:max-w-none">{activeTab === 'deployments' ? 'Deployment Command' : 'Global Contacts'}</h1>
+            <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white truncate max-w-[140px] sm:max-w-none">{activeTab === 'deployments' ? 'Deployment Matrix' : 'Directory'}</h1>
             <span className="hidden sm:flex bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase items-center gap-1.5 shadow-sm">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> Secure Cloud Vault
             </span>
@@ -1113,8 +1115,8 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
               {/* ✨ THE VIP SWITCH */}
               <div className="mb-6 flex justify-center sm:justify-start">
                 <div className="inline-flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner w-full sm:w-auto">
-                  <button onClick={() => setSiteTier('All')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${siteTier === 'All' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>All 55</button>
-                  <button onClick={() => setSiteTier('Commissioned')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${siteTier === 'Commissioned' ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' : 'text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400'}`}>26 VIP</button>
+                  <button onClick={() => setSiteTier('All')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${siteTier === 'All' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>Total 56</button>
+                  <button onClick={() => setSiteTier('Commissioned')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${siteTier === 'Commissioned' ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' : 'text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400'}`}>Operational - 26 </button>
                   <button onClick={() => setSiteTier('Project')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${siteTier === 'Project' ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/20' : 'text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400'}`}>Projects</button>
                 </div>
               </div>
@@ -1123,7 +1125,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
                 <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
                    <div className="absolute -right-4 -top-4 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl group-hover:bg-indigo-500/20 transition-all"></div>
-                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><Users size={12}/> Boots on Ground</p>
+                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><Users size={12}/> Total Manpower on Ground</p>
                    <h3 className="text-3xl font-black text-slate-900 dark:text-white">{totalBoots}</h3>
                 </div>
                 
@@ -1131,7 +1133,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
                 <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-visible group cursor-help z-20">
                    <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-xl transition-all ${awolSites.length === 0 ? 'bg-emerald-500/10' : 'bg-rose-500/10 group-hover:bg-rose-500/20'}`}></div>
                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
-                     <Monitor size={12} className={awolSites.length === 0 ? "text-emerald-500" : "text-rose-500"}/> Reporting Pulse
+                     <Monitor size={12} className={awolSites.length === 0 ? "text-emerald-500" : "text-rose-500"}/> Sites Reporting 
                    </p>
                    <h3 className={`text-3xl font-black ${awolSites.length === 0 ? 'text-slate-900 dark:text-white' : 'text-rose-500'}`}>
                      {awolSites.length} <span className="text-sm text-slate-400 font-bold uppercase tracking-widest">Sites Missing</span>
