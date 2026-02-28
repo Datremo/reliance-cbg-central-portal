@@ -3,7 +3,7 @@ import { supabase } from './supabaseClient';
 import { 
   Plus, Trash2, Calendar, MapPin, Users, Shield, LogOut, 
   Filter, CheckCircle, Smartphone, Monitor, Activity,  Leaf, Zap,Eye, EyeOff, Clock,BarChart2, PieChart, TrendingUp, Target,
-  X, Search, ChevronDown, Download, Edit2, Save, Sun, Moon, Lock, Mail,RefreshCw, Copy, BookOpen, Briefcase, Phone, Menu, Unlock, ArrowRight
+  X, Search, ChevronDown, Download, Edit2, Save, Sun, Moon, Lock, Mail,RefreshCw, Copy, BookOpen, Briefcase, Phone, Menu, Unlock, ArrowRight, AlertTriangle, Camera, FileText, Image as ImageIcon
 } from 'lucide-react';
 // 👑 THE 26 VIP COMMISSIONED SITES
 const COMMISSIONED_SITES = [
@@ -26,7 +26,7 @@ const SITES = Object.values(SITES_BY_STATE).flat();
 const LOCATIONS = ["Main Gate", "Weigh Bridge", "MTCC", "Patrolling", "SAP Operator", "Other"];
 const DESIGNATIONS = ["SS - Security Supervisor", "SG - Security Guard"];
 const CONTACT_ROLES = ["State In-Charge", "Plant In-Charge","Safety In-Charge", "Site Store Team", "Operations In-Charge","Microlink", "Other"];
-// ✨ NEW HELPER FUNCTION: Making phone numbers gorgeous (12345 67890)
+//   NEW HELPER FUNCTION: Making phone numbers gorgeous (12345 67890)
 const formatPhone = (phone) => {
   if (!phone) return "N/A";
   const cleaned = ('' + phone).replace(/\D/g, '');
@@ -42,11 +42,14 @@ export default function App() {
   const [theme, setTheme] = useState('light');
   const [deletingRecord, setDeletingRecord] = useState(null); 
   const [viewingRecord, setViewingRecord] = useState(null); 
-  const [contacts, setContacts] = useState([]); // CONTACTS STATE
+  const [contacts, setContacts] = useState([]); 
   const [editingContact, setEditingContact] = useState(null);
   const [deletingContact, setDeletingContact] = useState(null);
   const [viewingContact, setViewingContact] = useState(null); 
   const [isUnlocking, setIsUnlocking] = useState(false);
+  
+  // ✨ NEW: INCIDENT COMMAND STATE
+  const [incidents, setIncidents] = useState([]);
   const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light');
 
   
@@ -83,15 +86,44 @@ export default function App() {
     }
   };
 
-// --- 🔥 FETCH DEPLOYMENTS & CONTACTS ---
+// --- 🔥 FETCH DEPLOYMENTS, CONTACTS & INCIDENTS ---
   useEffect(() => {
     if (userProfile) {
       fetchDeployments();
-      if (userProfile.role === 'admin') fetchContacts(); // Safe inside the shield! 
+      fetchIncidents(); // EVERYONE GETS INCIDENTS!
+      if (userProfile.role === 'admin') fetchContacts(); 
     }
   }, [userProfile]);
 
-  // ✨ 1. FETCH DEPLOYMENTS
+  // ✨ NEW: FETCH INCIDENTS ENGINE
+  const fetchIncidents = async () => {
+    let query = supabase.from('incidents').select('*').order('created_at', { ascending: false });
+    if (userProfile.role === 'supervisor') query = query.eq('site', userProfile.site);
+    const { data, error } = await query;
+    if (!error) setIncidents(data || []);
+  };
+
+  const deleteIncident = async (id) => {
+    if(window.confirm("🚨 Delete this incident report forever?")) {
+      await supabase.from('incidents').delete().eq('id', id);
+      fetchIncidents();
+    }
+  };
+
+const toggleIncidentStatus = async (inc) => {
+    const newStatus = inc.status === 'Acknowledged' ? 'Pending' : 'Acknowledged';
+    
+    // We added the error catcher here!
+    const { error } = await supabase.from('incidents').update({status: newStatus}).eq('id', inc.id);
+    
+    if (error) {
+      alert(`🚨 Vault Error: ${error.message}`); // This will snitch if the column is missing!
+    } else {
+      fetchIncidents();
+    }
+  };
+
+  //   1. FETCH DEPLOYMENTS
   const fetchDeployments = async () => {
     setIsLoadingData(true);
     
@@ -126,13 +158,13 @@ export default function App() {
     setIsLoadingData(false);
   };
 
-  // ✨ 2. FETCH CONTACTS (Properly separated!)
+  //   2. FETCH CONTACTS (Properly separated!)
   const fetchContacts = async () => {
     const { data, error } = await supabase.from('contacts').select('*').order('name', { ascending: true });
     if (!error) setContacts(data || []);
   };
 
-  // ✨ 3. CSV IMPORT (Zero Cloud Storage Used!
+  //   3. CSV IMPORT (Zero Cloud Storage Used!
   const handleCSVImport = async (file) => {
     if (!file) return;
     const reader = new FileReader();
@@ -167,7 +199,7 @@ export default function App() {
       }
 
       if (newContacts.length > 0) {
-        // ✨ THE UPSERT : 'onConflict' uses the unique phone number we just locked!
+        //   THE UPSERT : 'onConflict' uses the unique phone number we just locked!
         const { error } = await supabase.from('contacts').upsert(newContacts, { onConflict: 'phone' });
         if (error) alert(`Vault Rejection: ${error.message}`);
         else {
@@ -242,7 +274,10 @@ export default function App() {
   userProfile={userProfile} 
   deployments={deployments} 
   contacts={contacts} 
+  incidents={incidents} 
   isLoading={isLoadingData} 
+  onToggleAck={toggleIncidentStatus} 
+  onDeleteIncident={deleteIncident}
   onLogout={() => supabase.auth.signOut()} 
   onEdit={setEditingRecord} 
   onDelete={setDeletingRecord} 
@@ -256,7 +291,7 @@ export default function App() {
   toggleTheme={toggleTheme} 
 />
           ) : (
-            <SupervisorMobileView userProfile={userProfile} deployments={deployments} isLoading={isLoadingData} fetchDeployments={fetchDeployments} onLogout={() => supabase.auth.signOut()} onEdit={setEditingRecord} onDelete={setDeletingRecord} onView={setViewingRecord} onAddContact={() => setEditingContact({ name: '', phone: '', designation: 'SS - Security Supervisor', state_name: '', site: '', email: '', company: '' })} onEditContact={setEditingContact} onDeleteContact={setDeletingContact} theme={theme} toggleTheme={toggleTheme} />
+            <SupervisorMobileView userProfile={userProfile} deployments={deployments} incidents={incidents} isLoading={isLoadingData} fetchDeployments={fetchDeployments} fetchIncidents={fetchIncidents} onLogout={() => supabase.auth.signOut()} onEdit={setEditingRecord} onDelete={setDeletingRecord} onView={setViewingRecord} onToggleAck={toggleIncidentStatus} onDeleteIncident={deleteIncident} onAddContact={() => setEditingContact({ name: '', phone: '', designation: 'SS - Security Supervisor', state_name: '', site: '', email: '', company: '' })} onEditContact={setEditingContact} onDeleteContact={setDeletingContact} theme={theme} toggleTheme={toggleTheme} />
           )}
         </div>
           {/* Modals for Deployments */}
@@ -264,7 +299,7 @@ export default function App() {
         {deletingRecord && <DeleteModal record={deletingRecord} onClose={() => setDeletingRecord(null)} onConfirm={confirmDelete} type="deployment" />}
         {viewingRecord && <ViewModal record={viewingRecord} onClose={() => setViewingRecord(null)} />}
         
-        {/* ✨ NEW: Modals for Contacts! */}
+        {/*   NEW: Modals for Contacts! */}
         {editingContact && <ContactFormModal record={editingContact} onClose={() => setEditingContact(null)} onSave={saveContact} />}
         {deletingContact && <DeleteModal record={deletingContact} onClose={() => setDeletingContact(null)} onConfirm={confirmDeleteContact} type="contact" />}
         {viewingContact && <ContactViewModal record={viewingContact} onClose={() => setViewingContact(null)} />}
@@ -283,7 +318,7 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
   const [showPassword, setShowPassword] = useState(false);
   const [time, setTime] = useState(new Date());
 
-  // ✨ The Cinematic Login States!
+  //   The Cinematic Login States!
   const [loginPhase, setLoginPhase] = useState('idle'); // 'idle' -> 'loading' -> 'unlocked'
 
   useEffect(() => {
@@ -315,7 +350,7 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
   return (
     <div className={`relative min-h-screen flex items-center justify-center overflow-hidden transition-all duration-1000 ${loginPhase === 'unlocked' ? 'bg-white dark:bg-white' : (theme === 'dark' ? 'bg-[#0B1120]' : 'bg-slate-50')}`}>
 
-      {/* ✨ GORGEOUS BACKGROUND IMAGE WITH SHADOW & OVERLAY ✨ */}
+      {/*   GORGEOUS BACKGROUND IMAGE WITH SHADOW & OVERLAY   */}
       <div className={`absolute inset-0 z-0 transition-opacity duration-1000 ${loginPhase === 'unlocked' ? 'opacity-0' : 'opacity-100'}`}>
         <img src="/background.webp" alt="Background" className="w-full h-full object-cover opacity-50 dark:opacity-30 mix-blend-luminosity" onError={(e) => e.target.style.display='none'} />
         {/* This creates the dark/light cinematic vignette over the image */}
@@ -337,7 +372,7 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
       {/* 🔝 TOP NAVIGATION: Logo & Theme Toggle */}
       <div className={`absolute top-0 left-0 w-full p-6 sm:p-8 flex justify-between items-start z-50 transition-opacity duration-500 ${loginPhase === 'unlocked' ? 'opacity-0' : 'opacity-100'}`}>
          {/* 🖼️ BRANDING LOGO (biologo.webp) */}
-         <img src="/biologo.webp" alt="Reliance Logo" className="h-10 sm:h-12 w-auto object-contain drop-shadow-xl transition-transform hover:scale-105" onError={(e) => e.target.style.display='none'} />
+         <img src="/logo.webp" alt="Reliance Logo" className="h-10 sm:h-12 w-auto object-contain drop-shadow-xl transition-transform hover:scale-105" onError={(e) => e.target.style.display='none'} />
 
          {/* 🌓 THEME TOGGLE */}
          <button onClick={toggleTheme} className="p-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_15px_rgba(0,0,0,0.5)] border border-white/50 dark:border-slate-700/50 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all hover:rotate-12">
@@ -357,7 +392,7 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
         {/* 🪟 THE PREMIUM CARD WRAPPER */}
         <div className="relative group mt-8 lg:mt-0">
 
-          {/* ✨ THE BREATHING AURA */}
+          {/*   THE BREATHING AURA */}
           <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-teal-300 to-green-500 rounded-[2.5rem] blur-xl opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-500 animate-gradient-flow z-0"></div>
 
           {/* 🧊 THE GLASS CARD CONTENT */}
@@ -373,7 +408,7 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
 
             <div className="mb-10 flex flex-col items-center text-center relative z-10">
 
-              {/* ✨ EMBOSSED 3D SHIELD ICON */}
+              {/*   EMBOSSED 3D SHIELD ICON */}
               <div className="relative mb-6">
                 <div className="absolute inset-0 bg-emerald-500/30 blur-2xl animate-pulse rounded-full"></div>
                 <div className="relative w-20 h-20 bg-gradient-to-br from-white to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-2xl flex items-center justify-center shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_10px_20px_rgba(0,0,0,0.1)] dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),0_10px_20px_rgba(0,0,0,0.4)] border border-slate-200/50 dark:border-slate-700/50 transform rotate-3 hover:rotate-6 transition-transform duration-500 group">
@@ -400,7 +435,7 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
                 <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Site ID / Email</label>
                 <div className="relative group/input">
                   <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/input:text-emerald-500 transition-colors z-10" />
-                  {/* ✨ DEEP CARVED INPUT */}
+                  {/*   DEEP CARVED INPUT */}
                   <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={loginPhase !== 'idle'}
                     className="w-full pl-11 pr-4 py-3.5 bg-slate-50/80 dark:bg-[#0B1120]/80 border border-slate-200/50 dark:border-slate-800/50 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_3px_8px_rgba(0,0,0,0.6)]"
                     placeholder="auth@reliance-cbg.com" />
@@ -411,7 +446,7 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
                 <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Secure Passkey</label>
                 <div className="relative group/input">
                   <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/input:text-emerald-500 transition-colors z-10" />
-                  {/* ✨ DEEP CARVED INPUT */}
+                  {/*   DEEP CARVED INPUT */}
                   <input type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)} disabled={loginPhase !== 'idle'}
                     className="w-full pl-11 pr-12 py-3.5 bg-slate-50/80 dark:bg-[#0B1120]/80 border border-slate-200/50 dark:border-slate-800/50 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_3px_8px_rgba(0,0,0,0.6)]"
                     placeholder="••••••••" />
@@ -421,7 +456,7 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
                 </div>
               </div>
 
-              {/* ✨ FLOWING ENERGY BUTTON */}
+              {/*   FLOWING ENERGY BUTTON */}
               <button type="submit" disabled={loginPhase !== 'idle'} className="w-full py-4 mt-2 bg-gradient-to-r from-emerald-600 via-green-400 to-emerald-600 animate-gradient-flow text-white rounded-xl font-black tracking-widest uppercase text-xs transition-transform transform hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/30 flex justify-center items-center relative overflow-hidden">
                 <span className="flex items-center gap-2 drop-shadow-md z-10">
                   {loginPhase === 'loading' ? <><RefreshCw size={16} className="animate-spin" /> VERIFYING ENCRYPTION...</> : 'AUTHORIZE ACCESS'}
@@ -446,7 +481,7 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
 // ==========================================
 // 📱 SUPERVISOR VIEW (SHARED KIOSK MODE)
 // ==========================================
-function SupervisorMobileView({ userProfile, deployments, isLoading, fetchDeployments, onLogout, onEdit, onDelete, onView, theme, toggleTheme }) {
+function SupervisorMobileView({ userProfile, deployments, incidents, isLoading, fetchDeployments, fetchIncidents, onDeleteIncident, onLogout, onEdit, onDelete, onView, theme, toggleTheme }) {
   const [activeTab, setActiveTab] = useState('form');
   
   // 🎬 THE CINEMATIC INTRO STATES (1: Portal Welcome, 2: Identity Scan, 3: Personal Welcome, 0: Dashboard)
@@ -480,7 +515,7 @@ function SupervisorMobileView({ userProfile, deployments, isLoading, fetchDeploy
   return (
     <div className="flex flex-col w-full min-h-screen bg-slate-50 dark:bg-slate-950 max-w-md mx-auto shadow-2xl relative border-x border-slate-200 dark:border-slate-900 transition-colors">
       
-      {/* ✨ THE MANDATORY VIP SELECTION POP-UP */}
+      {/*   THE MANDATORY VIP SELECTION POP-UP */}
       <style>
         {`
           @keyframes fade-zoom { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
@@ -495,12 +530,12 @@ function SupervisorMobileView({ userProfile, deployments, isLoading, fetchDeploy
           {/* STAGE 1: Premium Boot Splash */}
           {introStage === 1 && (
             <div className="text-center animate-fade-zoom relative">
-              {/* ✨ Glowing Energy Aura behind the logo! */}
+              {/*   Glowing Energy Aura behind the logo! */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl animate-pulse z-0"></div>
               
               <div className="relative mb-8 z-10">
                  {/* 🖼️ THE PNG LOGO! (With a genius fallback just in case!) */}
-                 <img src="/biologo.webp" alt="Reliance Logo" className="w-28 h-28 mx-auto object-contain drop-shadow-[0_10px_20px_rgba(16,185,129,0.3)] transition-all hover:scale-105" 
+                 <img src="/logo.webp" alt="Reliance Logo" className="w-28 h-28 mx-auto object-contain drop-shadow-[0_10px_20px_rgba(16,185,129,0.3)] transition-all hover:scale-105" 
                       onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
                  
                  {/* 🛡️ The Fallback Shield (Only shows if logo.png is missing) */}
@@ -571,7 +606,7 @@ function SupervisorMobileView({ userProfile, deployments, isLoading, fetchDeploy
       <div className="bg-white/90 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-5 py-4 flex justify-between items-center sticky top-0 z-40">
         <div className="flex items-center gap-3">
           
-          {/* ✨ PREMIUM SHIELD BOX ADDED HERE! */}
+          {/*   PREMIUM SHIELD BOX ADDED HERE! */}
           <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20 shadow-sm shrink-0">
              <Shield size={20} className="drop-shadow-sm" />
           </div>
@@ -579,7 +614,7 @@ function SupervisorMobileView({ userProfile, deployments, isLoading, fetchDeploy
 
           <div>
             <h1 className="text-lg font-black tracking-tight text-slate-900 dark:text-slate-100">{userProfile.site} <span className="text-emerald-600 dark:text-emerald-400">Site</span></h1>
-          {/* ✨ SHOWS THE SELECTED SUPERVISOR NAME! */}
+          {/*   SHOWS THE SELECTED SUPERVISOR NAME! */}
           <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-widest mt-0.5">
             {fillerName ? `Officer: ${fillerName}` : 'Active Deployment'}
           </p>
@@ -593,22 +628,27 @@ function SupervisorMobileView({ userProfile, deployments, isLoading, fetchDeploy
         </div>
       </div>
 
-      <div className="flex-1 w-full overflow-y-auto pb-24">
-        {activeTab === 'form' ? (
-          /* ✨ WE PASS THE FILLER NAME INTO THE FORM HERE! */
-          <DeploymentMobileForm userProfile={userProfile} fetchDeployments={fetchDeployments} setActiveTab={setActiveTab} fillerName={fillerName} deployments={deployments}/>
-        ) : (
-          <SupervisorMobileHistory deployments={deployments} isLoading={isLoading} onEdit={onEdit} onDelete={onDelete} onView={onView}/>
-        )}
-      </div>
+     <div className="flex-1 w-full overflow-y-auto pb-24">
+        {activeTab === 'form' && <DeploymentMobileForm userProfile={userProfile} fetchDeployments={fetchDeployments} setActiveTab={setActiveTab} fillerName={fillerName} deployments={deployments}/>}
+        {activeTab === 'history' && <SupervisorMobileHistory deployments={deployments} isLoading={isLoading} onEdit={onEdit} onDelete={onDelete} onView={onView}/>}
+        {/* ✨ NEW VIEWS! */}
+        {activeTab === 'inc_form' && <IncidentMobileForm userProfile={userProfile} fetchIncidents={fetchIncidents} setActiveTab={setActiveTab} />}
+{activeTab === 'inc_history' && <IncidentMobileHistory incidents={incidents} isLoading={isLoading} onDeleteIncident={onDeleteIncident} />}</div>
 
+      {/* ✨ THE UPGRADED 4-TAB NAVIGATION! */}
       <div className="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 pb-safe z-40">
         <div className="flex justify-around items-center p-1 max-w-md mx-auto">
-          <button onClick={() => setActiveTab('form')} className={`flex flex-col items-center p-3 w-full transition-colors ${activeTab === 'form' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-400'}`}>
-            <Users size={22} className={activeTab === 'form' ? 'stroke-2' : 'stroke-[1.5]'} /><span className="text-[10px] font-bold mt-1">ENTRY</span>
+          <button onClick={() => setActiveTab('form')} className={`flex flex-col items-center p-2.5 w-full transition-colors ${activeTab === 'form' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-400'}`}>
+            <Users size={20} className={activeTab === 'form' ? 'stroke-2' : 'stroke-[1.5]'} /><span className="text-[9px] font-bold mt-1">ENTRY</span>
           </button>
-          <button onClick={() => setActiveTab('history')} className={`flex flex-col items-center p-3 w-full transition-colors ${activeTab === 'history' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-400'}`}>
-            <Calendar size={22} className={activeTab === 'history' ? 'stroke-2' : 'stroke-[1.5]'} /><span className="text-[10px] font-bold mt-1">LOGS</span>
+          <button onClick={() => setActiveTab('history')} className={`flex flex-col items-center p-2.5 w-full transition-colors ${activeTab === 'history' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-400'}`}>
+            <Calendar size={20} className={activeTab === 'history' ? 'stroke-2' : 'stroke-[1.5]'} /><span className="text-[9px] font-bold mt-1">LOGS</span>
+          </button>
+          <button onClick={() => setActiveTab('inc_form')} className={`flex flex-col items-center p-2.5 w-full transition-colors ${activeTab === 'inc_form' ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500 hover:text-rose-400'}`}>
+            <AlertTriangle size={20} className={activeTab === 'inc_form' ? 'stroke-2' : 'stroke-[1.5]'} /><span className="text-[9px] font-bold mt-1">SOS</span>
+          </button>
+          <button onClick={() => setActiveTab('inc_history')} className={`flex flex-col items-center p-2.5 w-full transition-colors ${activeTab === 'inc_history' ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500 hover:text-rose-400'}`}>
+            <FileText size={20} className={activeTab === 'inc_history' ? 'stroke-2' : 'stroke-[1.5]'} /><span className="text-[9px] font-bold mt-1">SOS LOGS</span>
           </button>
         </div>
       </div>
@@ -626,7 +666,7 @@ function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fil
 
   const addPerson = () => setPersonnel([...personnel, { id: Date.now(), shift: "Day Shift", designation: "SG - Security Guard", name: "", phone: "", location: "Main Gate", customLocation: "" }]);
   const updatePerson = (id, field, value) => setPersonnel(personnel.map(p => p.id === id ? { ...p, [field]: value } : p));
-  // ✨ THE TIME-TRAVEL MAGIC WAND!
+  //   THE TIME-TRAVEL MAGIC WAND!
   const handleAutoFill = () => {
     // 1. Calculate exactly what yesterday's date was!
     const yesterday = new Date();
@@ -688,7 +728,7 @@ function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fil
    return (
     <form onSubmit={handleSubmit} className="p-4 space-y-5">
       
-      {/* ✨ THE MAGIC WAND BUTTON */}
+      {/*   THE MAGIC WAND BUTTON */}
       <button type="button" onClick={handleAutoFill} className="w-full py-3.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 rounded-xl text-xs font-black uppercase tracking-widest flex justify-center items-center gap-2 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all shadow-sm group">
         <Copy size={16} className="group-hover:scale-110 transition-transform" /> 
         Auto-Fill Yesterday's Shift
@@ -769,7 +809,7 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
 
   const filteredLogs = deployments.filter(d => d.date === viewDate);
 
-  // ✨ THE PRO WHATSAPP EXPORT (With SS Sorting!)
+  //   THE PRO WHATSAPP EXPORT (With SS Sorting!)
   const handleCopyWhatsApp = () => {
     if (filteredLogs.length === 0) return alert("No logs to copy for this date!");
 
@@ -816,7 +856,7 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
 
   return (
     <div className="p-4 space-y-3">
-      {/* ✨ DATE PICKER & WHATSAPP BUTTON */}
+      {/*   DATE PICKER & WHATSAPP BUTTON */}
       <div className="bg-white dark:bg-slate-900 p-3 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col gap-3 mb-4">
         <div className="flex justify-between items-center">
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Log Date</span>
@@ -828,7 +868,7 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
       </div>
 
       {filteredLogs.map((row, idx) => {
-        // ✨ SAFETY FIRST: Fallbacks so React never panics!
+        //   SAFETY FIRST: Fallbacks so React never panics!
         const safeShift = row.shift || "";
         const safeDesignation = row.designation || "";
         const safeName = row.name || "Unknown";
@@ -872,22 +912,30 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
   );
 }
 // ==========================================
-// 🖥️ ADMIN VIEW (MASTER PORTAL + COMMAND CENTER)
+// ADMIN VIEW (MASTER PORTAL + COMMAND CENTER)
 // ==========================================
-function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLogout, onEdit, onView, onDelete, onAddContact, onEditContact, onDeleteContact, onViewContact, onImportCSV, theme, toggleTheme }) {
-  // ✨ TAB STATE TO SWITCH BETWEEN DEPLOYMENTS & CONTACTS
+function AdminDesktopView({ userProfile, deployments, contacts, incidents, isLoading, onToggleAck, onDeleteIncident, onLogout, onEdit, onView, onDelete, onAddContact, onEditContact, onDeleteContact, onViewContact, onImportCSV, theme, toggleTheme }) {  //   TAB STATE TO SWITCH BETWEEN DEPLOYMENTS & CONTACTS
   const [activeTab, setActiveTab] = useState('deployments'); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
+  // ✨ NEW: TODAY'S INCIDENT TRACKER LOGIC
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todaysIncidents = incidents ? incidents.filter(i => (i.created_at || '').startsWith(todayStr)) : [];
+  const siteIncidentCounts = {};
+  todaysIncidents.forEach(inc => {
+    siteIncidentCounts[inc.site] = (siteIncidentCounts[inc.site] || 0) + 1;
+  });
+  const totalTodaysIncidents = todaysIncidents.length;
+
   // Deployment Filters
   const [filterState, setFilterState] = useState("All");
   const [filterSite, setFilterSite] = useState("All");
   const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
   const [filterShift, setFilterShift] = useState("All");
   const [filterDesignation, setFilterDesignation] = useState("All");
-  const [filterLocation, setFilterLocation] = useState("All"); // ✨ NEW: Location Filter
+  const [filterLocation, setFilterLocation] = useState("All"); //   NEW: Location Filter
   const [searchTerm, setSearchTerm] = useState(""); 
-  const [siteTier, setSiteTier] = useState("All"); // ✨ NEW: VIP Toggle
+  const [siteTier, setSiteTier] = useState("All"); //   NEW: VIP Toggle
 
   // Contact Omni-Search
   const [contactSearchTerm, setContactSearchTerm] = useState("");
@@ -906,7 +954,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
     const safeName = d.name || ""; 
     const searchMatch = searchTerm === "" || safeName.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // ✨ VIP Tier Logic
+    //   VIP Tier Logic
     const isCommissioned = COMMISSIONED_SITES.includes(d.site);
     const tierMatch = siteTier === "All" || (siteTier === "Commissioned" ? isCommissioned : !isCommissioned);
 
@@ -916,7 +964,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
 // 🫀 2. THE LIVE HEARTBEAT STATS
   const totalBoots = filteredData.length;
   
-  // ✨ NEW: Phantom Roster (AWOL) Engine
+  //   NEW: Phantom Roster (AWOL) Engine
   const activeSiteNames = new Set(filteredData.map(d => d.site));
   const expectedSites = availableSites.filter(s => {
     if (siteTier === 'Commissioned') return COMMISSIONED_SITES.includes(s);
@@ -925,7 +973,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
   });
   const awolSites = expectedSites.filter(s => !activeSiteNames.has(s));
 
-  // ✨ NEW: MTCC Active Node Tracker (With specific counts per site!)
+  //   NEW: MTCC Active Node Tracker (With specific counts per site!)
   const mtccDeployments = filteredData.filter(d => d.location === 'MTCC');
   const mtccSiteMap = {};
   mtccDeployments.forEach(d => {
@@ -940,7 +988,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
   const ssCount = filteredData.filter(d => d.designation && d.designation.startsWith('SS')).length;
   const sgCount = filteredData.filter(d => d.designation && d.designation.startsWith('SG')).length;
 
-// ✨ NEW: THE 4-PILLAR COMPLIANCE ENGINE (Fatigue, Top-Heavy, Gap, Fraud)
+//   NEW: THE 4-PILLAR COMPLIANCE ENGINE (Fatigue, Top-Heavy, Gap, Fraud)
   let fatigueRisk = 0, topHeavySites = 0, leadershipGap = 0, fraudCount = 0;
   const phoneShifts = {}; 
   const siteShiftStats = {};
@@ -994,7 +1042,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
     { name: "Other Posts", count: locCounts["Other"], color: "from-slate-500 to-slate-400" }
   ];
 
-  // ✨ NEW: 2x2 GOD-MODE METRICS MATH
+  //  NEW: 2x2 GOD-MODE METRICS MATH
   const dayShiftCount = filteredData.filter(d => (d.shift || '').includes('Day')).length;
   const leaveCount = filteredData.filter(d => (d.shift || '').includes('Off')).length;
   const rogueCount = filteredData.filter(d => d.location === 'Other').length;
@@ -1003,7 +1051,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
   filteredData.forEach(d => { sitePopulation[d.site] = (sitePopulation[d.site] || 0) + 1; });
   const top5Sites = Object.entries(sitePopulation).sort((a, b) => b[1] - a[1]).slice(0, 5);
   
-  // 🟢 4. THE EXCEL EXPORT MAGIC WAND
+  //  4. THE EXCEL EXPORT MAGIC WAND
   const exportToCSV = () => {
     if (filteredData.length === 0) { alert("Oops! 🥺 No data to export with these filters!"); return; }
     const headers = ['Date', 'Facility', 'Shift', 'Role', 'Employee Name', 'Phone', 'Location', 'Submitted By'];
@@ -1019,7 +1067,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
     link.click();
   };
 
-  // ✨ OMNI-SEARCH LOGIC FOR CONTACTS
+  //   OMNI-SEARCH LOGIC FOR CONTACTS
   const filteredContacts = (contacts || []).filter(c => {
     if (contactSearchTerm === "") return true;
     const q = contactSearchTerm.toLowerCase();
@@ -1037,7 +1085,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
   return (
      <div className="flex w-full h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors relative">
       
-      {/* ✨ MOBILE BACKDROP FOR SIDEBAR */}
+      {/*   MOBILE BACKDROP FOR SIDEBAR */}
       {isMobileMenuOpen && (
         <div 
           className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-[60] md:hidden" 
@@ -1066,7 +1114,11 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
           <button onClick={() => { setActiveTab('contacts'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'contacts' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}>
             <BookOpen size={18} /> Directory
           </button>
+          <button onClick={() => { setActiveTab('incidents'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'incidents' ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}>
+            <AlertTriangle size={18} /> Incident Command
+          </button>
         </div>
+
 
         <div className="p-6 border-t border-slate-800 bg-slate-950/30">
           <div className="flex items-center gap-3 mb-5">
@@ -1082,7 +1134,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
         </div>
       </aside>
 
-      {/* 🖥️ MAIN CONTENT AREA */}
+      {/* MAIN CONTENT AREA */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 sm:px-6 shrink-0 z-10 transition-colors w-full">
           <div className="flex items-center gap-3">
@@ -1090,7 +1142,8 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
             <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden p-2 -ml-2 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 rounded-lg transition-colors">
               <Menu size={20} />
             </button>
-            <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white truncate max-w-[140px] sm:max-w-none">{activeTab === 'deployments' ? 'Deployment Matrix' : 'Directory'}</h1>
+            <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white truncate max-w-[140px] sm:max-w-none">
+            {activeTab === 'deployments' ? 'Deployment Command' : activeTab === 'contacts' ? 'Directory' : 'Incident Command'}</h1>
             <span className="hidden sm:flex bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase items-center gap-1.5 shadow-sm">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> Secure Cloud Vault
             </span>
@@ -1099,6 +1152,36 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
             <span className="sm:hidden bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[10px] font-bold px-2 py-1 rounded-full uppercase flex items-center shadow-sm">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse mr-1.5"></div> Live
             </span>
+
+            {/* ✨ THE NEW GOD-MODE SOS PILL */}
+            <div className="relative group cursor-pointer">
+              <div className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full flex items-center gap-2 text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-sm transition-all duration-300 ${totalTodaysIncidents > 0 ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30'}`}>
+                {totalTodaysIncidents > 0 ? (
+                  <><AlertTriangle size={14} className="animate-pulse" /> <span className="hidden sm:inline">{totalTodaysIncidents} SOS Today</span><span className="sm:hidden">{totalTodaysIncidents}</span></>
+                ) : (
+                  <><CheckCircle size={14} /> <span className="hidden sm:inline">All Clear Today</span></>
+                )}
+              </div>
+
+              {/* ✨ THE HOVER DROPDOWN MENU */}
+              {totalTodaysIncidents > 0 && (
+                <div className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden transform origin-top-right scale-95 group-hover:scale-100">
+                  <div className="bg-rose-500 dark:bg-rose-600 text-white text-[9px] font-black uppercase tracking-widest px-3 py-2 flex justify-between items-center">
+                    <span>Live Incidents</span>
+                    <span className="bg-white/20 px-1.5 py-0.5 rounded">{totalTodaysIncidents}</span>
+                  </div>
+                  <div className="p-2 space-y-1 max-h-48 overflow-y-auto custom-scrollbar">
+                    {Object.entries(siteIncidentCounts).map(([site, count]) => (
+                      <div key={site} className="flex justify-between items-center text-xs p-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-lg transition-colors border border-transparent hover:border-slate-100 dark:hover:border-slate-600">
+                        <span className="font-bold text-slate-700 dark:text-slate-300 truncate pr-3">{site}</span>
+                        <span className="bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400 px-2 py-0.5 rounded text-[10px] font-black shrink-0">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button onClick={toggleTheme} className="p-2 text-slate-500 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors">
                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
@@ -1108,11 +1191,11 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
         <div className="flex-1 overflow-auto p-4 sm:p-6 custom-scrollbar">
           
           {/* ===================================== */}
-          {/* 🎯 TAB: DEPLOYMENT MATRIX VIEW (COMMAND CENTER) */}
+          {/* TAB: DEPLOYMENT MATRIX VIEW (COMMAND CENTER) */}
           {/* ===================================== */}
           {activeTab === 'deployments' && (
             <>
-              {/* ✨ THE VIP SWITCH */}
+              {/*   THE VIP SWITCH */}
               <div className="mb-6 flex justify-center sm:justify-start">
                 <div className="inline-flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner w-full sm:w-auto">
                   <button onClick={() => setSiteTier('All')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${siteTier === 'All' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>Total 56</button>
@@ -1121,7 +1204,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
                 </div>
               </div>
 
-              {/* ✨ RESPONSIVE KPI CARDS */}
+              {/*   RESPONSIVE KPI CARDS */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
                 <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
                    <div className="absolute -right-4 -top-4 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl group-hover:bg-indigo-500/20 transition-all"></div>
@@ -1129,7 +1212,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
                    <h3 className="text-3xl font-black text-slate-900 dark:text-white">{totalBoots}</h3>
                 </div>
                 
-                {/* ✨ THE NEW AWOL PHANTOM ROSTER CARD (WITH SECRET HOVER DROP!) */}
+                {/*   THE NEW AWOL PHANTOM ROSTER CARD (WITH SECRET HOVER DROP!) */}
                 <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-visible group cursor-help z-20">
                    <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-xl transition-all ${awolSites.length === 0 ? 'bg-emerald-500/10' : 'bg-rose-500/10 group-hover:bg-rose-500/20'}`}></div>
                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
@@ -1139,10 +1222,10 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
                      {awolSites.length} <span className="text-sm text-slate-400 font-bold uppercase tracking-widest">Sites Missing</span>
                    </h3>
                    
-                   {/* 🕵️‍♀️ THE MAGIC HOVER REVEAL MENU (NOW SHOWS BOTH!) */}
+                   {/*  THE MAGIC HOVER REVEAL MENU (NOW SHOWS BOTH!) */}
                    <div className="absolute top-full left-0 w-64 sm:w-72 mt-2 bg-slate-900 dark:bg-slate-950 border border-slate-700 shadow-2xl rounded-xl p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 max-h-56 overflow-y-auto custom-scrollbar translate-y-2 group-hover:translate-y-0 flex gap-4">
                      
-                     {/* 🚨 Missing Column */}
+                     
                      <div className="flex-1">
                        <p className="text-[9px] text-rose-400 font-bold uppercase tracking-widest mb-2 border-b border-slate-700 pb-1 sticky top-0 bg-slate-900 dark:bg-slate-950 z-10">Missing ({awolSites.length})</p>
                        <ul className="space-y-1.5">
@@ -1153,7 +1236,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
                        </ul>
                      </div>
 
-                     {/* 🟢 Present Column */}
+                     {/*  Present Column */}
                      <div className="flex-1 border-l border-slate-700/50 pl-4">
                        <p className="text-[9px] text-emerald-400 font-bold uppercase tracking-widest mb-2 border-b border-slate-700 pb-1 sticky top-0 bg-slate-900 dark:bg-slate-950 z-10">Active ({expectedSites.length - awolSites.length})</p>
                        <ul className="space-y-1.5">
@@ -1167,7 +1250,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
                    </div>
                 </div>
 
-                {/* ✨ THE NEW MTCC ACTIVE NODES CARD (WITH SECRET HOVER!) */}
+                {/*   THE NEW MTCC ACTIVE NODES CARD (WITH SECRET HOVER!) */}
                 <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-visible group cursor-help z-10">
                    <div className="absolute -right-4 -top-4 w-24 h-24 bg-amber-500/10 rounded-full blur-xl group-hover:bg-amber-500/20 transition-all"></div>
                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><Target size={12} className="text-amber-500"/> MTCC Active Nodes</p>
@@ -1199,7 +1282,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
               {/* 📊 TIER 2: CINEMATIC GRAPHS */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 
-                {/* ✨ THE PRO ENTERPRISE HISTOGRAM! */}
+                {/*   THE PRO ENTERPRISE HISTOGRAM! */}
                 <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center pb-12 relative overflow-hidden">
                    {/* Subtle tech grid background for that enterprise feel! */}
                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:14px_14px]"></div>
@@ -1227,7 +1310,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
                              ></div>
                            </div>
                            
-                           {/* ✨ THE HORIZONTAL TEXT! */}
+                           {/*   THE HORIZONTAL TEXT! */}
                            <span className="absolute -bottom-10 w-16 sm:w-20 text-center text-[9px] sm:text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-[1.1] drop-shadow-sm flex flex-col items-center justify-start">
                              {loc.name}
                            </span>
@@ -1237,7 +1320,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
                    </div>
                 </div>
 
-                {/* ✨ THE NEW 2x2 GOD-MODE METRICS GRID! */}
+                {/*   THE NEW 2x2 GOD-MODE METRICS GRID! */}
                 <div className="grid grid-cols-2 gap-3 sm:gap-4 h-full">
                   
                   {/* 1. Shift Balance (Miniature) */}
@@ -1275,7 +1358,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
                      </div>
                   </div>
 
-                  {/* ✨ THE COMPLIANCE RADAR CARD (4-in-1!) */}
+                  {/*   THE COMPLIANCE RADAR CARD (4-in-1!) */}
                 <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center relative group overflow-hidden">
                    <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-xl transition-all ${(fatigueRisk || topHeavySites || leadershipGap || fraudCount) > 0 ? 'bg-rose-500/10 group-hover:bg-rose-500/20' : 'bg-emerald-500/10'}`}></div>
                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1.5 relative z-10">
@@ -1316,7 +1399,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
                   <FilterSelect label="Site" value={filterSite} onChange={setFilterSite} options={[...availableSites].sort()} />
                   <FilterSelect label="Shift" value={filterShift} onChange={setFilterShift} options={["Day Shift", "Night Shift"]} />
                   <FilterSelect label="Role" value={filterDesignation} onChange={setFilterDesignation} options={["SS", "SG"]} />
-                  {/* ✨ LOCATION FILTER BUILT RIGHT IN! */}
+                  {/*   LOCATION FILTER BUILT RIGHT IN! */}
                   <FilterSelect label="Loc" value={filterLocation} onChange={setFilterLocation} options={LOCATIONS} />
                   
                   <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0 ml-auto">
@@ -1420,7 +1503,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredContacts.map(contact => (
                 <div key={contact.id} onClick={() => onViewContact(contact)} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md transition-shadow relative group cursor-pointer">                    
-                    {/* Actions Menu (Edit/Delete) - ✨ ADDED stopPropagation! */}
+                    {/* Actions Menu (Edit/Delete) -   ADDED stopPropagation! */}
                     <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button onClick={(e) => { e.stopPropagation(); onEditContact(contact); }} className="p-1.5 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded-md"><Edit2 size={14} /></button>
                       <button onClick={(e) => { e.stopPropagation(); onDeleteContact(contact); }} className="p-1.5 text-slate-400 hover:text-red-600 bg-slate-50 dark:bg-slate-800 rounded-md"><Trash2 size={14} /></button>
@@ -1475,8 +1558,9 @@ function AdminDesktopView({ userProfile, deployments, contacts, isLoading, onLog
               </div>
             </>
           )}
-
+        {activeTab === 'incidents' && <AdminIncidentView incidents={incidents} isLoading={isLoading} onAcknowledge={onToggleAck} onDelete={onDeleteIncident} />}
         </div>
+        
       </main>
     </div>
   );
@@ -1518,7 +1602,7 @@ function EditModal({ record, onClose, onSave }) {
 
 function FilterSelect({ label, value, onChange, options, type = "select" }) {
   return (
-    // ✨ Notice the "w-full sm:w-auto" right here! That's the mobile magic!
+    //   Notice the "w-full sm:w-auto" right here! That's the mobile magic!
     <div className="flex items-center gap-2 w-full sm:w-auto bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 focus-within:border-indigo-500/50">
       <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">{label}:</span>
       {type === "select" ? (
@@ -1530,7 +1614,7 @@ function FilterSelect({ label, value, onChange, options, type = "select" }) {
   );
 }
 
-// ✨ NEW CATCHY INFO POP-UP COMPONENT
+//   NEW CATCHY INFO POP-UP COMPONENT
 function ViewModal({ record, onClose }) {
   return (
     <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -1586,7 +1670,7 @@ function DeleteModal({ record, onClose, onConfirm, type }) {
     <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center">
         <Trash2 size={32} className="mx-auto text-red-500 mb-4" />
-        {/* ✨ DYNAMIC HEADER! */}
+        {/*   DYNAMIC HEADER! */}
         <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-2">Delete {type === 'contact' ? 'Contact' : 'Entry'}?</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Are you sure you want to completely remove {record.name}?</p>
         <div className="flex gap-3">
@@ -1602,7 +1686,7 @@ function DeleteModal({ record, onClose, onConfirm, type }) {
 // ✏️ CONTACT FORM MODAL (UPGRADED)
 // ==========================================
 function ContactFormModal({ record, onClose, onSave }) {
-  // ✨ SMART LOGIC: Checks if we are editing someone with a custom designation
+  //   SMART LOGIC: Checks if we are editing someone with a custom designation
   const isCustomInitial = record.designation && !CONTACT_ROLES.includes(record.designation);
 
   const [formData, setFormData] = useState({
@@ -1649,7 +1733,7 @@ function ContactFormModal({ record, onClose, onSave }) {
             </div>
           </div>
 
-          {/* ✨ MAGIC TEXT BOX: Only shows if 'Other' is selected! */}
+          {/*   MAGIC TEXT BOX: Only shows if 'Other' is selected! */}
           {formData.designationMode === 'Other' && (
             <div className="animate-in fade-in slide-in-from-top-2 duration-200">
               <label className="block text-[10px] font-bold text-indigo-500 uppercase mb-1">Custom Designation *</label>
@@ -1681,7 +1765,7 @@ function ContactFormModal({ record, onClose, onSave }) {
               <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Email</label><input type="email" value={formData.email || ''} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none focus:border-indigo-500" placeholder="name@company.com" /></div>
               <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Work / Company</label><input type="text" value={formData.company || ''} onChange={(e) => setFormData({...formData, company: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none focus:border-indigo-500" placeholder="e.g. RBG Security" /></div>
               
-              {/* ✨ NEW NOTES SECTION */}
+              {/*   NEW NOTES SECTION */}
               <div>
                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Notes</label>
                 <textarea value={formData.notes || ''} onChange={(e) => setFormData({...formData, notes: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-medium outline-none focus:border-indigo-500 min-h-[80px] resize-y placeholder:text-slate-400" placeholder="Add any important details here..."></textarea>
@@ -1708,7 +1792,7 @@ function KPICard({ title, value }) {
 }
 
 // ==========================================
-// ✨ CATCHY CONTACT VIEW POP-UP
+//   CATCHY CONTACT VIEW POP-UP
 // ==========================================
 function ContactViewModal({ record, onClose }) {
   const safeName = record.name || "Unknown";
@@ -1763,7 +1847,7 @@ function ContactViewModal({ record, onClose }) {
             )}
           </div>
 
-          {/* ✨ BEAUTIFUL NOTES SECTION */}
+          {/*   BEAUTIFUL NOTES SECTION */}
           {record.notes && (
             <div className="bg-amber-50/50 dark:bg-amber-900/10 p-4 rounded-2xl border border-amber-100/50 dark:border-amber-500/20">
               <span className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest flex items-center gap-1.5 mb-2">
@@ -1777,6 +1861,304 @@ function ContactViewModal({ record, onClose }) {
           
         </div>
       </div>
+    </div>
+  );
+}
+
+// ==========================================
+// 🚨 INCIDENT REPORTING MODULE (GOD MODE)
+// ==========================================
+
+function IncidentMobileForm({ userProfile, fetchIncidents, setActiveTab }) {
+  const [formData, setFormData] = useState({
+    timeOfIncident: '', reportedBy: '', incidentLocation: '', details: '', actionsTaken: '', preventiveMeasures: '', recommendations: '', photos: []
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Magic Image Converter!
+  const handlePhotoUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    const base64Photos = await Promise.all(files.map(file => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => resolve(ev.target.result);
+        reader.readAsDataURL(file);
+      });
+    }));
+    setFormData({ ...formData, photos: [...formData.photos, ...base64Photos] });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    const newIncident = {
+      site: userProfile.site,
+      time_of_incident: formData.timeOfIncident.replace('T', ' '),
+      time_of_reporting: new Date().toLocaleString('en-IN'), // Auto-stamps the exact second!
+      reported_by: formData.reportedBy,
+      incident_location: formData.incidentLocation,
+      details: formData.details,
+      actions_taken: formData.actionsTaken,
+      preventive_measures: formData.preventiveMeasures,
+      recommendations: formData.recommendations,
+      photos: formData.photos // Scales later when you move DB!
+    };
+
+    const { error } = await supabase.from('incidents').insert([newIncident]);
+    setIsSubmitting(false);
+    if (error) alert(`Error: ${error.message}`);
+    else {
+      alert("🚨 Incident Logged into Vault!");
+      fetchIncidents();
+      setActiveTab('inc_history');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="p-4 space-y-4">
+      <div className="bg-rose-50 dark:bg-rose-500/10 p-4 rounded-xl border border-rose-200 dark:border-rose-500/20 shadow-sm mb-6">
+        <h2 className="text-rose-600 dark:text-rose-400 font-black uppercase tracking-widest text-sm flex items-center gap-2"><AlertTriangle size={18}/> Log Security Incident</h2>
+        <p className="text-[10px] text-rose-500/80 font-bold mt-1">This goes directly to Command Center.</p>
+      </div>
+
+      <div className="space-y-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Time of Incident</label><input type="datetime-local" required value={formData.timeOfIncident} onChange={(e) => setFormData({...formData, timeOfIncident: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none [color-scheme:light] dark:[color-scheme:dark]" /></div>
+        
+        <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Reported By (Name & EP)</label><input type="text" required placeholder="e.g. Rahul Sharma (EP1234)" value={formData.reportedBy} onChange={(e) => setFormData({...formData, reportedBy: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none uppercase" /></div>
+        
+        <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Incident Location</label><input type="text" required placeholder="Where on site did this happen?" value={formData.incidentLocation} onChange={(e) => setFormData({...formData, incidentLocation: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none" /></div>
+
+        <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Details of Incident</label><textarea required placeholder="What exactly happened?" value={formData.details} onChange={(e) => setFormData({...formData, details: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-medium outline-none min-h-[80px]" /></div>
+
+        <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Actions Taken <span className="text-rose-500">(Min 4 Points)</span></label><textarea required placeholder="1. &#10;2. &#10;3. &#10;4. " value={formData.actionsTaken} onChange={(e) => setFormData({...formData, actionsTaken: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-medium outline-none min-h-[100px]" /></div>
+
+        <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Follow up & Preventive Measures <span className="text-rose-500">(Min 4 Points)</span></label><textarea required placeholder="1. &#10;2. &#10;3. &#10;4. " value={formData.preventiveMeasures} onChange={(e) => setFormData({...formData, preventiveMeasures: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-medium outline-none min-h-[100px]" /></div>
+
+        <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Actions & Recommendations <span className="text-rose-500">(Min 4-5 Points)</span></label><textarea required placeholder="1. &#10;2. &#10;3. &#10;4. &#10;5. " value={formData.recommendations} onChange={(e) => setFormData({...formData, recommendations: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-medium outline-none min-h-[100px]" /></div>
+
+        <div>
+          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Photographic Evidence</label>
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {formData.photos.map((p, i) => <img key={i} src={p} className="h-16 w-16 object-cover rounded-lg border border-slate-200" alt="Incident" />)}
+            <label className="h-16 w-16 bg-slate-100 dark:bg-slate-800 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-slate-400 cursor-pointer hover:border-indigo-500 transition-colors shrink-0">
+              <Camera size={20} /> <span className="text-[8px] font-bold mt-1 uppercase">Add</span>
+              <input type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" disabled={isSubmitting} className="w-full py-4 rounded-xl font-black text-sm bg-rose-600 text-white hover:bg-rose-700 shadow-lg shadow-rose-900/20 flex justify-center items-center gap-2 uppercase tracking-widest mt-6">
+        {isSubmitting ? 'UPLOADING...' : <><AlertTriangle size={18} /> SUBMIT REPORT</>}
+      </button>
+    </form>
+  );
+}
+
+function IncidentMobileHistory({ incidents, isLoading }) {
+  const [viewDate, setViewDate] = useState(new Date().toISOString().split('T')[0]);
+
+  const filtered = incidents.filter(i => (i.created_at || '').startsWith(viewDate));
+
+  const copyToWhatsApp = (incident) => {
+    let msg = `🚨 *INCIDENT REPORT - ${incident.site}* 🚨\n\n` +
+      `🕒 *Time of Incident:* ${incident.time_of_incident}\n` +
+      `⏱️ *Time of Reporting:* ${incident.time_of_reporting}\n` +
+      `👤 *Reported By:* ${incident.reported_by}\n` +
+      `📍 *Location:* ${incident.incident_location}\n\n` +
+      `📝 *Details:*\n${incident.details}\n\n` +
+      `⚡ *Actions Taken:*\n${incident.actions_taken}\n\n` +
+      `🛡️ *Preventive Measures:*\n${incident.preventive_measures}\n\n` +
+      `💡 *Recommendations:*\n${incident.recommendations}`;
+    
+    navigator.clipboard.writeText(msg).then(() => alert("Copied for WhatsApp! 🟢"));
+  };
+
+  return (
+    <div className="p-4 space-y-4">
+      {/* ... keep the filter date input ... */}
+
+      {filtered.map(inc => (
+        <div key={inc.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border-l-4 border-rose-500 border-y border-r border-y-slate-200 border-r-slate-200 dark:border-y-slate-800 dark:border-r-slate-800 relative">
+          
+          {/* ✨ ADMIN ACKNOWLEDGEMENT BADGE! */}
+          <div className="absolute top-3 right-3">
+             {inc.status === 'Acknowledged' && <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 text-[8px] font-black uppercase px-2 py-1 rounded flex items-center gap-1"><CheckCircle size={10}/> Admin Seen</span>}
+          </div>
+
+          <h4 className="font-black text-slate-900 dark:text-white uppercase text-sm mb-1 line-clamp-1 pr-20">{inc.incident_location}</h4>
+          <p className="text-[10px] text-rose-500 font-bold tracking-widest uppercase mb-3">{inc.time_of_incident}</p>
+          <div className="text-xs text-slate-600 dark:text-slate-400 font-medium line-clamp-2 mb-4 bg-slate-50 dark:bg-slate-950/50 p-2 rounded border border-slate-100 dark:border-slate-800/50">{inc.details}</div>
+          
+          <button onClick={() => copyToWhatsApp(inc)} className="w-full py-2.5 rounded-lg text-xs font-bold bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-200 dark:border-green-800/50 flex justify-center items-center gap-2 hover:bg-green-100 transition-colors shadow-sm">
+             <Copy size={16} /> COPY FOR WHATSAPP
+          </button>
+        </div>
+      ))}
+      {filtered.length === 0 && <p className="text-center text-slate-500 text-sm mt-10 font-medium">No incidents reported on this date.</p>}
+    </div>
+  );
+}
+
+function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete }) {
+  const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
+  const [filterState, setFilterState] = useState("All");
+  const [filterSite, setFilterSite] = useState("All");
+  const [viewingInc, setViewingInc] = useState(null);
+
+  const availableSites = filterState === "All" ? SITES : SITES_BY_STATE[filterState] || [];
+
+  const filtered = incidents.filter(i => {
+    const dMatch = filterDate === '' || (i.created_at || '').startsWith(filterDate);
+    const stMatch = filterState === "All" || (SITES_BY_STATE[filterState] && SITES_BY_STATE[filterState].includes(i.site));
+    const siMatch = filterSite === "All" || i.site === filterSite;
+    return dMatch && stMatch && siMatch;
+  });
+
+  const downloadPhoto = (e, url, idx) => {
+    e.stopPropagation();
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Incident_${viewingInc.site}_Photo_${idx+1}.jpg`;
+    a.click();
+  };
+
+// ✨ NEW: OFFICIAL MICROSOFT WORD GENERATOR (GOD MODE)
+  const downloadReport = (inc) => {
+    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Incident Report</title></head><body style='font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;'>";
+    const footer = "</body></html>";
+    
+    const content = `
+      <h1 style="text-align: center; color: #e11d48; border-bottom: 2px solid #e11d48; padding-bottom: 10px;">OFFICIAL INCIDENT REPORT</h1>
+      
+      <table style="width: 100%; margin-top: 20px; font-size: 14px; text-align: left; border-collapse: collapse;">
+        <tr><th style="padding: 8px 0; width: 150px; color: #555;">Facility:</th><td style="font-weight: bold; font-size: 16px;">${inc.site}</td></tr>
+        <tr><th style="padding: 8px 0; color: #555;">Location:</th><td style="font-weight: bold;">${inc.incident_location}</td></tr>
+        <tr><th style="padding: 8px 0; color: #555;">Date & Time:</th><td style="font-weight: bold;">${inc.time_of_incident}</td></tr>
+        <tr><th style="padding: 8px 0; color: #555;">Reported On:</th><td style="font-weight: bold;">${inc.time_of_reporting}</td></tr>
+        <tr><th style="padding: 8px 0; color: #555;">Reported By:</th><td style="font-weight: bold;">${inc.reported_by}</td></tr>
+        <tr><th style="padding: 8px 0; color: #555;">Status:</th><td style="font-weight: bold; color: ${inc.status === 'Acknowledged' ? '#10b981' : '#f59e0b'};">${inc.status || 'Pending'}</td></tr>
+      </table>
+      
+      <h3 style="color: #334155; margin-top: 30px; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px;">DETAILS OF INCIDENT:</h3>
+      <p style="white-space: pre-wrap; line-height: 1.6; color: #1e293b;">${inc.details}</p>
+      
+      <h3 style="color: #4f46e5; margin-top: 20px; border-bottom: 1px solid #e0e7ff; padding-bottom: 5px;">ACTIONS TAKEN:</h3>
+      <p style="white-space: pre-wrap; line-height: 1.6; color: #1e293b;">${inc.actions_taken}</p>
+      
+      <h3 style="color: #10b981; margin-top: 20px; border-bottom: 1px solid #d1fae5; padding-bottom: 5px;">PREVENTIVE MEASURES:</h3>
+      <p style="white-space: pre-wrap; line-height: 1.6; color: #1e293b;">${inc.preventive_measures}</p>
+      
+      <h3 style="color: #f59e0b; margin-top: 20px; border-bottom: 1px solid #fef3c7; padding-bottom: 5px;">RECOMMENDATIONS:</h3>
+      <p style="white-space: pre-wrap; line-height: 1.6; color: #1e293b;">${inc.recommendations}</p>
+      
+      <div style="margin-top: 50px; text-align: center; color: #94a3b8; font-size: 12px; font-weight: bold;">
+        <p>Generated via Reliance CBG Command Center</p>
+      </div>
+    `;
+
+    const sourceHTML = header + content + footer;
+    const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Incident_Report_${inc.site.replace(/\s+/g, '_')}_${inc.time_of_incident.split(' ')[0]}.doc`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* ✨ NEW FILTERS! */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 flex flex-wrap gap-4 items-end">
+        <FilterSelect label="Date" value={filterDate} onChange={setFilterDate} type="date" />
+        <FilterSelect label="State" value={filterState} onChange={e => {setFilterState(e); setFilterSite("All");}} options={Object.keys(SITES_BY_STATE).sort()} />
+        <FilterSelect label="Site" value={filterSite} onChange={setFilterSite} options={[...availableSites].sort()} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filtered.map(inc => (
+          <div key={inc.id} onClick={() => setViewingInc(inc)} className="bg-white dark:bg-slate-900 rounded-2xl border-t-4 border-rose-500 border-x border-b border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-shadow group relative">
+            
+            {/* ✨ STATUS BADGE! */}
+            <div className="absolute top-4 right-4 z-10">
+              {inc.status === 'Acknowledged' ? 
+                <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 text-[9px] font-black uppercase px-2 py-1 rounded shadow-sm flex items-center gap-1"><CheckCircle size={10}/> Acknowledged</span> 
+                : 
+                <span className="bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 text-[9px] font-black uppercase px-2 py-1 rounded shadow-sm flex items-center gap-1"><AlertTriangle size={10}/> Pending Review</span>
+              }
+            </div>
+
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50">
+               <span className="text-[10px] font-black bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-1 rounded uppercase tracking-widest">{inc.site}</span>
+               <h3 className="font-black text-slate-900 dark:text-white mt-3 uppercase text-sm leading-tight pr-20">{inc.incident_location}</h3>
+               <p className="text-[10px] font-bold text-rose-500 mt-2">{inc.time_of_incident}</p>
+            </div>
+            <div className="p-5 flex-1 text-xs font-medium text-slate-600 dark:text-slate-400 line-clamp-3">
+               {inc.details}
+            </div>
+            {(inc.photos && inc.photos.length > 0) && (
+              <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 flex gap-2">
+                <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1"><ImageIcon size={12}/> {inc.photos.length} Attached</span>
+              </div>
+            )}
+          </div>
+        ))}
+        {filtered.length === 0 && <div className="col-span-full py-20 text-center text-slate-500 font-bold flex flex-col items-center"><CheckCircle size={48} className="text-slate-300 dark:text-slate-700 mb-4"/> No incidents reported! All clear! 🟢</div>}
+      </div>
+
+      {/* ✨ THE GOD-MODE VIEW MODAL! */}
+      {viewingInc && (
+        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={() => setViewingInc(null)}>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col relative" onClick={e => e.stopPropagation()}>
+             <div className="h-2 bg-rose-500 w-full shrink-0"></div>
+             <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start bg-slate-50 dark:bg-slate-950/50 shrink-0">
+               <div>
+                 <span className="text-[10px] font-black bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-1 rounded uppercase tracking-widest">{viewingInc.site}</span>
+                 <h2 className="text-xl font-black text-slate-900 dark:text-white mt-2 uppercase">{viewingInc.incident_location}</h2>
+                 <p className="text-xs font-bold text-slate-500 mt-1">Reported by: {viewingInc.reported_by}</p>
+               </div>
+               <button onClick={() => setViewingInc(null)} className="p-2 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm"><X size={16} /></button>
+             </div>
+             
+             <div className="p-6 overflow-y-auto custom-scrollbar space-y-5 text-sm font-medium text-slate-700 dark:text-slate-300">
+               <div><strong className="text-[10px] text-rose-500 uppercase tracking-widest block mb-1">Details</strong><p className="whitespace-pre-wrap">{viewingInc.details}</p></div>
+               <div className="border-l-2 border-indigo-400 pl-3"><strong className="text-[10px] text-indigo-500 uppercase tracking-widest block mb-1">Actions Taken</strong><p className="whitespace-pre-wrap">{viewingInc.actions_taken}</p></div>
+               <div className="border-l-2 border-emerald-400 pl-3"><strong className="text-[10px] text-emerald-500 uppercase tracking-widest block mb-1">Preventive Measures</strong><p className="whitespace-pre-wrap">{viewingInc.preventive_measures}</p></div>
+               <div className="border-l-2 border-amber-400 pl-3"><strong className="text-[10px] text-amber-500 uppercase tracking-widest block mb-1">Recommendations</strong><p className="whitespace-pre-wrap">{viewingInc.recommendations}</p></div>
+               
+               {(viewingInc.photos && viewingInc.photos.length > 0) && (
+                 <div>
+                   <strong className="text-[10px] text-slate-500 uppercase tracking-widest block mb-2">Photographic Evidence</strong>
+                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                     {viewingInc.photos.map((p, i) => (
+                       <div key={i} className="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 aspect-square">
+                         <img src={p} alt="evidence" className="w-full h-full object-cover" />
+                         <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                           <button onClick={(e) => downloadPhoto(e, p, i)} className="bg-white text-slate-900 font-bold text-[10px] uppercase tracking-widest px-3 py-2 rounded-lg flex items-center gap-1 shadow-xl hover:scale-105 transition-transform"><Download size={14}/> Download</button>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+               )}
+             </div>
+
+             <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 flex flex-wrap justify-between gap-3 shrink-0">
+               <button onClick={() => { onDelete(viewingInc.id); setViewingInc(null); }} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 transition-colors"><Trash2 size={14}/> Delete</button>
+               
+               <div className="flex gap-2">
+                 <button onClick={() => downloadReport(viewingInc)} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 transition-colors shadow-sm border border-indigo-200 dark:border-indigo-800">
+                   <Download size={16} /> Report
+                 </button>
+                 <button onClick={() => { onAcknowledge(viewingInc); setViewingInc({...viewingInc, status: viewingInc.status === 'Acknowledged' ? 'Pending' : 'Acknowledged'}); }} className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md ${viewingInc.status === 'Acknowledged' ? 'bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-300' : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-emerald-500/20'}`}>
+                   <Shield size={16}/> {viewingInc.status === 'Acknowledged' ? 'Mark Pending' : 'Acknowledge SOS'}
+                 </button>
+               </div>
+             </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
