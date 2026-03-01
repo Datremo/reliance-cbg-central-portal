@@ -88,20 +88,21 @@ export default function App() {
   };
 
 // --- 🔥 FETCH DEPLOYMENTS, CONTACTS & INCIDENTS ---
-  useEffect(() => {
+useEffect(() => {
     if (userProfile) {
       fetchDeployments();
-      fetchIncidents(); // EVERYONE GETS INCIDENTS!
-      fetchWeeklyReports(); // ✨ FETCHING THE NEW LEDGERS!
-      if (userProfile.role === 'admin') fetchContacts(); 
+      fetchIncidents();
+      fetchWeeklyReports(); // ✨ NEW: Tell the app to fetch the reports!
+      if (userProfile.role === 'admin') fetchContacts();
     }
   }, [userProfile]);
 
+  // ✨ NEW: The actual function that pulls from the vault
   const fetchWeeklyReports = async () => {
-    let query = supabase.from('weekly_reports').select('*').order('created_at', { ascending: false });
+    let query = supabase.from('weekly_reports').select('*');
     if (userProfile.role === 'supervisor') query = query.eq('site', userProfile.site);
-    const { data, error } = await query;
-    if (!error) setWeeklyReports(data || []);
+    const { data } = await query;
+    setWeeklyReports(data || []);
   };
 
 
@@ -538,7 +539,13 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
             <MapPin size={12}/> {userProfile.site}
           </div>
         </div>
-        <button onClick={onLogout} className="p-3 bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 rounded-2xl shadow-sm hover:bg-rose-200 transition-colors active:scale-95"><LogOut size={20}/></button>
+        {/* ✨ THE RESTORED DARK MODE BUTTON & LOGOUT */}
+        <div className="flex gap-2">
+          <button onClick={toggleTheme} className="p-3 text-slate-500 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm hover:text-indigo-600 transition-colors active:scale-95">
+            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
+          <button onClick={onLogout} className="p-3 bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 rounded-2xl shadow-sm hover:bg-rose-200 transition-colors active:scale-95"><LogOut size={20}/></button>
+        </div>
       </div>
 
       <div>
@@ -1172,8 +1179,13 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
             <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden p-2 -ml-2 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 rounded-lg transition-colors">
               <Menu size={20} />
             </button>
-            <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white truncate max-w-[140px] sm:max-w-none">
-            {activeTab === 'deployments' ? 'Deployment Command' : activeTab === 'contacts' ? 'Directory' : 'Incident Command'}</h1>
+            {/* ✨ SMART HEADER THAT KNOWS EVERY TAB! */}
+          <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white truncate max-w-[140px] sm:max-w-none">
+            {activeTab === 'deployments' && 'Deployment Command'}
+            {activeTab === 'incidents' && 'Incident Command'}
+            {activeTab === 'contacts' && 'Directory'}
+            {activeTab === 'weekly' && 'MIS Report'}
+          </h1>
             <span className="hidden sm:flex bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase items-center gap-1.5 shadow-sm">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> Secure Cloud Vault
             </span>
@@ -2269,8 +2281,11 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete }) {
 // 📋 WEEKLY LEDGER REPORT MODULE (EXACT PAPER COPY)
 // ==========================================
 
+// ==========================================
+// 📋 WEEKLY LEDGER REPORT MODULE (EXACT PAPER COPY)
+// ==========================================
+
 function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab }) {
-  // ✨ NO AUTO-CALCULATION! Fully manual, clean dates!
   const [fd, setFd] = useState({
     dateFrom: '', dateTo: '', srNo: '',
     dispSolid: '', dispGas: '', dispScrap: '',
@@ -2306,7 +2321,8 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab }) {
     }
   };
 
-  const TableInput = ({ valKey }) => (
+  // ✨ THE FIX: Changing this to a regular helper function so React stops unmounting it!
+  const renderInput = (valKey) => (
     <td className="border border-slate-300 dark:border-slate-700 p-0">
       <input type="number" required value={fd[valKey]} onChange={(e) => setFd({...fd, [valKey]: e.target.value})} className="w-14 sm:w-20 bg-transparent text-center py-3 text-sm font-bold text-slate-900 dark:text-white outline-none focus:bg-emerald-50 dark:focus:bg-emerald-900/30 transition-colors" />
     </td>
@@ -2314,8 +2330,6 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab }) {
 
   return (
     <form onSubmit={handleSubmit} className="p-4 space-y-6">
-      
-      {/* 📅 MANUAL DATE SELECTION */}
       <div className="bg-emerald-50 dark:bg-emerald-500/10 p-5 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 shadow-sm">
         <h3 className="font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest text-xs mb-3 flex items-center gap-2"><Calendar size={16}/> Select Ledger Dates</h3>
         <div className="grid grid-cols-2 gap-3">
@@ -2324,14 +2338,12 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab }) {
         </div>
       </div>
 
-      {/* 📄 THE EXACT PAPER LEDGER DIGITIZED (Merged Cells!) */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
         <div className="p-4 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700"><h4 className="font-black text-slate-700 dark:text-slate-300 text-xs uppercase tracking-widest flex items-center gap-2"><FileText size={16}/> Official Register</h4></div>
         
         <div className="overflow-x-auto custom-scrollbar p-2">
           <table className="w-max border-collapse border border-slate-300 dark:border-slate-700 text-center text-[10px] font-black uppercase tracking-widest">
             <thead>
-              {/* ROW 1: MASTER HEADINGS */}
               <tr className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                 <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 min-w-[60px]">Sr. No.</th>
                 <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 min-w-[120px]">SITE</th>
@@ -2344,7 +2356,6 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab }) {
                 <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 text-rose-600 dark:text-rose-400">GOV.<br/>OFFICIAL</th>
                 <th colSpan="4" className="border border-slate-300 dark:border-slate-700 p-2 bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white">DEPLOYMENT</th>
               </tr>
-              {/* ROW 2: SUB-HEADINGS */}
               <tr className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400">
                 <th className="border border-slate-300 dark:border-slate-700 p-2">SOLID</th>
                 <th className="border border-slate-300 dark:border-slate-700 p-2">GAS</th>
@@ -2365,18 +2376,18 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab }) {
               </tr>
             </thead>
             <tbody>
-              {/* THE SINGLE DATA ROW FOR ENTRY */}
               <tr className="bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
                 <td className="border border-slate-300 dark:border-slate-700 p-0"><input type="text" required value={fd.srNo} onChange={(e) => setFd({...fd, srNo: e.target.value})} className="w-16 sm:w-20 bg-transparent text-center py-3 text-sm font-bold outline-none" /></td>
                 <td className="border border-slate-300 dark:border-slate-700 p-3 text-xs font-black text-slate-400">{userProfile.site}</td>
-                <TableInput valKey="dispSolid" /><TableInput valKey="dispGas" /><TableInput valKey="dispScrap" />
-                <TableInput valKey="recCompany" /><TableInput valKey="recContractor" />
-                <TableInput valKey="ogpNRGP" /><TableInput valKey="ogpRmgp" /><TableInput valKey="ogpRmgpIn" />
-                <TableInput valKey="vehContractor" /><TableInput valKey="vehCompany" />
-                <TableInput valKey="footContractor" /><TableInput valKey="footRil" />
-                <TableInput valKey="footVisitor" /><TableInput valKey="footGov" />
-                <TableInput valKey="depDaySS" /><TableInput valKey="depDaySG" />
-                <TableInput valKey="depNightSS" /><TableInput valKey="depNightSG" />
+                {/* ✨ AND HERE IS THE FIX IMPLEMENTED! */}
+                {renderInput('dispSolid')}{renderInput('dispGas')}{renderInput('dispScrap')}
+                {renderInput('recCompany')}{renderInput('recContractor')}
+                {renderInput('ogpNRGP')}{renderInput('ogpRmgp')}{renderInput('ogpRmgpIn')}
+                {renderInput('vehContractor')}{renderInput('vehCompany')}
+                {renderInput('footContractor')}{renderInput('footRil')}
+                {renderInput('footVisitor')}{renderInput('footGov')}
+                {renderInput('depDaySS')}{renderInput('depDaySG')}
+                {renderInput('depNightSS')}{renderInput('depNightSG')}
               </tr>
             </tbody>
           </table>
@@ -2411,6 +2422,11 @@ function WeeklyMobileHistory({ weeklyReports, isLoading }) {
     </div>
   );
 }
+
+// ==========================================
+// 📈 VIP OPERATIONS & THREAT MATRIX (CSO DASHBOARD)
+// ==========================================
+
 // ==========================================
 // 📈 VIP OPERATIONS & THREAT MATRIX (CSO DASHBOARD)
 // ==========================================
@@ -2420,25 +2436,34 @@ function AdminWeeklyView({ weeklyReports, isLoading }) {
   const [filterSite, setFilterSite] = useState("All");
   const [viewingRep, setViewingRep] = useState(null);
 
-  // 1. FILTER ENGINE
+  // 1. FILTER ENGINE (STRICT POSTING DATE LOGIC)
   const uniqueSites = [...new Set(weeklyReports.map(r => r.site))];
   const filtered = weeklyReports.filter(r => {
-    const dMatch = filterDate === '' || (r.date_from <= filterDate && r.date_to >= filterDate) || r.created_at.startsWith(filterDate);
+    // ✨ FIX: Now it ONLY looks at the exact day the supervisor clicked "Submit" (created_at)!
+    const dMatch = filterDate === '' || (r.created_at && r.created_at.startsWith(filterDate));
     const sMatch = filterSite === "All" || r.site === filterSite;
     return dMatch && sMatch;
   });
 
   // 2. MATH HELPERS
   const num = (v) => parseInt(v) || 0;
-  
-  // 3. CSO METRIC CALCULATORS
-  let totalDispatch = 0, totalReceipt = 0;
-  let totalFootfall = 0, totalVehicles = 0;
-  let rmgpOut = 0, rmgpIn = 0;
-  let govVisitors = 0, totalContractors = 0;
+
+  // ✨ THE FIX: We added "1" to Math.max so it never divides by zero and breaks the CSS!
+  const maxOgp = Math.max(1, ...filtered.map(r => Math.max(num(r.ogp_rmgp), num(r.ogp_rmgp_in))));
+  const maxTraffic = Math.max(1, ...filtered.map(r => Math.max(num(r.foot_contractor), num(r.veh_contractor))));
+  const maxDispatch = Math.max(1, ...filtered.map(r => num(r.disp_solid) + num(r.disp_gas) + num(r.disp_scrap)));
+
+  let totalDispatch = 0;
+
+  // 3. CSO METRIC CALCULATORS (Updated for Totals)
+  let tSolid = 0, tGas = 0, tScrap = 0;
+  let totalReceipt = 0, totalFootfall = 0, totalVehicles = 0;
+  let rmgpOut = 0, rmgpIn = 0, govVisitors = 0, totalContractors = 0;
 
   filtered.forEach(r => {
-    totalDispatch += num(r.disp_solid) + num(r.disp_gas) + num(r.disp_scrap);
+    tSolid += num(r.disp_solid);
+    tGas += num(r.disp_gas);
+    tScrap += num(r.disp_scrap);
     totalReceipt += num(r.rec_company) + num(r.rec_contractor);
     totalFootfall += num(r.foot_contractor) + num(r.foot_ril) + num(r.foot_visitor) + num(r.foot_gov);
     totalVehicles += num(r.veh_contractor) + num(r.veh_company);
@@ -2448,13 +2473,14 @@ function AdminWeeklyView({ weeklyReports, isLoading }) {
     totalContractors += num(r.foot_contractor);
   });
 
+  const grandTotalDispatch = tSolid + tGas + tScrap;
+
   const assetDeficit = rmgpOut - rmgpIn;
   const isAssetAlert = assetDeficit > 0;
   const isGhostAlert = totalVehicles > totalContractors && totalVehicles > 0;
 
-  // 4. THE MASTER EXCEL EXPORTER! (PERFECT MERGED HEADERS!) 🟢
+  // 4. THE MASTER EXCEL EXPORTER! 🟢
   const exportMasterAudit = () => {
-    // We are generating TWO header rows to match the image perfectly!
     const row1 = ["Sr_No", "SITE", "Date_From", "Date_To", "DISPATCH", "", "", "RECEIPT", "", "OGP", "", "", "VEHICLE", "", "CONTRACTOR/ RIL STAFF", "", "VISITOR", "GOV. OFFICIAL", "DEPLOYMENT", "", "", ""];
     const row2 = ["", "", "", "", "SOLID", "GAS", "SCRAP", "COMPANY", "CONTRACTOR", "NRGP", "RMGP", "RMGP IN", "CONTRACTOR VEHICLE", "COMPANY/ EMP. VEHICLE", "CONTRACTOR WORKER", "RIL EMPLOYE", "", "", "Day SS", "Day SG", "Night SS", "Night SG"];
     
@@ -2471,16 +2497,18 @@ function AdminWeeklyView({ weeklyReports, isLoading }) {
     a.download = `CSO_Master_Audit_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
   };
+
   return (
     <div className="space-y-6">
       
       {/* 🟢 ZONE 1: COMMAND BAR */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 flex flex-wrap justify-between items-end gap-4">
-        <div className="flex flex-wrap gap-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 flex flex-wrap justify-between items-end gap-4 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-3xl rounded-full pointer-events-none"></div>
+        <div className="flex flex-wrap gap-4 relative z-10">
           <FilterSelect label="Filter Date" value={filterDate} onChange={setFilterDate} type="date" />
           <FilterSelect label="VIP Site" value={filterSite} onChange={setFilterSite} options={uniqueSites.sort()} />
         </div>
-        <button onClick={exportMasterAudit} className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 active:scale-95">
+        <button onClick={exportMasterAudit} className="relative z-10 px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 active:scale-95">
           <Download size={16} /> Export Master Audit
         </button>
       </div>
@@ -2524,56 +2552,141 @@ function AdminWeeklyView({ weeklyReports, isLoading }) {
         </div>
       </div>
 
-      {/* 📊 ZONE 3: INTELLIGENCE CHARTS (CSS Bars) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
-           <h3 className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest mb-4">Traffic Velocity (Human vs Machine)</h3>
-           <div className="h-32 flex items-end gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
-             {/* Simple CSS Chart representing sites */}
-             {filtered.slice(0, 8).map((r, i) => {
-               const humans = num(r.foot_contractor) + num(r.foot_ril) + num(r.foot_visitor);
-               const machines = num(r.veh_company) + num(r.veh_contractor);
-               const max = Math.max(humans, machines, 1);
+      {/* 📊 ZONE 3: THE TRIPLE-THREAT VISUAL MATRIX */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* CHART 1: ASSET LEAKAGE */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col">
+           <div className="flex justify-between items-start mb-6">
+             <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Asset Leakage (OGP)</h3>
+             <Shield size={16} className="text-indigo-500"/>
+           </div>
+           {/* ✨ FIX: Forced explicit height and proper flex columns */}
+           <div className="h-40 flex items-end justify-between gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
+             {filtered.slice(0, 10).map((r, i) => {
+               const outH = (num(r.ogp_rmgp) / maxOgp) * 100;
+               const inH = (num(r.ogp_rmgp_in) / maxOgp) * 100;
                return (
-                 <div key={i} className="flex-1 flex justify-center items-end gap-1 group relative">
-                   <div style={{height: `${(humans/max)*100}%`}} className="w-full max-w-[12px] bg-blue-400 dark:bg-blue-500 rounded-t-sm transition-all group-hover:opacity-80"></div>
-                   <div style={{height: `${(machines/max)*100}%`}} className="w-full max-w-[12px] bg-slate-300 dark:bg-slate-600 rounded-t-sm transition-all group-hover:opacity-80"></div>
-                   
-                   {/* Tooltip */}
+                 <div key={i} className="flex-1 h-full flex items-end justify-center gap-1 group relative">
+                   <div style={{height: `${Math.max(outH, 2)}%`}} className="w-full max-w-[14px] bg-amber-400 dark:bg-amber-500 rounded-t-sm transition-all group-hover:opacity-80"></div>
+                   <div style={{height: `${Math.max(inH, 2)}%`}} className="w-full max-w-[14px] bg-emerald-400 dark:bg-emerald-500 rounded-t-sm transition-all group-hover:opacity-80"></div>
                    <div className="absolute bottom-full mb-2 bg-slate-800 text-white text-[9px] font-bold py-1 px-2 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10">
-                     {r.site}: {humans}🧍‍♂️ | {machines}🚗
+                     {r.site}<br/>Out: {num(r.ogp_rmgp)} | In: {num(r.ogp_rmgp_in)}
                    </div>
                  </div>
-               )
+               );
              })}
-             {filtered.length === 0 && <div className="w-full text-center text-slate-400 text-xs font-bold mt-10">No data available</div>}
+             {filtered.length === 0 && <div className="w-full text-center text-slate-400 text-xs font-bold mt-10">No data</div>}
            </div>
-           <div className="flex justify-center gap-4 mt-3">
-             <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-blue-400 dark:bg-blue-500 rounded-sm"></div><span className="text-[10px] font-bold text-slate-500 uppercase">Humans</span></div>
-             <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-slate-300 dark:bg-slate-600 rounded-sm"></div><span className="text-[10px] font-bold text-slate-500 uppercase">Machines</span></div>
+           <div className="flex justify-center gap-4 mt-4 shrink-0">
+             <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-amber-400 dark:bg-amber-500 rounded-sm"></div><span className="text-[9px] font-bold text-slate-500 uppercase">RMGP OUT</span></div>
+             <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-emerald-400 dark:bg-emerald-500 rounded-sm"></div><span className="text-[9px] font-bold text-slate-500 uppercase">RMGP IN</span></div>
            </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
-           <h3 className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest mb-4">Pilferage & Material Monitor</h3>
-           <div className="h-32 flex flex-col justify-center gap-4">
-              <div>
-                <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase mb-1"><span>Total Dispatch</span><span>{totalDispatch}</span></div>
-                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 overflow-hidden flex">
-                  <div style={{width: `${(totalDispatch/(totalDispatch+totalReceipt||1))*100}%`}} className="bg-emerald-500 h-full"></div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase mb-1"><span>Total Receipt</span><span>{totalReceipt}</span></div>
-                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 overflow-hidden flex">
-                  <div style={{width: `${(totalReceipt/(totalDispatch+totalReceipt||1))*100}%`}} className="bg-indigo-500 h-full"></div>
-                </div>
-              </div>
+        {/* CHART 2: GHOST VEHICLE ANOMALY */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col">
+           <div className="flex justify-between items-start mb-6">
+             <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Ghost Vehicle Radar</h3>
+             <AlertTriangle size={16} className="text-blue-500"/>
+           </div>
+           {/* ✨ FIX: Forced explicit height */}
+           <div className="h-40 flex items-end justify-between gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
+             {filtered.slice(0, 10).map((r, i) => {
+               const isGhost = num(r.veh_contractor) > num(r.foot_contractor);
+               const workH = (num(r.foot_contractor) / maxTraffic) * 100;
+               const vehH = (num(r.veh_contractor) / maxTraffic) * 100;
+               return (
+                 <div key={i} className="flex-1 h-full flex items-end justify-center gap-1 group relative">
+                   <div style={{height: `${Math.max(workH, 2)}%`}} className="w-full max-w-[14px] bg-blue-400 dark:bg-blue-500 rounded-t-sm transition-all group-hover:opacity-80"></div>
+                   <div style={{height: `${Math.max(vehH, 2)}%`}} className={`w-full max-w-[14px] rounded-t-sm transition-all group-hover:opacity-80 ${isGhost ? 'bg-rose-500' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
+                   <div className="absolute bottom-full mb-2 bg-slate-800 text-white text-[9px] font-bold py-1 px-2 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10">
+                     {r.site}<br/>Workers: {num(r.foot_contractor)} | Veh: {num(r.veh_contractor)}
+                   </div>
+                 </div>
+               );
+             })}
+             {filtered.length === 0 && <div className="w-full text-center text-slate-400 text-xs font-bold mt-10">No data</div>}
+           </div>
+           <div className="flex justify-center gap-4 mt-4 shrink-0">
+             <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-blue-400 dark:bg-blue-500 rounded-sm"></div><span className="text-[9px] font-bold text-slate-500 uppercase">Con. Worker</span></div>
+             <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-sm"></div><span className="text-[9px] font-bold text-slate-500 uppercase">Con. Vehicle</span></div>
            </div>
         </div>
+
+        {/* CHART 3: MATERIAL FLOW COMMAND (TOTALIZED EXECUTIVE VIEW) */}
+<div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col min-h-[300px] relative overflow-hidden group">
+  
+  {/* Header Section */}
+  <div className="flex justify-between items-start mb-8 shrink-0 relative z-10">
+    <div>
+      <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Material Flow Command</h3>
+      <p className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase mt-1 flex items-center gap-1.5">
+        <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></div>
+        {filterSite === "All" ? "Global Throughput" : `Site Focus: ${filterSite}`}
+      </p>
+    </div>
+    <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700">
+      <Activity size={16} className="text-rose-500"/>
+    </div>
+  </div>
+  
+  {/* ✨ THE PROFESSIONAL BAR ENGINE WITH GRID LINES */}
+  <div className="flex-1 relative flex items-end justify-around gap-8 px-6 pb-2 mb-2">
+    
+    {/* 🏁 TACTICAL GRID LINES (Background) */}
+    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-6 pb-2 opacity-20 dark:opacity-10">
+      <div className="w-full border-t border-slate-400"></div>
+      <div className="w-full border-t border-slate-400"></div>
+      <div className="w-full border-t border-slate-400"></div>
+      <div className="w-full border-t border-slate-400"></div>
+      <div className="w-full border-b border-slate-600"></div>
+    </div>
+
+    {/* 📊 THE ACTUAL BARS (Totalized Logic) */}
+    
+    {/* Solid Bar */}
+    <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
+      <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">
+        {tSolid}
+      </div>
+      <div 
+        style={{ height: `${(tSolid / (grandTotalDispatch || 1)) * 100}%`, minHeight: tSolid > 0 ? '4px' : '0' }} 
+        className="w-full max-w-[44px] bg-slate-400 dark:bg-slate-500 rounded-t-lg transition-all duration-1000 ease-out shadow-[0_-2px_10px_rgba(100,116,139,0.2)] group-hover/bar:brightness-110"
+      ></div>
+      <span className="mt-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">Solid</span>
+    </div>
+
+    {/* Gas / Slurry Bar */}
+    <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
+      <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-indigo-600 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">
+        {tGas}
+      </div>
+      <div 
+        style={{ height: `${(tGas / (grandTotalDispatch || 1)) * 100}%`, minHeight: tGas > 0 ? '4px' : '0' }} 
+        className="w-full max-w-[44px] bg-indigo-500 rounded-t-lg transition-all duration-1000 ease-out shadow-[0_-2px_10px_rgba(79,70,229,0.2)] group-hover/bar:brightness-110"
+      ></div>
+      <span className="mt-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">Gas</span>
+    </div>
+
+    {/* Scrap Bar - THE RED ALERT */}
+    <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
+      <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-rose-600 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">
+        {tScrap}
+      </div>
+      <div 
+        style={{ height: `${(tScrap / (grandTotalDispatch || 1)) * 100}%`, minHeight: tScrap > 0 ? '4px' : '0' }} 
+        className="w-full max-w-[44px] bg-rose-500 rounded-t-lg transition-all duration-1000 ease-out shadow-[0_-4px_15px_rgba(244,63,94,0.3)] group-hover/bar:brightness-110"
+      ></div>
+      <span className="mt-3 text-[9px] font-black text-rose-500 uppercase tracking-widest animate-pulse">Scrap</span>
+    </div>
+
+  </div>
+</div>
+
       </div>
 
-      {/* 🗂️ ZONE 4: TACTICAL LEDGER WALL */}
+      {/* 🗂️ ZONE 4: TACTICAL LEDGER WALL (The Cards) */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {filtered.map(r => {
           // Card Anomaly Logic
@@ -2581,7 +2694,7 @@ function AdminWeeklyView({ weeklyReports, isLoading }) {
           const r_rmgpIn = num(r.ogp_rmgp_in);
           const r_scrap = num(r.disp_scrap);
           const isLeakage = r_rmgpOut > r_rmgpIn;
-          const isHighScrap = r_scrap > 50; // Arbitrary flag for visual
+          const isHighScrap = r_scrap > 50; 
           const hasAnomaly = isLeakage || isHighScrap;
 
           return (
@@ -2615,7 +2728,7 @@ function AdminWeeklyView({ weeklyReports, isLoading }) {
       {/* 📄 ZONE 5: THE DEEP DIVE MODAL */}
       {viewingRep && (
         <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in" onClick={() => setViewingRep(null)}>
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col relative" onClick={e => e.stopPropagation()}>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative" onClick={e => e.stopPropagation()}>
              <div className="h-2 bg-emerald-500 w-full shrink-0"></div>
              
              <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start bg-slate-50 dark:bg-slate-950/50 shrink-0">
@@ -2628,7 +2741,6 @@ function AdminWeeklyView({ weeklyReports, isLoading }) {
              </div>
              
              <div className="p-6 overflow-y-auto custom-scrollbar">
-               {/* 📄 THE EXACT PAPER LEDGER DISPLAY FOR THE ADMIN */}
                <div className="overflow-x-auto border border-slate-300 dark:border-slate-700 rounded-xl">
                  <table className="w-max min-w-full border-collapse text-center text-[10px] font-black uppercase tracking-widest bg-white dark:bg-slate-900">
                    <thead>
@@ -2664,7 +2776,7 @@ function AdminWeeklyView({ weeklyReports, isLoading }) {
                      </tr>
                    </thead>
                    <tbody>
-                     <tr className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
+                     <tr className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
                        <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.sr_no}</td>
                        <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.site}</td>
                        <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.disp_solid || 0}</td>
@@ -2692,7 +2804,6 @@ function AdminWeeklyView({ weeklyReports, isLoading }) {
              </div>
 
              <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 flex justify-end shrink-0">
-               {/* 🟢 EXACT 2-ROW EXCEL FORMAT FOR SINGLE DOWNLOAD! */}
                <button onClick={() => {
                   const r = viewingRep;
                   const row1 = ["Sr_No", "SITE", "Date_From", "Date_To", "DISPATCH", "", "", "RECEIPT", "", "OGP", "", "", "VEHICLE", "", "CONTRACTOR/ RIL STAFF", "", "VISITOR", "GOV. OFFICIAL", "DEPLOYMENT", "", "", ""];
@@ -2704,7 +2815,7 @@ function AdminWeeklyView({ weeklyReports, isLoading }) {
                   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
                   a.download = `Ledger_${r.site}_${r.date_from}.csv`; a.click();
                }} className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-xs font-black text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 transition-colors shadow-sm border border-indigo-200 dark:border-indigo-800 uppercase tracking-widest">
-                 <Download size={16} /> Download CSV
+                 <Download size={16} /> Download Single CSV
                </button>
              </div>
           </div>
