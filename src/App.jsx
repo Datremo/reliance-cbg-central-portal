@@ -3,7 +3,7 @@ import { supabase } from './supabaseClient';
 import { 
   Plus, Trash2, Calendar, MapPin, Users, Shield, LogOut, 
   Filter, CheckCircle, Smartphone, Monitor, Activity,  Leaf, Zap,Eye, EyeOff, Clock,BarChart2, PieChart, TrendingUp, Target,
-  X, Search, ChevronDown, Download, Edit2, Save, Sun, Moon, Lock, Mail,RefreshCw, Copy, BookOpen, Briefcase, Phone, Menu, Unlock, ArrowRight, AlertTriangle, Camera, FileText, Image as ImageIcon
+  X, Search, ChevronDown, Download, Edit2, Save, Sun, Moon, Lock, Mail,RefreshCw, Copy, BookOpen, Briefcase, Phone, Menu, Unlock, ArrowRight,ArrowLeft, AlertTriangle, Camera, FileText, Image as ImageIcon
 } from 'lucide-react';
 // 👑 THE 26 VIP COMMISSIONED SITES
 const COMMISSIONED_SITES = [
@@ -47,9 +47,10 @@ export default function App() {
   const [deletingContact, setDeletingContact] = useState(null);
   const [viewingContact, setViewingContact] = useState(null); 
   const [isUnlocking, setIsUnlocking] = useState(false);
-  
-  // ✨ NEW: INCIDENT COMMAND STATE
+  // ✨ NEW: INCIDENT & WEEKLY COMMAND STATE
   const [incidents, setIncidents] = useState([]);
+  const [weeklyReports, setWeeklyReports] = useState([]);
+  
   const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light');
 
   
@@ -91,9 +92,18 @@ export default function App() {
     if (userProfile) {
       fetchDeployments();
       fetchIncidents(); // EVERYONE GETS INCIDENTS!
+      fetchWeeklyReports(); // ✨ FETCHING THE NEW LEDGERS!
       if (userProfile.role === 'admin') fetchContacts(); 
     }
   }, [userProfile]);
+
+  const fetchWeeklyReports = async () => {
+    let query = supabase.from('weekly_reports').select('*').order('created_at', { ascending: false });
+    if (userProfile.role === 'supervisor') query = query.eq('site', userProfile.site);
+    const { data, error } = await query;
+    if (!error) setWeeklyReports(data || []);
+  };
+
 
   // ✨ NEW: FETCH INCIDENTS ENGINE
   const fetchIncidents = async () => {
@@ -275,6 +285,7 @@ const toggleIncidentStatus = async (inc) => {
   deployments={deployments} 
   contacts={contacts} 
   incidents={incidents} 
+  weeklyReports={weeklyReports}
   isLoading={isLoadingData} 
   onToggleAck={toggleIncidentStatus} 
   onDeleteIncident={deleteIncident}
@@ -291,7 +302,7 @@ const toggleIncidentStatus = async (inc) => {
   toggleTheme={toggleTheme} 
 />
           ) : (
-            <SupervisorMobileView userProfile={userProfile} deployments={deployments} incidents={incidents} isLoading={isLoadingData} fetchDeployments={fetchDeployments} fetchIncidents={fetchIncidents} onLogout={() => supabase.auth.signOut()} onEdit={setEditingRecord} onDelete={setDeletingRecord} onView={setViewingRecord} onToggleAck={toggleIncidentStatus} onDeleteIncident={deleteIncident} onAddContact={() => setEditingContact({ name: '', phone: '', designation: 'SS - Security Supervisor', state_name: '', site: '', email: '', company: '' })} onEditContact={setEditingContact} onDeleteContact={setDeletingContact} theme={theme} toggleTheme={toggleTheme} />
+            <SupervisorMobileView userProfile={userProfile} deployments={deployments} incidents={incidents} weeklyReports={weeklyReports} isLoading={isLoadingData} fetchDeployments={fetchDeployments} fetchIncidents={fetchIncidents} fetchWeeklyReports={fetchWeeklyReports} onLogout={() => supabase.auth.signOut()} onEdit={setEditingRecord} onDelete={setDeletingRecord} onView={setViewingRecord} onToggleAck={toggleIncidentStatus} onDeleteIncident={deleteIncident} onAddContact={() => setEditingContact({ name: '', phone: '', designation: 'SS - Security Supervisor', state_name: '', site: '', email: '', company: '' })} onEditContact={setEditingContact} onDeleteContact={setDeletingContact} theme={theme} toggleTheme={toggleTheme} />
           )}
         </div>
           {/* Modals for Deployments */}
@@ -481,23 +492,26 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
 // ==========================================
 // 📱 SUPERVISOR VIEW (SHARED KIOSK MODE)
 // ==========================================
-function SupervisorMobileView({ userProfile, deployments, incidents, isLoading, fetchDeployments, fetchIncidents, onDeleteIncident, onLogout, onEdit, onDelete, onView, theme, toggleTheme }) {
-  const [activeTab, setActiveTab] = useState('form');
-  
-  // 🎬 THE CINEMATIC INTRO STATES (1: Portal Welcome, 2: Identity Scan, 3: Personal Welcome, 0: Dashboard)
+// ==========================================
+// 📱 SUPERVISOR iOS-STYLE COMMAND HUB + CINEMATIC INTRO
+// ==========================================
+function SupervisorMobileView({ userProfile, deployments, incidents, weeklyReports, isLoading, fetchDeployments, fetchIncidents, fetchWeeklyReports, onLogout, onEdit, onDelete, onView, onDeleteIncident, theme, toggleTheme }) {
+  // ✨ NEW: iOS App States
+  const [currentApp, setCurrentApp] = useState('hub'); // 'hub', 'deployment', 'incident', 'weekly'
+  const [appTab, setAppTab] = useState('form'); // 'form' or 'history'
+
+  // 🎬 RESTORED: THE CINEMATIC INTRO STATES
   const [introStage, setIntroStage] = useState(1);
   const [customName, setCustomName] = useState('');
-  const handleCustomSubmit = (e) => {
-    e.preventDefault();
-    if(customName.trim().length > 0) {
-      selectName(customName.trim());
-    }
-  };
   const [fillerName, setFillerName] = useState('');
-  
   const allowedSupervisors = userProfile.name ? userProfile.name.split(',').map(n => n.trim()) : [];
 
-  // Auto-advance the first screen after 2.5 seconds
+  const handleCustomSubmit = (e) => {
+    e.preventDefault();
+    if(customName.trim().length > 0) selectName(customName.trim());
+  };
+
+  // Auto-advance the boot screen
   useEffect(() => {
     if (introStage === 1) {
       const timer = setTimeout(() => setIntroStage(2), 2500);
@@ -507,155 +521,168 @@ function SupervisorMobileView({ userProfile, deployments, incidents, isLoading, 
 
   const selectName = (name) => {
     setFillerName(name.toUpperCase());
-    setIntroStage(3); // Go to white welcome screen!
-    // Show white screen for 2 seconds, then dissolve into the app!
-    setTimeout(() => setIntroStage(0), 2000);
+    setIntroStage(3); // Go to white welcome screen
+    setTimeout(() => setIntroStage(0), 2000); // Dissolve into the iOS Hub!
   };
 
-  return (
-    <div className="flex flex-col w-full min-h-screen bg-slate-50 dark:bg-slate-950 max-w-md mx-auto shadow-2xl relative border-x border-slate-200 dark:border-slate-900 transition-colors">
-      
-      {/*   THE MANDATORY VIP SELECTION POP-UP */}
-      <style>
-        {`
-          @keyframes fade-zoom { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
-          .animate-fade-zoom { animation: fade-zoom 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        `}
-      </style>
 
-      {/* 🎬 THE MOVIE SEQUENCE OVERLAY */}
-      {introStage > 0 && (
-        <div className={`fixed inset-0 z-[100] flex items-center justify-center p-6 transition-colors duration-1000 ${introStage === 3 ? 'bg-white dark:bg-slate-950' : 'bg-slate-950'}`}>
-          
-          {/* STAGE 1: Premium Boot Splash */}
-          {introStage === 1 && (
-            <div className="text-center animate-fade-zoom relative">
-              {/*   Glowing Energy Aura behind the logo! */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl animate-pulse z-0"></div>
-              
-              <div className="relative mb-8 z-10">
-                 {/* 🖼️ THE PNG LOGO! (With a genius fallback just in case!) */}
-                 <img src="/logo.webp" alt="Reliance Logo" className="w-28 h-28 mx-auto object-contain drop-shadow-[0_10px_20px_rgba(16,185,129,0.3)] transition-all hover:scale-105" 
-                      onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-                 
-                 {/* 🛡️ The Fallback Shield (Only shows if logo.png is missing) */}
-                 <div className="hidden w-24 h-24 mx-auto bg-gradient-to-br from-emerald-400 to-green-600 rounded-3xl flex-col items-center justify-center shadow-[0_10px_30px_rgba(16,185,129,0.4)] border border-white/20">
-                    <Shield size={48} className="text-white drop-shadow-md" />
-                 </div>
-              </div>
-
-              <h1 className="text-4xl font-black text-white tracking-widest uppercase mb-2 drop-shadow-lg relative z-10">
-                Reliance <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-300">CBG</span>
-              </h1>
-              <h2 className="text-[11px] font-bold text-slate-400 tracking-[0.4em] uppercase mb-12 relative z-10">
-                Secure Deployment Network
-              </h2>
-              
-              {/* Sleek Hacker-style Loading Indicator */}
-              <div className="flex justify-center items-center gap-3 relative z-10">
-                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div>
-                 <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Establishing Secure Uplink...</span>
-              </div>
-            </div>
-          )}
-
-          {/* STAGE 2: Identity Scan */}
-          {introStage === 2 && (
-            <div className="w-full max-w-sm animate-fade-zoom">
-              <div className="text-center mb-8">
-                 <div className="w-16 h-16 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4 mx-auto border border-indigo-500/30 shadow-[0_0_30px_rgba(99,102,241,0.2)]">
-                    <Users size={32} />
-                 </div>
-                 <h2 className="text-2xl font-black text-white tracking-wide mb-1">IDENTITY SCAN</h2>
-                 <p className="text-xs text-indigo-300 uppercase tracking-widest font-semibold">Select Authorized Officer</p>
-              </div>
-
-              <div className="space-y-3 max-h-[50vh] overflow-y-auto custom-scrollbar pr-2">
-                {allowedSupervisors.map((name, idx) => (
-                  <button key={idx} onClick={() => selectName(name)} className="w-full py-5 bg-white/5 hover:bg-indigo-500/20 border border-white/10 hover:border-indigo-400/50 rounded-2xl font-black text-sm text-white uppercase transition-all flex justify-between items-center px-6 group shadow-lg">
-                    {name} <ArrowRight size={18} className="text-indigo-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                  </button>
-                ))}
-              </div>
-              {/* ⌨️ MANUAL FALLBACK */}
-              <div className="mt-6 pt-5 border-t border-indigo-500/20">
-                <p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest text-center mb-3">Not on the list?</p>
-                <form onSubmit={handleCustomSubmit} className="flex gap-2">
-                  <input type="text" placeholder="Enter Full Name..." value={customName} onChange={(e) => setCustomName(e.target.value)} className="flex-1 bg-black/20 border border-indigo-500/30 rounded-xl py-3 px-4 text-xs font-bold text-white outline-none focus:border-indigo-400 uppercase placeholder:text-indigo-300/50 shadow-inner" />
-                  <button type="submit" className="bg-indigo-500 text-white px-5 rounded-xl font-black text-xs hover:bg-indigo-400 transition-colors shadow-lg shadow-indigo-500/25">GO</button>
-                </form>
-              </div>
-            </div>
-          )}
-
-          {/* STAGE 3: Personal Welcome (White Screen) */}
-          {introStage === 3 && (
-            <div className="text-center animate-fade-zoom">
-              <div className="w-24 h-24 mx-auto bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mb-6 shadow-xl border border-emerald-200 dark:border-emerald-800">
-                 <CheckCircle size={48} className="text-emerald-500" />
-              </div>
-              <h1 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Welcome,</h1>
-              <h2 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">{fillerName}</h2>
-              <p className="mt-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest animate-pulse">Accessing Secure Dashboard...</p>
-            </div>
-          )}
-        </div>
-      )}
-
-
-      <div className="bg-white/90 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-5 py-4 flex justify-between items-center sticky top-0 z-40">
-        <div className="flex items-center gap-3">
-          
-          {/*   PREMIUM SHIELD BOX ADDED HERE! */}
-          <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20 shadow-sm shrink-0">
-             <Shield size={20} className="drop-shadow-sm" />
+  // 📱 THE iOS HUB SCREEN
+  const renderHub = () => (
+    <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50 dark:bg-slate-950 p-5 space-y-8 animate-in fade-in duration-300">
+      <div className="flex justify-between items-start pt-4">
+        <div>
+          <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1">Welcome back,</p>
+          {/* ✨ NOW IT USES THEIR CHOSEN NAME! */}
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white uppercase leading-none line-clamp-2">{fillerName || userProfile.name}</h1>
+          <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400 rounded-lg text-xs font-black tracking-widest uppercase shadow-sm">
+            <MapPin size={12}/> {userProfile.site}
           </div>
-          </div>
-
-          <div>
-            <h1 className="text-lg font-black tracking-tight text-slate-900 dark:text-slate-100">{userProfile.site} <span className="text-emerald-600 dark:text-emerald-400">Site</span></h1>
-          {/*   SHOWS THE SELECTED SUPERVISOR NAME! */}
-          <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-widest mt-0.5">
-            {fillerName ? `Officer: ${fillerName}` : 'Active Deployment'}
-          </p>
         </div>
-        <div className="flex gap-2">
-          <button onClick={toggleTheme} className="p-2 text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-full hover:text-indigo-600 transition-colors">{theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}</button>
-          <button onClick={fetchDeployments} className={`p-2 text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-full hover:text-indigo-600 transition-colors ${isLoading ? "animate-spin text-indigo-500" : ""}`}>
-            <RefreshCw size={18} />
-          </button>
-          <button onClick={onLogout} className="p-2 text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-full hover:text-rose-500 transition-colors"><LogOut size={18} /></button>
-        </div>
+        <button onClick={onLogout} className="p-3 bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 rounded-2xl shadow-sm hover:bg-rose-200 transition-colors active:scale-95"><LogOut size={20}/></button>
       </div>
 
-     <div className="flex-1 w-full overflow-y-auto pb-24">
-        {activeTab === 'form' && <DeploymentMobileForm userProfile={userProfile} fetchDeployments={fetchDeployments} setActiveTab={setActiveTab} fillerName={fillerName} deployments={deployments}/>}
-        {activeTab === 'history' && <SupervisorMobileHistory deployments={deployments} isLoading={isLoading} onEdit={onEdit} onDelete={onDelete} onView={onView}/>}
-        {/* ✨ NEW VIEWS! */}
-        {activeTab === 'inc_form' && <IncidentMobileForm userProfile={userProfile} fetchIncidents={fetchIncidents} setActiveTab={setActiveTab} />}
-{activeTab === 'inc_history' && <IncidentMobileHistory incidents={incidents} isLoading={isLoading} onDeleteIncident={onDeleteIncident} />}</div>
+      <div>
+        <h2 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 ml-1">Command Modules</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <button onClick={() => { setCurrentApp('deployment'); setAppTab('form'); }} className="aspect-square bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center gap-4 hover:shadow-md transition-all active:scale-95 group">
+            <div className="w-16 h-16 bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform"><Users size={32} className="stroke-[1.5]"/></div>
+            <span className="font-black text-slate-700 dark:text-slate-300 text-[11px] text-center uppercase tracking-widest">Live<br/>Deployment</span>
+          </button>
 
-      {/* ✨ THE UPGRADED 4-TAB NAVIGATION! */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 pb-safe z-40">
-        <div className="flex justify-around items-center p-1 max-w-md mx-auto">
-          <button onClick={() => setActiveTab('form')} className={`flex flex-col items-center p-2.5 w-full transition-colors ${activeTab === 'form' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-400'}`}>
-            <Users size={20} className={activeTab === 'form' ? 'stroke-2' : 'stroke-[1.5]'} /><span className="text-[9px] font-bold mt-1">ENTRY</span>
+          <button onClick={() => { setCurrentApp('incident'); setAppTab('form'); }} className="aspect-square bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center gap-4 hover:shadow-md transition-all active:scale-95 group relative">
+            <div className="w-16 h-16 bg-rose-50 text-rose-500 dark:bg-rose-500/10 dark:text-rose-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform"><AlertTriangle size={32} className="stroke-[1.5]"/></div>
+            <span className="font-black text-slate-700 dark:text-slate-300 text-[11px] text-center uppercase tracking-widest">Incident<br/>Command</span>
           </button>
-          <button onClick={() => setActiveTab('history')} className={`flex flex-col items-center p-2.5 w-full transition-colors ${activeTab === 'history' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-400'}`}>
-            <Calendar size={20} className={activeTab === 'history' ? 'stroke-2' : 'stroke-[1.5]'} /><span className="text-[9px] font-bold mt-1">LOGS</span>
-          </button>
-          <button onClick={() => setActiveTab('inc_form')} className={`flex flex-col items-center p-2.5 w-full transition-colors ${activeTab === 'inc_form' ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500 hover:text-rose-400'}`}>
-            <AlertTriangle size={20} className={activeTab === 'inc_form' ? 'stroke-2' : 'stroke-[1.5]'} /><span className="text-[9px] font-bold mt-1">SOS</span>
-          </button>
-          <button onClick={() => setActiveTab('inc_history')} className={`flex flex-col items-center p-2.5 w-full transition-colors ${activeTab === 'inc_history' ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500 hover:text-rose-400'}`}>
-            <FileText size={20} className={activeTab === 'inc_history' ? 'stroke-2' : 'stroke-[1.5]'} /><span className="text-[9px] font-bold mt-1">SOS LOGS</span>
+
+          <button onClick={() => { setCurrentApp('weekly'); setAppTab('form'); }} className="aspect-square bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center gap-4 hover:shadow-md transition-all active:scale-95 group">
+            <div className="w-16 h-16 bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform"><BookOpen size={32} className="stroke-[1.5]"/></div>
+            <span className="font-black text-slate-700 dark:text-slate-300 text-[11px] text-center uppercase tracking-widest">Weekly<br/>Ledger</span>
           </button>
         </div>
       </div>
     </div>
   );
-}
 
+  // 🛠️ THE OPEN MODULE SCREEN
+  const renderModule = () => (
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950 animate-in slide-in-from-right-8 duration-300">
+      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 pt-safe flex items-center gap-3 shadow-sm z-20 shrink-0">
+        <button onClick={() => setCurrentApp('hub')} className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-slate-200 transition-colors active:scale-95"><ArrowLeft size={20}/></button>
+        <div>
+          <h2 className="font-black text-slate-900 dark:text-white uppercase text-sm">{currentApp === 'deployment' ? 'Live Deployment' : currentApp === 'incident' ? 'Incident Command' : 'Weekly Ledger'}</h2>
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">{userProfile.site} • {fillerName}</p>
+        </div>
+      </div>
+
+      <div className="p-4 shrink-0">
+        <div className="bg-slate-200/50 dark:bg-slate-800/50 p-1.5 rounded-xl flex shadow-inner border border-slate-200 dark:border-slate-800">
+          <button onClick={() => setAppTab('form')} className={`flex-1 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${appTab === 'form' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>New Entry</button>
+          <button onClick={() => setAppTab('history')} className={`flex-1 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${appTab === 'history' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>View Logs</button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto custom-scrollbar pb-10">
+        {currentApp === 'deployment' && appTab === 'form' && <DeploymentMobileForm userProfile={userProfile} fetchDeployments={fetchDeployments} setActiveTab={setAppTab} fillerName={fillerName} deployments={deployments}/>}
+        {currentApp === 'deployment' && appTab === 'history' && <SupervisorMobileHistory deployments={deployments} isLoading={isLoading} onEdit={onEdit} onDelete={onDelete} onView={onView}/>}
+        
+        {currentApp === 'incident' && appTab === 'form' && <IncidentMobileForm userProfile={userProfile} fetchIncidents={fetchIncidents} setActiveTab={setAppTab} />}
+        {currentApp === 'incident' && appTab === 'history' && <IncidentMobileHistory incidents={incidents} isLoading={isLoading} onDeleteIncident={onDeleteIncident} />}
+
+        {currentApp === 'weekly' && appTab === 'form' && <WeeklyMobileForm userProfile={userProfile} fetchWeeklyReports={fetchWeeklyReports} setActiveTab={setAppTab} />}
+        {currentApp === 'weekly' && appTab === 'history' && <WeeklyMobileHistory weeklyReports={weeklyReports} isLoading={isLoading} />}
+      </div>
+    </div>
+  );
+
+  // 🎬 MASTER WRAPPER (Handles Movie -> Hub -> Module)
+  return (
+    <div className="w-full flex-1 min-h-screen bg-slate-50 dark:bg-slate-950 sm:bg-slate-200 sm:dark:bg-slate-900 sm:py-10 flex justify-center items-center">
+      <div className="w-full sm:max-w-md bg-white dark:bg-slate-950 sm:rounded-[2.5rem] sm:border-[8px] border-slate-800 dark:border-slate-800 sm:shadow-2xl overflow-hidden relative flex flex-col h-screen sm:h-[850px] sm:max-h-[90vh]">
+        
+        {/* CSS for the Hollywood fade-zoom */}
+        <style>{`
+          @keyframes fade-zoom { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
+          .animate-fade-zoom { animation: fade-zoom 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        `}</style>
+
+        {/* 🎬 THE MOVIE SEQUENCE OVERLAY */}
+        {introStage > 0 ? (
+          // ✨ Notice 'absolute inset-0' so it stays INSIDE the phone!
+          <div className={`absolute inset-0 z-[100] flex items-center justify-center p-6 transition-colors duration-1000 ${introStage === 3 ? 'bg-white dark:bg-slate-950' : 'bg-slate-950'}`}>
+            
+            {/* STAGE 1: Premium Boot Splash */}
+            {introStage === 1 && (
+              <div className="text-center animate-fade-zoom relative">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl animate-pulse z-0"></div>
+                
+                <div className="relative mb-8 z-10">
+                   <img src="/logo.webp" alt="Reliance Logo" className="w-28 h-28 mx-auto object-contain drop-shadow-[0_10px_20px_rgba(16,185,129,0.3)] transition-all hover:scale-105" 
+                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+                   <div className="hidden w-24 h-24 mx-auto bg-gradient-to-br from-emerald-400 to-green-600 rounded-3xl flex-col items-center justify-center shadow-[0_10px_30px_rgba(16,185,129,0.4)] border border-white/20">
+                      <Shield size={48} className="text-white drop-shadow-md" />
+                   </div>
+                </div>
+
+                <h1 className="text-4xl font-black text-white tracking-widest uppercase mb-2 drop-shadow-lg relative z-10">
+                  Reliance <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-300">CBG</span>
+                </h1>
+                <h2 className="text-[11px] font-bold text-slate-400 tracking-[0.4em] uppercase mb-12 relative z-10">Secure Deployment Network</h2>
+                
+                <div className="flex justify-center items-center gap-3 relative z-10">
+                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div>
+                   <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Establishing Secure Uplink...</span>
+                </div>
+              </div>
+            )}
+
+            {/* STAGE 2: Identity Scan */}
+            {introStage === 2 && (
+              <div className="w-full max-w-sm animate-fade-zoom">
+                <div className="text-center mb-8">
+                   <div className="w-16 h-16 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4 mx-auto border border-indigo-500/30 shadow-[0_0_30px_rgba(99,102,241,0.2)]"><Users size={32} /></div>
+                   <h2 className="text-2xl font-black text-white tracking-wide mb-1">IDENTITY SCAN</h2>
+                   <p className="text-xs text-indigo-300 uppercase tracking-widest font-semibold">Select Authorized Officer</p>
+                </div>
+
+                <div className="space-y-3 max-h-[50vh] overflow-y-auto custom-scrollbar pr-2">
+                  {allowedSupervisors.map((name, idx) => (
+                    <button key={idx} onClick={() => selectName(name)} className="w-full py-5 bg-white/5 hover:bg-indigo-500/20 border border-white/10 hover:border-indigo-400/50 rounded-2xl font-black text-sm text-white uppercase transition-all flex justify-between items-center px-6 group shadow-lg">
+                      {name} <ArrowRight size={18} className="text-indigo-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                    </button>
+                  ))}
+                </div>
+                
+                <div className="mt-6 pt-5 border-t border-indigo-500/20">
+                  <p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest text-center mb-3">Not on the list?</p>
+                  <form onSubmit={handleCustomSubmit} className="flex gap-2">
+                    <input type="text" placeholder="Enter Full Name..." value={customName} onChange={(e) => setCustomName(e.target.value)} className="flex-1 bg-black/20 border border-indigo-500/30 rounded-xl py-3 px-4 text-xs font-bold text-white outline-none focus:border-indigo-400 uppercase placeholder:text-indigo-300/50 shadow-inner" />
+                    <button type="submit" className="bg-indigo-500 text-white px-5 rounded-xl font-black text-xs hover:bg-indigo-400 transition-colors shadow-lg shadow-indigo-500/25">GO</button>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* STAGE 3: Personal Welcome */}
+            {introStage === 3 && (
+              <div className="text-center animate-fade-zoom">
+                <div className="w-24 h-24 mx-auto bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mb-6 shadow-xl border border-emerald-200 dark:border-emerald-800">
+                   <CheckCircle size={48} className="text-emerald-500" />
+                </div>
+                <h1 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Welcome,</h1>
+                <h2 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">{fillerName}</h2>
+                <p className="mt-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest animate-pulse">Accessing Secure Dashboard...</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* ✨ THE ACTUAL APP VIEWS! */
+          currentApp === 'hub' ? renderHub() : renderModule()
+        )}
+
+      </div>
+    </div>
+  );
+}
 function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fillerName, deployments}) {
   const today = new Date().toISOString().split('T')[0];
   const [date, setDate] = useState(today);
@@ -914,7 +941,7 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
 // ==========================================
 // ADMIN VIEW (MASTER PORTAL + COMMAND CENTER)
 // ==========================================
-function AdminDesktopView({ userProfile, deployments, contacts, incidents, isLoading, onToggleAck, onDeleteIncident, onLogout, onEdit, onView, onDelete, onAddContact, onEditContact, onDeleteContact, onViewContact, onImportCSV, theme, toggleTheme }) {  //   TAB STATE TO SWITCH BETWEEN DEPLOYMENTS & CONTACTS
+function AdminDesktopView({ userProfile, deployments, contacts, incidents, weeklyReports, isLoading, onToggleAck, onDeleteIncident, onLogout, onEdit, onView, onDelete, onAddContact, onEditContact, onDeleteContact, onViewContact, onImportCSV, theme, toggleTheme }) {  //   TAB STATE TO SWITCH BETWEEN DEPLOYMENTS & CONTACTS
   const [activeTab, setActiveTab] = useState('deployments'); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
@@ -1116,6 +1143,9 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, isLoa
           </button>
           <button onClick={() => { setActiveTab('incidents'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'incidents' ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}>
             <AlertTriangle size={18} /> Incident Command
+          </button>
+          <button onClick={() => { setActiveTab('weekly'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'weekly' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}>
+            <Activity size={18} /> MIS Reports
           </button>
         </div>
 
@@ -1559,6 +1589,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, isLoa
             </>
           )}
         {activeTab === 'incidents' && <AdminIncidentView incidents={incidents} isLoading={isLoading} onAcknowledge={onToggleAck} onDelete={onDeleteIncident} />}
+        {activeTab === 'weekly' && <AdminWeeklyView weeklyReports={weeklyReports} isLoading={isLoading} />}
         </div>
         
       </main>
@@ -2234,3 +2265,452 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete }) {
   );
 }
 
+// ==========================================
+// 📋 WEEKLY LEDGER REPORT MODULE (EXACT PAPER COPY)
+// ==========================================
+
+function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab }) {
+  // ✨ NO AUTO-CALCULATION! Fully manual, clean dates!
+  const [fd, setFd] = useState({
+    dateFrom: '', dateTo: '', srNo: '',
+    dispSolid: '', dispGas: '', dispScrap: '',
+    recCompany: '', recContractor: '',
+    ogpNRGP: '', ogpRmgp: '', ogpRmgpIn: '',
+    vehContractor: '', vehCompany: '',
+    footContractor: '', footRil: '', footVisitor: '', footGov: '',
+    depDaySS: '', depDaySG: '', depNightSS: '', depNightSG: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    const newReport = {
+      site: userProfile.site,
+      date_from: fd.dateFrom, date_to: fd.dateTo, sr_no: fd.srNo,
+      disp_solid: fd.dispSolid, disp_gas: fd.dispGas, disp_scrap: fd.dispScrap,
+      rec_company: fd.recCompany, rec_contractor: fd.recContractor,
+      ogp_nrgp: fd.ogpNRGP, ogp_rmgp: fd.ogpRmgp, ogp_rmgp_in: fd.ogpRmgpIn,
+      veh_contractor: fd.vehContractor, veh_company: fd.vehCompany,
+      foot_contractor: fd.footContractor, foot_ril: fd.footRil, foot_visitor: fd.footVisitor, foot_gov: fd.footGov,
+      dep_day_ss: fd.depDaySS, dep_day_sg: fd.depDaySG, dep_night_ss: fd.depNightSS, dep_night_sg: fd.depNightSG
+    };
+
+    const { error } = await supabase.from('weekly_reports').insert([newReport]);
+    setIsSubmitting(false);
+    if (error) alert(`Error: ${error.message}`);
+    else {
+      alert("✅ Official Weekly Ledger synced to Command Center!");
+      fetchWeeklyReports();
+      setActiveTab('history');
+    }
+  };
+
+  const TableInput = ({ valKey }) => (
+    <td className="border border-slate-300 dark:border-slate-700 p-0">
+      <input type="number" required value={fd[valKey]} onChange={(e) => setFd({...fd, [valKey]: e.target.value})} className="w-14 sm:w-20 bg-transparent text-center py-3 text-sm font-bold text-slate-900 dark:text-white outline-none focus:bg-emerald-50 dark:focus:bg-emerald-900/30 transition-colors" />
+    </td>
+  );
+
+  return (
+    <form onSubmit={handleSubmit} className="p-4 space-y-6">
+      
+      {/* 📅 MANUAL DATE SELECTION */}
+      <div className="bg-emerald-50 dark:bg-emerald-500/10 p-5 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 shadow-sm">
+        <h3 className="font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest text-xs mb-3 flex items-center gap-2"><Calendar size={16}/> Select Ledger Dates</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <div><label className="block text-[9px] font-black text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-widest mb-1">Date From</label><input type="date" required value={fd.dateFrom} onChange={(e) => setFd({...fd, dateFrom: e.target.value})} className="w-full bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-500/30 rounded-lg py-2.5 px-3 text-sm font-bold outline-none text-emerald-800 dark:text-emerald-200 [color-scheme:light] dark:[color-scheme:dark]" /></div>
+          <div><label className="block text-[9px] font-black text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-widest mb-1">Date To</label><input type="date" required value={fd.dateTo} onChange={(e) => setFd({...fd, dateTo: e.target.value})} className="w-full bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-500/30 rounded-lg py-2.5 px-3 text-sm font-bold outline-none text-emerald-800 dark:text-emerald-200 [color-scheme:light] dark:[color-scheme:dark]" /></div>
+        </div>
+      </div>
+
+      {/* 📄 THE EXACT PAPER LEDGER DIGITIZED (Merged Cells!) */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div className="p-4 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700"><h4 className="font-black text-slate-700 dark:text-slate-300 text-xs uppercase tracking-widest flex items-center gap-2"><FileText size={16}/> Official Register</h4></div>
+        
+        <div className="overflow-x-auto custom-scrollbar p-2">
+          <table className="w-max border-collapse border border-slate-300 dark:border-slate-700 text-center text-[10px] font-black uppercase tracking-widest">
+            <thead>
+              {/* ROW 1: MASTER HEADINGS */}
+              <tr className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 min-w-[60px]">Sr. No.</th>
+                <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 min-w-[120px]">SITE</th>
+                <th colSpan="3" className="border border-slate-300 dark:border-slate-700 p-2 bg-emerald-100/50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-400">DISPATCH</th>
+                <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 bg-indigo-100/50 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-400">RECEIPT</th>
+                <th colSpan="3" className="border border-slate-300 dark:border-slate-700 p-2 bg-amber-100/50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400">OGP</th>
+                <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 bg-blue-100/50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400">VEHICLE</th>
+                <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 bg-purple-100/50 dark:bg-purple-900/20 text-purple-800 dark:text-purple-400">CONTRACTOR/ RIL STAFF</th>
+                <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 text-rose-600 dark:text-rose-400">VISITOR</th>
+                <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 text-rose-600 dark:text-rose-400">GOV.<br/>OFFICIAL</th>
+                <th colSpan="4" className="border border-slate-300 dark:border-slate-700 p-2 bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white">DEPLOYMENT</th>
+              </tr>
+              {/* ROW 2: SUB-HEADINGS */}
+              <tr className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400">
+                <th className="border border-slate-300 dark:border-slate-700 p-2">SOLID</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2">GAS</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2">SCRAP</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2">COMPANY</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2">CONTRACTOR</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2">NRGP</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2">RMGP</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2">RMGP IN</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2 leading-tight px-1">CONTRACTOR<br/>VEHICLE</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2 leading-tight px-1">COMPANY/<br/>EMP. VEHICLE</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2 leading-tight px-1">CONTRACTOR<br/>WORKER</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2 leading-tight px-1">RIL<br/>EMPLOYE</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2">Day SS</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2">Day SG</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2">Night SS</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2">Night SG</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* THE SINGLE DATA ROW FOR ENTRY */}
+              <tr className="bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                <td className="border border-slate-300 dark:border-slate-700 p-0"><input type="text" required value={fd.srNo} onChange={(e) => setFd({...fd, srNo: e.target.value})} className="w-16 sm:w-20 bg-transparent text-center py-3 text-sm font-bold outline-none" /></td>
+                <td className="border border-slate-300 dark:border-slate-700 p-3 text-xs font-black text-slate-400">{userProfile.site}</td>
+                <TableInput valKey="dispSolid" /><TableInput valKey="dispGas" /><TableInput valKey="dispScrap" />
+                <TableInput valKey="recCompany" /><TableInput valKey="recContractor" />
+                <TableInput valKey="ogpNRGP" /><TableInput valKey="ogpRmgp" /><TableInput valKey="ogpRmgpIn" />
+                <TableInput valKey="vehContractor" /><TableInput valKey="vehCompany" />
+                <TableInput valKey="footContractor" /><TableInput valKey="footRil" />
+                <TableInput valKey="footVisitor" /><TableInput valKey="footGov" />
+                <TableInput valKey="depDaySS" /><TableInput valKey="depDaySG" />
+                <TableInput valKey="depNightSS" /><TableInput valKey="depNightSG" />
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <button type="submit" disabled={isSubmitting} className="w-full py-4 rounded-xl font-black text-sm bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-900/20 flex justify-center items-center gap-2 uppercase tracking-widest mt-6">
+        {isSubmitting ? 'SYNCING...' : <><BookOpen size={18} /> SUBMIT LEDGER</>}
+      </button>
+    </form>
+  );
+}
+function WeeklyMobileHistory({ weeklyReports, isLoading }) {
+  if (isLoading) return <div className="p-8 text-center text-slate-500 font-bold animate-pulse">Loading ledgers...</div>;
+  
+  return (
+    <div className="p-4 space-y-4">
+      {weeklyReports.map(rep => (
+        <div key={rep.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border-l-4 border-emerald-500 border-y border-r border-y-slate-200 border-r-slate-200 dark:border-y-slate-800 dark:border-r-slate-800 relative">
+          <div className="absolute top-4 right-4 bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 font-black text-[10px] uppercase tracking-widest px-2 py-1 rounded">Sr. {rep.sr_no}</div>
+          <h4 className="font-black text-slate-900 dark:text-white uppercase text-sm mb-1">{rep.site}</h4>
+          <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase mb-4"><Calendar size={10} className="inline mr-1"/>{rep.date_from} TO {rep.date_to}</p>
+          
+          <div className="grid grid-cols-3 gap-2 text-[10px] font-bold text-center border-t border-slate-100 dark:border-slate-800 pt-3">
+            <div className="bg-slate-50 dark:bg-slate-950 p-2 rounded"><span className="text-slate-400 block mb-1">Dispatch</span><span className="text-slate-700 dark:text-slate-300">{(parseInt(rep.disp_solid||0) + parseInt(rep.disp_gas||0) + parseInt(rep.disp_scrap||0))} Total</span></div>
+            <div className="bg-slate-50 dark:bg-slate-950 p-2 rounded"><span className="text-slate-400 block mb-1">Receipt</span><span className="text-slate-700 dark:text-slate-300">{(parseInt(rep.rec_company||0) + parseInt(rep.rec_contractor||0))} Total</span></div>
+            <div className="bg-slate-50 dark:bg-slate-950 p-2 rounded"><span className="text-slate-400 block mb-1">Footfall</span><span className="text-slate-700 dark:text-slate-300">{(parseInt(rep.foot_contractor||0) + parseInt(rep.foot_ril||0) + parseInt(rep.foot_visitor||0) + parseInt(rep.foot_gov||0))} Total</span></div>
+          </div>
+        </div>
+      ))}
+      {weeklyReports.length === 0 && <p className="text-center text-slate-500 text-sm mt-10 font-medium">No weekly ledgers found.</p>}
+    </div>
+  );
+}
+// ==========================================
+// 📈 VIP OPERATIONS & THREAT MATRIX (CSO DASHBOARD)
+// ==========================================
+
+function AdminWeeklyView({ weeklyReports, isLoading }) {
+  const [filterDate, setFilterDate] = useState('');
+  const [filterSite, setFilterSite] = useState("All");
+  const [viewingRep, setViewingRep] = useState(null);
+
+  // 1. FILTER ENGINE
+  const uniqueSites = [...new Set(weeklyReports.map(r => r.site))];
+  const filtered = weeklyReports.filter(r => {
+    const dMatch = filterDate === '' || (r.date_from <= filterDate && r.date_to >= filterDate) || r.created_at.startsWith(filterDate);
+    const sMatch = filterSite === "All" || r.site === filterSite;
+    return dMatch && sMatch;
+  });
+
+  // 2. MATH HELPERS
+  const num = (v) => parseInt(v) || 0;
+  
+  // 3. CSO METRIC CALCULATORS
+  let totalDispatch = 0, totalReceipt = 0;
+  let totalFootfall = 0, totalVehicles = 0;
+  let rmgpOut = 0, rmgpIn = 0;
+  let govVisitors = 0, totalContractors = 0;
+
+  filtered.forEach(r => {
+    totalDispatch += num(r.disp_solid) + num(r.disp_gas) + num(r.disp_scrap);
+    totalReceipt += num(r.rec_company) + num(r.rec_contractor);
+    totalFootfall += num(r.foot_contractor) + num(r.foot_ril) + num(r.foot_visitor) + num(r.foot_gov);
+    totalVehicles += num(r.veh_contractor) + num(r.veh_company);
+    rmgpOut += num(r.ogp_rmgp);
+    rmgpIn += num(r.ogp_rmgp_in);
+    govVisitors += num(r.foot_gov) + num(r.foot_visitor);
+    totalContractors += num(r.foot_contractor);
+  });
+
+  const assetDeficit = rmgpOut - rmgpIn;
+  const isAssetAlert = assetDeficit > 0;
+  const isGhostAlert = totalVehicles > totalContractors && totalVehicles > 0;
+
+  // 4. THE MASTER EXCEL EXPORTER! (PERFECT MERGED HEADERS!) 🟢
+  const exportMasterAudit = () => {
+    // We are generating TWO header rows to match the image perfectly!
+    const row1 = ["Sr_No", "SITE", "Date_From", "Date_To", "DISPATCH", "", "", "RECEIPT", "", "OGP", "", "", "VEHICLE", "", "CONTRACTOR/ RIL STAFF", "", "VISITOR", "GOV. OFFICIAL", "DEPLOYMENT", "", "", ""];
+    const row2 = ["", "", "", "", "SOLID", "GAS", "SCRAP", "COMPANY", "CONTRACTOR", "NRGP", "RMGP", "RMGP IN", "CONTRACTOR VEHICLE", "COMPANY/ EMP. VEHICLE", "CONTRACTOR WORKER", "RIL EMPLOYE", "", "", "Day SS", "Day SG", "Night SS", "Night SG"];
+    
+    const csvRows = [row1.join(','), row2.join(',')];
+    
+    filtered.forEach(r => {
+      csvRows.push([r.sr_no, r.site, r.date_from, r.date_to, r.disp_solid, r.disp_gas, r.disp_scrap, r.rec_company, r.rec_contractor, r.ogp_nrgp, r.ogp_rmgp, r.ogp_rmgp_in, r.veh_contractor, r.veh_company, r.foot_contractor, r.foot_ril, r.foot_visitor, r.foot_gov, r.dep_day_ss, r.dep_day_sg, r.dep_night_ss, r.dep_night_sg].map(v => `"${v || 0}"`).join(','));
+    });
+
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `CSO_Master_Audit_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+  };
+  return (
+    <div className="space-y-6">
+      
+      {/* 🟢 ZONE 1: COMMAND BAR */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 flex flex-wrap justify-between items-end gap-4">
+        <div className="flex flex-wrap gap-4">
+          <FilterSelect label="Filter Date" value={filterDate} onChange={setFilterDate} type="date" />
+          <FilterSelect label="VIP Site" value={filterSite} onChange={setFilterSite} options={uniqueSites.sort()} />
+        </div>
+        <button onClick={exportMasterAudit} className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 active:scale-95">
+          <Download size={16} /> Export Master Audit
+        </button>
+      </div>
+
+      {/* 🚨 ZONE 2: SECURITY KPIs */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className={`bg-white dark:bg-slate-900 p-5 rounded-2xl border-t-4 shadow-sm transition-all ${isAssetAlert ? 'border-rose-500 dark:shadow-[0_0_15px_rgba(244,63,94,0.15)]' : 'border-indigo-500 border-slate-200 dark:border-slate-800'}`}>
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Asset Leakage</h3>
+            <Shield size={16} className={isAssetAlert ? 'text-rose-500' : 'text-indigo-500'}/>
+          </div>
+          <div className={`text-2xl font-black ${isAssetAlert ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'}`}>{assetDeficit > 0 ? `-${assetDeficit}` : 'SECURE'}</div>
+          <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">RMGP Deficit</p>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border-t-4 border-emerald-500 border-x border-b border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Material Flow</h3>
+            <Activity size={16} className="text-emerald-500"/>
+          </div>
+          <div className="text-2xl font-black text-slate-900 dark:text-white">{totalDispatch} <span className="text-sm text-slate-400">OUT</span></div>
+          <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">{totalReceipt} Received</p>
+        </div>
+
+        <div className={`bg-white dark:bg-slate-900 p-5 rounded-2xl border-t-4 shadow-sm transition-all ${isGhostAlert ? 'border-amber-500 dark:shadow-[0_0_15px_rgba(245,158,11,0.15)]' : 'border-blue-500 border-slate-200 dark:border-slate-800'}`}>
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Ghost Anomaly</h3>
+            <AlertTriangle size={16} className={isGhostAlert ? 'text-amber-500' : 'text-blue-500'}/>
+          </div>
+          <div className={`text-2xl font-black ${isGhostAlert ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>{totalVehicles} <span className="text-sm text-slate-400">VEH</span></div>
+          <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">Vs {totalContractors} Contractors</p>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border-t-4 border-purple-500 border-x border-b border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Audit Risk</h3>
+            <Users size={16} className="text-purple-500"/>
+          </div>
+          <div className="text-2xl font-black text-slate-900 dark:text-white">{govVisitors} <span className="text-sm text-slate-400">EXT</span></div>
+          <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">Gov/Visitor Presence</p>
+        </div>
+      </div>
+
+      {/* 📊 ZONE 3: INTELLIGENCE CHARTS (CSS Bars) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+           <h3 className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest mb-4">Traffic Velocity (Human vs Machine)</h3>
+           <div className="h-32 flex items-end gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
+             {/* Simple CSS Chart representing sites */}
+             {filtered.slice(0, 8).map((r, i) => {
+               const humans = num(r.foot_contractor) + num(r.foot_ril) + num(r.foot_visitor);
+               const machines = num(r.veh_company) + num(r.veh_contractor);
+               const max = Math.max(humans, machines, 1);
+               return (
+                 <div key={i} className="flex-1 flex justify-center items-end gap-1 group relative">
+                   <div style={{height: `${(humans/max)*100}%`}} className="w-full max-w-[12px] bg-blue-400 dark:bg-blue-500 rounded-t-sm transition-all group-hover:opacity-80"></div>
+                   <div style={{height: `${(machines/max)*100}%`}} className="w-full max-w-[12px] bg-slate-300 dark:bg-slate-600 rounded-t-sm transition-all group-hover:opacity-80"></div>
+                   
+                   {/* Tooltip */}
+                   <div className="absolute bottom-full mb-2 bg-slate-800 text-white text-[9px] font-bold py-1 px-2 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10">
+                     {r.site}: {humans}🧍‍♂️ | {machines}🚗
+                   </div>
+                 </div>
+               )
+             })}
+             {filtered.length === 0 && <div className="w-full text-center text-slate-400 text-xs font-bold mt-10">No data available</div>}
+           </div>
+           <div className="flex justify-center gap-4 mt-3">
+             <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-blue-400 dark:bg-blue-500 rounded-sm"></div><span className="text-[10px] font-bold text-slate-500 uppercase">Humans</span></div>
+             <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-slate-300 dark:bg-slate-600 rounded-sm"></div><span className="text-[10px] font-bold text-slate-500 uppercase">Machines</span></div>
+           </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+           <h3 className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest mb-4">Pilferage & Material Monitor</h3>
+           <div className="h-32 flex flex-col justify-center gap-4">
+              <div>
+                <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase mb-1"><span>Total Dispatch</span><span>{totalDispatch}</span></div>
+                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 overflow-hidden flex">
+                  <div style={{width: `${(totalDispatch/(totalDispatch+totalReceipt||1))*100}%`}} className="bg-emerald-500 h-full"></div>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase mb-1"><span>Total Receipt</span><span>{totalReceipt}</span></div>
+                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 overflow-hidden flex">
+                  <div style={{width: `${(totalReceipt/(totalDispatch+totalReceipt||1))*100}%`}} className="bg-indigo-500 h-full"></div>
+                </div>
+              </div>
+           </div>
+        </div>
+      </div>
+
+      {/* 🗂️ ZONE 4: TACTICAL LEDGER WALL */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {filtered.map(r => {
+          // Card Anomaly Logic
+          const r_rmgpOut = num(r.ogp_rmgp);
+          const r_rmgpIn = num(r.ogp_rmgp_in);
+          const r_scrap = num(r.disp_scrap);
+          const isLeakage = r_rmgpOut > r_rmgpIn;
+          const isHighScrap = r_scrap > 50; // Arbitrary flag for visual
+          const hasAnomaly = isLeakage || isHighScrap;
+
+          return (
+            <div key={r.id} onClick={() => setViewingRep(r)} className={`bg-white dark:bg-slate-900 p-5 rounded-2xl border cursor-pointer hover:-translate-y-1 transition-all group relative overflow-hidden ${hasAnomaly ? 'border-rose-400 dark:border-rose-500/50 shadow-sm dark:shadow-[0_0_15px_rgba(244,63,94,0.1)]' : 'border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md'}`}>
+              
+              {hasAnomaly && <div className="absolute top-0 right-0 w-16 h-16 bg-rose-500/10 blur-xl rounded-full"></div>}
+              
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <h4 className="font-black text-slate-900 dark:text-white uppercase text-sm">{r.site}</h4>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Sr. {r.sr_no}</p>
+                </div>
+                <div className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[9px] font-black uppercase px-2 py-1 rounded">{r.date_from}</div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 mt-4">
+                <div className="bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/50 p-2 rounded-lg">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Dispatch</span>
+                  <span className={`text-xs font-black ${isHighScrap ? 'text-rose-500' : 'text-slate-700 dark:text-slate-300'}`}>{num(r.disp_solid)+num(r.disp_gas)+r_scrap}</span>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/50 p-2 rounded-lg">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">RMGP Delta</span>
+                  <span className={`text-xs font-black ${isLeakage ? 'text-rose-500' : 'text-emerald-500'}`}>{isLeakage ? `-${r_rmgpOut - r_rmgpIn}` : '0 Loss'}</span>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* 📄 ZONE 5: THE DEEP DIVE MODAL */}
+      {viewingRep && (
+        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in" onClick={() => setViewingRep(null)}>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col relative" onClick={e => e.stopPropagation()}>
+             <div className="h-2 bg-emerald-500 w-full shrink-0"></div>
+             
+             <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start bg-slate-50 dark:bg-slate-950/50 shrink-0">
+               <div>
+                 <span className="text-[10px] font-black bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-1 rounded uppercase tracking-widest">Sr No. {viewingRep.sr_no}</span>
+                 <h2 className="text-xl font-black text-slate-900 dark:text-white mt-2 uppercase">{viewingRep.site}</h2>
+                 <p className="text-xs font-bold text-slate-500 mt-1">Date: {viewingRep.date_from} TO {viewingRep.date_to}</p>
+               </div>
+               <button onClick={() => setViewingRep(null)} className="p-2 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm"><X size={16} /></button>
+             </div>
+             
+             <div className="p-6 overflow-y-auto custom-scrollbar">
+               {/* 📄 THE EXACT PAPER LEDGER DISPLAY FOR THE ADMIN */}
+               <div className="overflow-x-auto border border-slate-300 dark:border-slate-700 rounded-xl">
+                 <table className="w-max min-w-full border-collapse text-center text-[10px] font-black uppercase tracking-widest bg-white dark:bg-slate-900">
+                   <thead>
+                     <tr className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2">Sr. No.</th>
+                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2">SITE</th>
+                       <th colSpan="3" className="border border-slate-300 dark:border-slate-700 p-2 bg-emerald-100/50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-400">DISPATCH</th>
+                       <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 bg-indigo-100/50 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-400">RECEIPT</th>
+                       <th colSpan="3" className="border border-slate-300 dark:border-slate-700 p-2 bg-amber-100/50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400">OGP</th>
+                       <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 bg-blue-100/50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400">VEHICLE</th>
+                       <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 bg-purple-100/50 dark:bg-purple-900/20 text-purple-800 dark:text-purple-400">CONTRACTOR/ RIL STAFF</th>
+                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 text-rose-600 dark:text-rose-400">VISITOR</th>
+                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 text-rose-600 dark:text-rose-400">GOV.<br/>OFFICIAL</th>
+                       <th colSpan="4" className="border border-slate-300 dark:border-slate-700 p-2 bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white">DEPLOYMENT</th>
+                     </tr>
+                     <tr className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400">
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">SOLID</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">GAS</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">SCRAP</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">COMPANY</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">CONTRACTOR</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">NRGP</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">RMGP</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">RMGP IN</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">CONTRACTOR<br/>VEHICLE</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">COMPANY/<br/>EMP. VEHICLE</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">CONTRACTOR<br/>WORKER</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">RIL<br/>EMPLOYE</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">Day SS</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">Day SG</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">Night SS</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">Night SG</th>
+                     </tr>
+                   </thead>
+                   <tbody>
+                     <tr className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
+                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.sr_no}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.site}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.disp_solid || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.disp_gas || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-4 text-rose-500">{viewingRep.disp_scrap || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.rec_company || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.rec_contractor || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.ogp_nrgp || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-4 text-amber-500">{viewingRep.ogp_rmgp || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-4 text-emerald-500">{viewingRep.ogp_rmgp_in || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.veh_contractor || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.veh_company || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.foot_contractor || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.foot_ril || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-4 text-purple-500">{viewingRep.foot_visitor || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-4 text-purple-500">{viewingRep.foot_gov || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.dep_day_ss || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.dep_day_sg || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.dep_night_ss || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.dep_night_sg || 0}</td>
+                     </tr>
+                   </tbody>
+                 </table>
+               </div>
+             </div>
+
+             <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 flex justify-end shrink-0">
+               {/* 🟢 EXACT 2-ROW EXCEL FORMAT FOR SINGLE DOWNLOAD! */}
+               <button onClick={() => {
+                  const r = viewingRep;
+                  const row1 = ["Sr_No", "SITE", "Date_From", "Date_To", "DISPATCH", "", "", "RECEIPT", "", "OGP", "", "", "VEHICLE", "", "CONTRACTOR/ RIL STAFF", "", "VISITOR", "GOV. OFFICIAL", "DEPLOYMENT", "", "", ""];
+                  const row2 = ["", "", "", "", "SOLID", "GAS", "SCRAP", "COMPANY", "CONTRACTOR", "NRGP", "RMGP", "RMGP IN", "CONTRACTOR VEHICLE", "COMPANY/ EMP. VEHICLE", "CONTRACTOR WORKER", "RIL EMPLOYE", "", "", "Day SS", "Day SG", "Night SS", "Night SG"];
+                  const row3 = [r.sr_no, r.site, r.date_from, r.date_to, r.disp_solid, r.disp_gas, r.disp_scrap, r.rec_company, r.rec_contractor, r.ogp_nrgp, r.ogp_rmgp, r.ogp_rmgp_in, r.veh_contractor, r.veh_company, r.foot_contractor, r.foot_ril, r.foot_visitor, r.foot_gov, r.dep_day_ss, r.dep_day_sg, r.dep_night_ss, r.dep_night_sg].map(v => `"${v || 0}"`);
+                  
+                  const csv = [row1.join(','), row2.join(','), row3.join(',')].join('\n');
+                  const blob = new Blob([csv], { type: 'text/csv' });
+                  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+                  a.download = `Ledger_${r.site}_${r.date_from}.csv`; a.click();
+               }} className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-xs font-black text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 transition-colors shadow-sm border border-indigo-200 dark:border-indigo-800 uppercase tracking-widest">
+                 <Download size={16} /> Download CSV
+               </button>
+             </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
