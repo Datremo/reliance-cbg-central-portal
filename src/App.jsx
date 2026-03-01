@@ -1871,11 +1871,10 @@ function ContactViewModal({ record, onClose }) {
 
 function IncidentMobileForm({ userProfile, fetchIncidents, setActiveTab }) {
   const [formData, setFormData] = useState({
-    timeOfIncident: '', reportedBy: '', incidentLocation: '', details: '', actionsTaken: '', preventiveMeasures: '', recommendations: '', photos: []
+    incidentName: '', timeOfIncident: '', reportedBy: '', epNumber: '', pincode: '', incidentLocation: '', details: '', findings: '', actionsTaken: '', recommendations: '', photos: []
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Magic Image Converter!
   const handlePhotoUpload = async (e) => {
     const files = Array.from(e.target.files);
     const base64Photos = await Promise.all(files.map(file => {
@@ -1893,22 +1892,26 @@ function IncidentMobileForm({ userProfile, fetchIncidents, setActiveTab }) {
     setIsSubmitting(true);
     const newIncident = {
       site: userProfile.site,
+      incident_name: formData.incidentName,
       time_of_incident: formData.timeOfIncident.replace('T', ' '),
-      time_of_reporting: new Date().toLocaleString('en-IN'), // Auto-stamps the exact second!
+      time_of_reporting: new Date().toLocaleString('en-IN'),
       reported_by: formData.reportedBy,
+      ep_number: formData.epNumber,
+      pincode: formData.pincode,
       incident_location: formData.incidentLocation,
       details: formData.details,
+      findings: formData.findings,
       actions_taken: formData.actionsTaken,
-      preventive_measures: formData.preventiveMeasures,
       recommendations: formData.recommendations,
-      photos: formData.photos // Scales later when you move DB!
+      photos: formData.photos,
+      status: 'Pending'
     };
 
     const { error } = await supabase.from('incidents').insert([newIncident]);
     setIsSubmitting(false);
     if (error) alert(`Error: ${error.message}`);
     else {
-      alert("🚨 Incident Logged into Vault!");
+      alert("🚨 Official Incident Logged to Command Center!");
       fetchIncidents();
       setActiveTab('inc_history');
     }
@@ -1917,24 +1920,39 @@ function IncidentMobileForm({ userProfile, fetchIncidents, setActiveTab }) {
   return (
     <form onSubmit={handleSubmit} className="p-4 space-y-4">
       <div className="bg-rose-50 dark:bg-rose-500/10 p-4 rounded-xl border border-rose-200 dark:border-rose-500/20 shadow-sm mb-6">
-        <h2 className="text-rose-600 dark:text-rose-400 font-black uppercase tracking-widest text-sm flex items-center gap-2"><AlertTriangle size={18}/> Log Security Incident</h2>
-        <p className="text-[10px] text-rose-500/80 font-bold mt-1">This goes directly to Command Center.</p>
+        <h2 className="text-rose-600 dark:text-rose-400 font-black uppercase tracking-widest text-sm flex items-center gap-2"><AlertTriangle size={18}/> Official Incident Report</h2>
+        <p className="text-[10px] text-rose-500/80 font-bold mt-1">This format syncs directly to Management.</p>
       </div>
 
       <div className="space-y-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Time of Incident</label><input type="datetime-local" required value={formData.timeOfIncident} onChange={(e) => setFormData({...formData, timeOfIncident: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none [color-scheme:light] dark:[color-scheme:dark]" /></div>
         
-        <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Reported By (Name & EP)</label><input type="text" required placeholder="e.g. Rahul Sharma (EP1234)" value={formData.reportedBy} onChange={(e) => setFormData({...formData, reportedBy: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none uppercase" /></div>
+        {/* ✨ NEW: INCIDENT NAME */}
+        <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Incident Type / Name</label><input type="text" required placeholder="e.g. Theft, Fire, Breach..." value={formData.incidentName} onChange={(e) => setFormData({...formData, incidentName: e.target.value})} className="w-full bg-rose-50/50 dark:bg-rose-500/5 border border-rose-200 dark:border-rose-500/30 rounded-lg py-2.5 px-3 text-sm font-black text-rose-600 dark:text-rose-400 outline-none uppercase placeholder-rose-300 dark:placeholder-rose-800" /></div>
+
+        <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Occurrence Date & Time</label><input type="datetime-local" required value={formData.timeOfIncident} onChange={(e) => setFormData({...formData, timeOfIncident: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none [color-scheme:light] dark:[color-scheme:dark]" /></div>
         
-        <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Incident Location</label><input type="text" required placeholder="Where on site did this happen?" value={formData.incidentLocation} onChange={(e) => setFormData({...formData, incidentLocation: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none" /></div>
+        <div className="grid grid-cols-2 gap-3">
+          <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Reported By</label><input type="text" required placeholder="Name" value={formData.reportedBy} onChange={(e) => setFormData({...formData, reportedBy: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none uppercase" /></div>
+          <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">EP Number</label><input type="text" required placeholder="EP ID" value={formData.epNumber} onChange={(e) => setFormData({...formData, epNumber: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none uppercase" /></div>
+        </div>
+        
+        <div className="grid grid-cols-3 gap-3 items-end">
+          <div className="col-span-2">
+            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Site Name</label>
+            <div className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2.5 px-3 text-sm font-bold text-slate-500 uppercase">{userProfile.site}</div>
+          </div>
+          <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pincode</label><input type="text" required placeholder="Code" value={formData.pincode} onChange={(e) => setFormData({...formData, pincode: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none uppercase" /></div>
+        </div>
+
+        <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Location of Incident</label><input type="text" required placeholder="Specific spot on site..." value={formData.incidentLocation} onChange={(e) => setFormData({...formData, incidentLocation: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none" /></div>
 
         <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Details of Incident</label><textarea required placeholder="What exactly happened?" value={formData.details} onChange={(e) => setFormData({...formData, details: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-medium outline-none min-h-[80px]" /></div>
 
-        <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Actions Taken <span className="text-rose-500">(Min 4 Points)</span></label><textarea required placeholder="1. &#10;2. &#10;3. &#10;4. " value={formData.actionsTaken} onChange={(e) => setFormData({...formData, actionsTaken: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-medium outline-none min-h-[100px]" /></div>
+        <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Findings</label><textarea required placeholder="- &#10;- " value={formData.findings} onChange={(e) => setFormData({...formData, findings: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-medium outline-none min-h-[80px]" /></div>
 
-        <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Follow up & Preventive Measures <span className="text-rose-500">(Min 4 Points)</span></label><textarea required placeholder="1. &#10;2. &#10;3. &#10;4. " value={formData.preventiveMeasures} onChange={(e) => setFormData({...formData, preventiveMeasures: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-medium outline-none min-h-[100px]" /></div>
+        <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Action Taken</label><textarea required placeholder="- &#10;- " value={formData.actionsTaken} onChange={(e) => setFormData({...formData, actionsTaken: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-medium outline-none min-h-[80px]" /></div>
 
-        <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Actions & Recommendations <span className="text-rose-500">(Min 4-5 Points)</span></label><textarea required placeholder="1. &#10;2. &#10;3. &#10;4. &#10;5. " value={formData.recommendations} onChange={(e) => setFormData({...formData, recommendations: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-medium outline-none min-h-[100px]" /></div>
+        <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Follow-up Actions & Recommendations</label><textarea required placeholder="- &#10;- " value={formData.recommendations} onChange={(e) => setFormData({...formData, recommendations: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-medium outline-none min-h-[80px]" /></div>
 
         <div>
           <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Photographic Evidence</label>
@@ -1957,45 +1975,107 @@ function IncidentMobileForm({ userProfile, fetchIncidents, setActiveTab }) {
 
 function IncidentMobileHistory({ incidents, isLoading }) {
   const [viewDate, setViewDate] = useState(new Date().toISOString().split('T')[0]);
+  const [viewingInc, setViewingInc] = useState(null); // ✨ NEW: Modal Brain!
 
-  const filtered = incidents.filter(i => (i.created_at || '').startsWith(viewDate));
+  // ✨ NEW: If they clear the date, they see ALL past reports!
+  const filtered = viewDate ? incidents.filter(i => (i.created_at || '').startsWith(viewDate)) : incidents;
 
-  const copyToWhatsApp = (incident) => {
-    let msg = `🚨 *INCIDENT REPORT - ${incident.site}* 🚨\n\n` +
-      `🕒 *Time of Incident:* ${incident.time_of_incident}\n` +
-      `⏱️ *Time of Reporting:* ${incident.time_of_reporting}\n` +
-      `👤 *Reported By:* ${incident.reported_by}\n` +
-      `📍 *Location:* ${incident.incident_location}\n\n` +
-      `📝 *Details:*\n${incident.details}\n\n` +
-      `⚡ *Actions Taken:*\n${incident.actions_taken}\n\n` +
-      `🛡️ *Preventive Measures:*\n${incident.preventive_measures}\n\n` +
-      `💡 *Recommendations:*\n${incident.recommendations}`;
+  const copyToWhatsApp = (e, inc) => {
+    e.stopPropagation(); // Stops the modal from opening when you just want to copy!
+    let msg = `🚨 *${(inc.incident_name || 'INCIDENT REPORT').toUpperCase()}* 🚨\n\n` +
+      `🕒 *Occurrence Date & Time:* ${inc.time_of_incident}\n` +
+      `⏱️ *Reporting Date & Time:* ${inc.time_of_reporting}\n` +
+      `👤 *Reported by:* ${inc.reported_by} (EP: ${inc.ep_number || 'N/A'})\n` +
+      `🏢 *Site Name & Pincode:* ${inc.site} - ${inc.pincode || 'N/A'}\n` +
+      `📍 *Location of incident:* ${inc.incident_location}\n\n` +
+      `📝 *Details of incident:*\n${inc.details}\n\n` +
+      `🔍 *Findings:*\n${inc.findings || 'N/A'}\n\n` +
+      `⚡ *Action Taken:*\n${inc.actions_taken}\n\n` +
+      `💡 *Follow-up Actions & Recommendations:*\n${inc.recommendations}`;
     
-    navigator.clipboard.writeText(msg).then(() => alert("Copied for WhatsApp! 🟢"));
+    navigator.clipboard.writeText(msg).then(() => alert("Copied format for WhatsApp! 🟢"));
   };
 
   return (
-    <div className="p-4 space-y-4">
-      {/* ... keep the filter date input ... */}
+    <div className="p-4 space-y-4 pb-24">
+      <div className="bg-white dark:bg-slate-900 p-3 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex justify-between items-center mb-2">
+        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Date Filter</span>
+        <div className="flex gap-2">
+          {/* ✨ NEW: A Clear button to see ALL history! */}
+          {viewDate && <button onClick={() => setViewDate('')} className="text-[10px] font-bold text-rose-500 bg-rose-50 dark:bg-rose-500/10 px-2 py-1 rounded border border-rose-200 dark:border-rose-500/20">CLEAR</button>}
+          <input type="date" value={viewDate} onChange={e => setViewDate(e.target.value)} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-sm font-bold outline-none [color-scheme:light] dark:[color-scheme:dark]" />
+        </div>
+      </div>
 
       {filtered.map(inc => (
-        <div key={inc.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border-l-4 border-rose-500 border-y border-r border-y-slate-200 border-r-slate-200 dark:border-y-slate-800 dark:border-r-slate-800 relative">
+        <div key={inc.id} onClick={() => setViewingInc(inc)} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border-l-4 border-rose-500 border-y border-r border-y-slate-200 border-r-slate-200 dark:border-y-slate-800 dark:border-r-slate-800 relative cursor-pointer active:scale-95 transition-transform">
           
-          {/* ✨ ADMIN ACKNOWLEDGEMENT BADGE! */}
           <div className="absolute top-3 right-3">
              {inc.status === 'Acknowledged' && <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 text-[8px] font-black uppercase px-2 py-1 rounded flex items-center gap-1"><CheckCircle size={10}/> Admin Seen</span>}
           </div>
 
-          <h4 className="font-black text-slate-900 dark:text-white uppercase text-sm mb-1 line-clamp-1 pr-20">{inc.incident_location}</h4>
-          <p className="text-[10px] text-rose-500 font-bold tracking-widest uppercase mb-3">{inc.time_of_incident}</p>
-          <div className="text-xs text-slate-600 dark:text-slate-400 font-medium line-clamp-2 mb-4 bg-slate-50 dark:bg-slate-950/50 p-2 rounded border border-slate-100 dark:border-slate-800/50">{inc.details}</div>
+          <h4 className="font-black text-rose-600 dark:text-rose-400 uppercase text-sm mb-1 line-clamp-1 pr-20">{inc.incident_name || 'Incident'}</h4>
+          <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase mb-3"><MapPin size={10} className="inline mr-1"/>{inc.incident_location}</p>
           
-          <button onClick={() => copyToWhatsApp(inc)} className="w-full py-2.5 rounded-lg text-xs font-bold bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-200 dark:border-green-800/50 flex justify-center items-center gap-2 hover:bg-green-100 transition-colors shadow-sm">
-             <Copy size={16} /> COPY FOR WHATSAPP
+          <div className="text-xs text-slate-600 dark:text-slate-400 font-medium line-clamp-2 mb-4">{inc.details}</div>
+          
+          <button onClick={(e) => copyToWhatsApp(e, inc)} className="w-full py-2.5 rounded-lg text-xs font-bold bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-200 dark:border-green-800/50 flex justify-center items-center gap-2 hover:bg-green-100 transition-colors shadow-sm">
+             <Copy size={16} /> WA COPY
           </button>
         </div>
       ))}
-      {filtered.length === 0 && <p className="text-center text-slate-500 text-sm mt-10 font-medium">No incidents reported on this date.</p>}
+      {filtered.length === 0 && <p className="text-center text-slate-500 text-sm mt-10 font-medium">No incidents found.</p>}
+
+      {/* ✨ THE BRAND NEW SUPERVISOR MOBILE MODAL! */}
+      {viewingInc && (
+        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[100] flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in duration-200" onClick={() => setViewingInc(null)}>
+          <div className="bg-white dark:bg-slate-900 w-full sm:max-w-md h-[85vh] sm:h-auto sm:max-h-[85vh] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+            <div className="h-1.5 w-12 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mt-3 sm:hidden shrink-0"></div>
+            
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start shrink-0">
+               <div>
+                 <span className={`text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest ${viewingInc.status === 'Acknowledged' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400'}`}>
+                   {viewingInc.status === 'Acknowledged' ? '✅ Admin Acknowledged' : '🚨 Pending Review'}
+                 </span>
+                 <h2 className="text-lg font-black text-slate-900 dark:text-white mt-3 uppercase leading-tight">{viewingInc.incident_name || 'Incident Report'}</h2>
+                 <p className="text-[10px] font-bold text-slate-500 mt-1">{viewingInc.time_of_incident}</p>
+               </div>
+               <button onClick={() => setViewingInc(null)} className="p-2 text-slate-400 hover:text-rose-500 bg-slate-100 dark:bg-slate-800 rounded-full"><X size={16} /></button>
+            </div>
+            
+            <div className="p-5 overflow-y-auto custom-scrollbar space-y-5 text-sm font-medium text-slate-700 dark:text-slate-300">
+               <div className="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-950/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800 text-[11px]">
+                 <div><span className="text-slate-400 block mb-0.5">Reported By</span><span className="font-bold uppercase">{viewingInc.reported_by}</span></div>
+                 <div><span className="text-slate-400 block mb-0.5">EP Number</span><span className="font-bold uppercase">{viewingInc.ep_number}</span></div>
+                 <div><span className="text-slate-400 block mb-0.5">Location</span><span className="font-bold uppercase">{viewingInc.incident_location}</span></div>
+                 <div><span className="text-slate-400 block mb-0.5">Pincode</span><span className="font-bold uppercase">{viewingInc.pincode}</span></div>
+               </div>
+
+               <div><strong className="text-[10px] text-rose-500 uppercase tracking-widest block mb-1">Details</strong><p className="whitespace-pre-wrap text-xs bg-slate-50 dark:bg-slate-950/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">{viewingInc.details}</p></div>
+               <div><strong className="text-[10px] text-purple-500 uppercase tracking-widest block mb-1">Findings</strong><p className="whitespace-pre-wrap text-xs bg-slate-50 dark:bg-slate-950/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">{viewingInc.findings}</p></div>
+               <div><strong className="text-[10px] text-indigo-500 uppercase tracking-widest block mb-1">Action Taken</strong><p className="whitespace-pre-wrap text-xs bg-slate-50 dark:bg-slate-950/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">{viewingInc.actions_taken}</p></div>
+               <div><strong className="text-[10px] text-amber-500 uppercase tracking-widest block mb-1">Recommendations</strong><p className="whitespace-pre-wrap text-xs bg-slate-50 dark:bg-slate-950/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">{viewingInc.recommendations}</p></div>
+               
+               {(viewingInc.photos && viewingInc.photos.length > 0) && (
+                 <div>
+                   <strong className="text-[10px] text-slate-500 uppercase tracking-widest block mb-2">Attached Evidence</strong>
+                   <div className="flex gap-2 overflow-x-auto pb-2">
+                     {viewingInc.photos.map((p, i) => (
+                       <img key={i} src={p} alt="evidence" className="h-20 w-20 object-cover rounded-lg border border-slate-200 dark:border-slate-700 shrink-0" />
+                     ))}
+                   </div>
+                 </div>
+               )}
+            </div>
+            
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
+               <button onClick={(e) => { copyToWhatsApp(e, viewingInc); setViewingInc(null); }} className="w-full py-3.5 rounded-xl text-xs font-black bg-green-500 text-white flex justify-center items-center gap-2 hover:bg-green-600 transition-colors shadow-lg shadow-green-500/20 uppercase tracking-widest">
+                 <Copy size={16} /> Copy Full Report
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2007,7 +2087,6 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete }) {
   const [viewingInc, setViewingInc] = useState(null);
 
   const availableSites = filterState === "All" ? SITES : SITES_BY_STATE[filterState] || [];
-
   const filtered = incidents.filter(i => {
     const dMatch = filterDate === '' || (i.created_at || '').startsWith(filterDate);
     const stMatch = filterState === "All" || (SITES_BY_STATE[filterState] && SITES_BY_STATE[filterState].includes(i.site));
@@ -2023,42 +2102,34 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete }) {
     a.click();
   };
 
-// ✨ NEW: OFFICIAL MICROSOFT WORD GENERATOR (GOD MODE)
+  // ✨ UPDATED WORD DOC FORMAT TO MATCH YOUR EXACT TEMPLATE
   const downloadReport = (inc) => {
-    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Incident Report</title></head><body style='font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;'>";
+    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Incident Report</title></head><body style='font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6;'>";
     const footer = "</body></html>";
     
     const content = `
-      <h1 style="text-align: center; color: #e11d48; border-bottom: 2px solid #e11d48; padding-bottom: 10px;">OFFICIAL INCIDENT REPORT</h1>
+      <p style="font-weight: bold; margin-bottom: 5px;">Occurrence Date & Time: <span style="font-weight: normal;">${inc.time_of_incident}</span></p>
+      <p style="font-weight: bold; margin-bottom: 5px;">Reporting Date & Time: <span style="font-weight: normal;">${inc.time_of_reporting}</span></p>
+      <p style="font-weight: bold; margin-bottom: 5px;">Reported by: <span style="font-weight: normal;">${inc.reported_by} (EP: ${inc.ep_number || 'N/A'})</span></p>
+      <p style="font-weight: bold; margin-bottom: 5px;">Site Name & Pincode: <span style="font-weight: normal;">${inc.site} - ${inc.pincode || ''}</span></p>
+      <p style="font-weight: bold; margin-bottom: 20px;">Location of incident: <span style="font-weight: normal;">${inc.incident_location}</span></p>
       
-      <table style="width: 100%; margin-top: 20px; font-size: 14px; text-align: left; border-collapse: collapse;">
-        <tr><th style="padding: 8px 0; width: 150px; color: #555;">Facility:</th><td style="font-weight: bold; font-size: 16px;">${inc.site}</td></tr>
-        <tr><th style="padding: 8px 0; color: #555;">Location:</th><td style="font-weight: bold;">${inc.incident_location}</td></tr>
-        <tr><th style="padding: 8px 0; color: #555;">Date & Time:</th><td style="font-weight: bold;">${inc.time_of_incident}</td></tr>
-        <tr><th style="padding: 8px 0; color: #555;">Reported On:</th><td style="font-weight: bold;">${inc.time_of_reporting}</td></tr>
-        <tr><th style="padding: 8px 0; color: #555;">Reported By:</th><td style="font-weight: bold;">${inc.reported_by}</td></tr>
-        <tr><th style="padding: 8px 0; color: #555;">Status:</th><td style="font-weight: bold; color: ${inc.status === 'Acknowledged' ? '#10b981' : '#f59e0b'};">${inc.status || 'Pending'}</td></tr>
-      </table>
+      <p style="font-weight: bold; margin-bottom: 5px;">Details of incident:</p>
+      <p style="white-space: pre-wrap; margin-bottom: 20px;">${inc.details}</p>
       
-      <h3 style="color: #334155; margin-top: 30px; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px;">DETAILS OF INCIDENT:</h3>
-      <p style="white-space: pre-wrap; line-height: 1.6; color: #1e293b;">${inc.details}</p>
+      <p style="font-weight: bold; margin-bottom: 5px;">Findings:</p>
+      <p style="white-space: pre-wrap; margin-bottom: 20px;">${inc.findings || 'N/A'}</p>
       
-      <h3 style="color: #4f46e5; margin-top: 20px; border-bottom: 1px solid #e0e7ff; padding-bottom: 5px;">ACTIONS TAKEN:</h3>
-      <p style="white-space: pre-wrap; line-height: 1.6; color: #1e293b;">${inc.actions_taken}</p>
+      <p style="font-weight: bold; margin-bottom: 5px;">Action Taken:</p>
+      <p style="white-space: pre-wrap; margin-bottom: 20px;">${inc.actions_taken}</p>
       
-      <h3 style="color: #10b981; margin-top: 20px; border-bottom: 1px solid #d1fae5; padding-bottom: 5px;">PREVENTIVE MEASURES:</h3>
-      <p style="white-space: pre-wrap; line-height: 1.6; color: #1e293b;">${inc.preventive_measures}</p>
+      <p style="font-weight: bold; margin-bottom: 5px;">Follow-up Actions & Recommendations:</p>
+      <p style="white-space: pre-wrap; margin-bottom: 30px;">${inc.recommendations}</p>
       
-      <h3 style="color: #f59e0b; margin-top: 20px; border-bottom: 1px solid #fef3c7; padding-bottom: 5px;">RECOMMENDATIONS:</h3>
-      <p style="white-space: pre-wrap; line-height: 1.6; color: #1e293b;">${inc.recommendations}</p>
-      
-      <div style="margin-top: 50px; text-align: center; color: #94a3b8; font-size: 12px; font-weight: bold;">
-        <p>Generated via Reliance CBG Command Center</p>
-      </div>
+      <p style="font-weight: bold;">Photo and Report attached for reference: <span style="font-weight: normal;">${(inc.photos && inc.photos.length > 0) ? 'Yes' : 'No'}</span></p>
     `;
 
-    const sourceHTML = header + content + footer;
-    const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
+    const blob = new Blob(['\ufeff', header + content + footer], { type: 'application/msword' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -2069,7 +2140,6 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete }) {
 
   return (
     <div className="space-y-6">
-      {/* ✨ NEW FILTERS! */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 flex flex-wrap gap-4 items-end">
         <FilterSelect label="Date" value={filterDate} onChange={setFilterDate} type="date" />
         <FilterSelect label="State" value={filterState} onChange={e => {setFilterState(e); setFilterSite("All");}} options={Object.keys(SITES_BY_STATE).sort()} />
@@ -2080,52 +2150,53 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete }) {
         {filtered.map(inc => (
           <div key={inc.id} onClick={() => setViewingInc(inc)} className="bg-white dark:bg-slate-900 rounded-2xl border-t-4 border-rose-500 border-x border-b border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-shadow group relative">
             
-            {/* ✨ STATUS BADGE! */}
             <div className="absolute top-4 right-4 z-10">
               {inc.status === 'Acknowledged' ? 
                 <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 text-[9px] font-black uppercase px-2 py-1 rounded shadow-sm flex items-center gap-1"><CheckCircle size={10}/> Acknowledged</span> 
                 : 
-                <span className="bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 text-[9px] font-black uppercase px-2 py-1 rounded shadow-sm flex items-center gap-1"><AlertTriangle size={10}/> Pending Review</span>
+                <span className="bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 text-[9px] font-black uppercase px-2 py-1 rounded shadow-sm flex items-center gap-1"><AlertTriangle size={10}/> Pending</span>
               }
             </div>
 
             <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50">
                <span className="text-[10px] font-black bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-1 rounded uppercase tracking-widest">{inc.site}</span>
-               <h3 className="font-black text-slate-900 dark:text-white mt-3 uppercase text-sm leading-tight pr-20">{inc.incident_location}</h3>
+               
+               {/* ✨ SHOWING INCIDENT NAME AS THE BIG TITLE NOW! */}
+               <h3 className="font-black text-rose-600 dark:text-rose-400 mt-3 uppercase text-sm leading-tight pr-20">{inc.incident_name || inc.incident_location}</h3>
+               
+               <p className="text-[10px] font-bold text-slate-500 mt-1 flex items-center gap-1"><MapPin size={10}/> {inc.incident_location}</p>
                <p className="text-[10px] font-bold text-rose-500 mt-2">{inc.time_of_incident}</p>
             </div>
             <div className="p-5 flex-1 text-xs font-medium text-slate-600 dark:text-slate-400 line-clamp-3">
                {inc.details}
             </div>
-            {(inc.photos && inc.photos.length > 0) && (
-              <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 flex gap-2">
-                <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1"><ImageIcon size={12}/> {inc.photos.length} Attached</span>
-              </div>
-            )}
           </div>
         ))}
         {filtered.length === 0 && <div className="col-span-full py-20 text-center text-slate-500 font-bold flex flex-col items-center"><CheckCircle size={48} className="text-slate-300 dark:text-slate-700 mb-4"/> No incidents reported! All clear! 🟢</div>}
       </div>
 
-      {/* ✨ THE GOD-MODE VIEW MODAL! */}
       {viewingInc && (
         <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={() => setViewingInc(null)}>
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col relative" onClick={e => e.stopPropagation()}>
              <div className="h-2 bg-rose-500 w-full shrink-0"></div>
              <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start bg-slate-50 dark:bg-slate-950/50 shrink-0">
                <div>
-                 <span className="text-[10px] font-black bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-1 rounded uppercase tracking-widest">{viewingInc.site}</span>
-                 <h2 className="text-xl font-black text-slate-900 dark:text-white mt-2 uppercase">{viewingInc.incident_location}</h2>
-                 <p className="text-xs font-bold text-slate-500 mt-1">Reported by: {viewingInc.reported_by}</p>
+                 <span className="text-[10px] font-black bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-1 rounded uppercase tracking-widest">{viewingInc.site} - {viewingInc.pincode}</span>
+                 
+                 {/* ✨ GOD MODE TITLE! */}
+                 <h2 className="text-xl font-black text-rose-600 dark:text-rose-400 mt-2 uppercase">{viewingInc.incident_name || 'Incident Report'}</h2>
+                 
+                 <p className="text-xs font-bold text-slate-500 mt-1 flex items-center gap-1"><MapPin size={12}/> Location: {viewingInc.incident_location}</p>
+                 <p className="text-xs font-bold text-slate-500 mt-1">Reported by: {viewingInc.reported_by} <span className="text-indigo-500">(EP: {viewingInc.ep_number})</span></p>
                </div>
                <button onClick={() => setViewingInc(null)} className="p-2 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm"><X size={16} /></button>
              </div>
              
              <div className="p-6 overflow-y-auto custom-scrollbar space-y-5 text-sm font-medium text-slate-700 dark:text-slate-300">
-               <div><strong className="text-[10px] text-rose-500 uppercase tracking-widest block mb-1">Details</strong><p className="whitespace-pre-wrap">{viewingInc.details}</p></div>
-               <div className="border-l-2 border-indigo-400 pl-3"><strong className="text-[10px] text-indigo-500 uppercase tracking-widest block mb-1">Actions Taken</strong><p className="whitespace-pre-wrap">{viewingInc.actions_taken}</p></div>
-               <div className="border-l-2 border-emerald-400 pl-3"><strong className="text-[10px] text-emerald-500 uppercase tracking-widest block mb-1">Preventive Measures</strong><p className="whitespace-pre-wrap">{viewingInc.preventive_measures}</p></div>
-               <div className="border-l-2 border-amber-400 pl-3"><strong className="text-[10px] text-amber-500 uppercase tracking-widest block mb-1">Recommendations</strong><p className="whitespace-pre-wrap">{viewingInc.recommendations}</p></div>
+               <div><strong className="text-[10px] text-rose-500 uppercase tracking-widest block mb-1">Details of incident</strong><p className="whitespace-pre-wrap">{viewingInc.details}</p></div>
+               <div className="border-l-2 border-purple-400 pl-3"><strong className="text-[10px] text-purple-500 uppercase tracking-widest block mb-1">Findings</strong><p className="whitespace-pre-wrap">{viewingInc.findings}</p></div>
+               <div className="border-l-2 border-indigo-400 pl-3"><strong className="text-[10px] text-indigo-500 uppercase tracking-widest block mb-1">Action Taken</strong><p className="whitespace-pre-wrap">{viewingInc.actions_taken}</p></div>
+               <div className="border-l-2 border-amber-400 pl-3"><strong className="text-[10px] text-amber-500 uppercase tracking-widest block mb-1">Follow-up Actions & Recommendations</strong><p className="whitespace-pre-wrap">{viewingInc.recommendations}</p></div>
                
                {(viewingInc.photos && viewingInc.photos.length > 0) && (
                  <div>
@@ -2149,7 +2220,7 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete }) {
                
                <div className="flex gap-2">
                  <button onClick={() => downloadReport(viewingInc)} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 transition-colors shadow-sm border border-indigo-200 dark:border-indigo-800">
-                   <Download size={16} /> Report
+                   <Download size={16} /> Download .DOC
                  </button>
                  <button onClick={() => { onAcknowledge(viewingInc); setViewingInc({...viewingInc, status: viewingInc.status === 'Acknowledged' ? 'Pending' : 'Acknowledged'}); }} className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md ${viewingInc.status === 'Acknowledged' ? 'bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-300' : 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-emerald-500/20'}`}>
                    <Shield size={16}/> {viewingInc.status === 'Acknowledged' ? 'Mark Pending' : 'Acknowledge SOS'}
@@ -2162,3 +2233,4 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete }) {
     </div>
   );
 }
+
