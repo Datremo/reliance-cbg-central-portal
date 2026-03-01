@@ -576,7 +576,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
       <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 pt-safe flex items-center gap-3 shadow-sm z-20 shrink-0">
         <button onClick={() => setCurrentApp('hub')} className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-slate-200 transition-colors active:scale-95"><ArrowLeft size={20}/></button>
         <div>
-          <h2 className="font-black text-slate-900 dark:text-white uppercase text-sm">{currentApp === 'deployment' ? 'Live Deployment' : currentApp === 'incident' ? 'Incident Command' : 'Weekly Ledger'}</h2>
+          <h2 className="font-black text-slate-900 dark:text-white uppercase text-sm">{currentApp === 'deployment' ? 'Live Deployment' : currentApp === 'incident' ? 'Incident Report' : 'MIS Report'}</h2>
           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">{userProfile.site} • {fillerName}</p>
         </div>
       </div>
@@ -1149,7 +1149,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
             <BookOpen size={18} /> Directory
           </button>
           <button onClick={() => { setActiveTab('incidents'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'incidents' ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}>
-            <AlertTriangle size={18} /> Incident Command
+            <AlertTriangle size={18} /> Incident Report
           </button>
           <button onClick={() => { setActiveTab('weekly'); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'weekly' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}>
             <Activity size={18} /> MIS Reports
@@ -1182,7 +1182,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
             {/* ✨ SMART HEADER THAT KNOWS EVERY TAB! */}
           <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white truncate max-w-[140px] sm:max-w-none">
             {activeTab === 'deployments' && 'Deployment Command'}
-            {activeTab === 'incidents' && 'Incident Command'}
+            {activeTab === 'incidents' && 'Incident Report'}
             {activeTab === 'contacts' && 'Directory'}
             {activeTab === 'weekly' && 'MIS Report'}
           </h1>
@@ -2315,7 +2315,7 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab }) {
     setIsSubmitting(false);
     if (error) alert(`Error: ${error.message}`);
     else {
-      alert("✅ Official Weekly Ledger synced to Command Center!");
+      alert("✅ Official MIS Report synced to Command Center!");
       fetchWeeklyReports();
       setActiveTab('history');
     }
@@ -2614,75 +2614,78 @@ function AdminWeeklyView({ weeklyReports, isLoading }) {
            </div>
         </div>
 
-        {/* CHART 3: MATERIAL FLOW COMMAND (TOTALIZED EXECUTIVE VIEW) */}
-<div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col min-h-[300px] relative overflow-hidden group">
-  
-  {/* Header Section */}
-  <div className="flex justify-between items-start mb-8 shrink-0 relative z-10">
-    <div>
-      <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Material Flow Command</h3>
-      <p className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase mt-1 flex items-center gap-1.5">
-        <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></div>
-        {filterSite === "All" ? "Global Throughput" : `Site Focus: ${filterSite}`}
-      </p>
-    </div>
-    <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700">
-      <Activity size={16} className="text-rose-500"/>
-    </div>
-  </div>
-  
-  {/* ✨ THE PROFESSIONAL BAR ENGINE WITH GRID LINES */}
-  <div className="flex-1 relative flex items-end justify-around gap-8 px-6 pb-2 mb-2">
-    
-    {/* 🏁 TACTICAL GRID LINES (Background) */}
-    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-6 pb-2 opacity-20 dark:opacity-10">
-      <div className="w-full border-t border-slate-400"></div>
-      <div className="w-full border-t border-slate-400"></div>
-      <div className="w-full border-t border-slate-400"></div>
-      <div className="w-full border-t border-slate-400"></div>
-      <div className="w-full border-b border-slate-600"></div>
-    </div>
+        {/* CHART 3: MATERIAL FLOW COMMAND (PROFESSIONAL VERTICAL TOTALS) */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col min-h-[320px]">
+           <div className="flex justify-between items-start mb-6 shrink-0">
+             <div>
+               <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Material Flow Command</h3>
+               <p className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase mt-1 flex items-center gap-1.5">
+                 <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></div>
+                 {filterSite === "All" ? "Global Aggregation" : `Node Focus: ${filterSite}`}
+               </p>
+             </div>
+             <Activity size={16} className="text-rose-500"/>
+           </div>
+           
+           {/* ✨ THE BAR ENGINE WITH TACTICAL GRID LINES */}
+           <div className="flex-1 relative flex items-end justify-around gap-6 px-4 pb-2 border-b border-slate-100 dark:border-slate-800/50 mb-2">
+              
+              {/* 🏁 BACKGROUND GRID LINES (Professional Aesthetic) */}
+              <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-4 pb-2 opacity-[0.05] dark:opacity-[0.1]">
+                <div className="w-full border-t border-slate-900 dark:border-slate-100"></div>
+                <div className="w-full border-t border-slate-900 dark:border-slate-100"></div>
+                <div className="w-full border-t border-slate-900 dark:border-slate-100"></div>
+                <div className="w-full border-t border-slate-900 dark:border-slate-100"></div>
+              </div>
 
-    {/* 📊 THE ACTUAL BARS (Totalized Logic) */}
-    
-    {/* Solid Bar */}
-    <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
-      <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">
-        {tSolid}
-      </div>
-      <div 
-        style={{ height: `${(tSolid / (grandTotalDispatch || 1)) * 100}%`, minHeight: tSolid > 0 ? '4px' : '0' }} 
-        className="w-full max-w-[44px] bg-slate-400 dark:bg-slate-500 rounded-t-lg transition-all duration-1000 ease-out shadow-[0_-2px_10px_rgba(100,116,139,0.2)] group-hover/bar:brightness-110"
-      ></div>
-      <span className="mt-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">Solid</span>
-    </div>
+              {/* Solid Material Bar */}
+              <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
+                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-slate-800 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl">
+                  {tSolid}
+                </div>
+                <div 
+                  style={{ height: `${(tSolid / (grandTotalDispatch || 1)) * 100}%`, minHeight: tSolid > 0 ? '4px' : '0' }} 
+                  className="w-full max-w-[32px] bg-slate-400 dark:bg-slate-500 rounded-t-lg transition-all duration-1000 ease-out shadow-sm group-hover/bar:brightness-110"
+                ></div>
+                <span className="mt-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">Solid</span>
+              </div>
 
-    {/* Gas / Slurry Bar */}
-    <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
-      <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-indigo-600 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">
-        {tGas}
-      </div>
-      <div 
-        style={{ height: `${(tGas / (grandTotalDispatch || 1)) * 100}%`, minHeight: tGas > 0 ? '4px' : '0' }} 
-        className="w-full max-w-[44px] bg-indigo-500 rounded-t-lg transition-all duration-1000 ease-out shadow-[0_-2px_10px_rgba(79,70,229,0.2)] group-hover/bar:brightness-110"
-      ></div>
-      <span className="mt-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">Gas</span>
-    </div>
+              {/* Gas / Slurry Bar */}
+              <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
+                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-indigo-600 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl">
+                  {tGas}
+                </div>
+                <div 
+                  style={{ height: `${(tGas / (grandTotalDispatch || 1)) * 100}%`, minHeight: tGas > 0 ? '4px' : '0' }} 
+                  className="w-full max-w-[32px] bg-indigo-500 rounded-t-lg transition-all duration-1000 ease-out shadow-sm group-hover/bar:brightness-110"
+                ></div>
+                <span className="mt-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">Gas</span>
+              </div>
 
-    {/* Scrap Bar - THE RED ALERT */}
-    <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
-      <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-rose-600 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">
-        {tScrap}
-      </div>
-      <div 
-        style={{ height: `${(tScrap / (grandTotalDispatch || 1)) * 100}%`, minHeight: tScrap > 0 ? '4px' : '0' }} 
-        className="w-full max-w-[44px] bg-rose-500 rounded-t-lg transition-all duration-1000 ease-out shadow-[0_-4px_15px_rgba(244,63,94,0.3)] group-hover/bar:brightness-110"
-      ></div>
-      <span className="mt-3 text-[9px] font-black text-rose-500 uppercase tracking-widest animate-pulse">Scrap</span>
-    </div>
+              {/* Scrap Bar - THE RED FLAG */}
+              <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
+                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-rose-600 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl">
+                  {tScrap}
+                </div>
+                <div 
+                  style={{ height: `${(tScrap / (grandTotalDispatch || 1)) * 100}%`, minHeight: tScrap > 0 ? '4px' : '0' }} 
+                  className="w-full max-w-[32px] bg-rose-500 rounded-t-lg transition-all duration-1000 ease-out shadow-[0_-2px_10px_rgba(244,63,94,0.3)] group-hover/bar:brightness-110"
+                ></div>
+                <span className="mt-3 text-[9px] font-black text-rose-500 uppercase tracking-widest animate-pulse">Scrap</span>
+              </div>
+           </div>
 
-  </div>
-</div>
+           {/* Summary Footer */}
+           <div className="mt-4 flex justify-between items-center bg-slate-50 dark:bg-slate-950/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+             <div className="flex flex-col">
+               <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total Network Dispatch</span>
+               <span className="text-base font-black text-slate-900 dark:text-white leading-none">{grandTotalDispatch.toLocaleString()} <span className="text-[10px] opacity-40">units</span></span>
+             </div>
+             <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-emerald-500 shadow-sm">
+                <TrendingUp size={16}/>
+             </div>
+           </div>
+        </div>
 
       </div>
 
