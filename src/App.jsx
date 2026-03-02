@@ -384,7 +384,7 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
       {/* 🔝 TOP NAVIGATION: Logo & Theme Toggle */}
       <div className={`absolute top-0 left-0 w-full p-6 sm:p-8 flex justify-between items-start z-50 transition-opacity duration-500 ${loginPhase === 'unlocked' ? 'opacity-0' : 'opacity-100'}`}>
          {/* 🖼️ BRANDING LOGO (biologo.webp) */}
-         <img src="/logo.webp" alt="Reliance Logo" className="h-10 sm:h-12 w-auto object-contain drop-shadow-xl transition-transform hover:scale-105" onError={(e) => e.target.style.display='none'} />
+         <img src="/logo.webp" alt="Test Logo" className="h-10 sm:h-12 w-auto object-contain drop-shadow-xl transition-transform hover:scale-105" onError={(e) => e.target.style.display='none'} />
 
          {/* 🌓 THEME TOGGLE */}
          <button onClick={toggleTheme} className="p-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_15px_rgba(0,0,0,0.5)] border border-white/50 dark:border-slate-700/50 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all hover:rotate-12">
@@ -430,7 +430,7 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
 
               <div className="relative inline-block">
                  <h1 className="text-3xl font-black tracking-tight mb-2 text-transparent bg-clip-text bg-gradient-to-b from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 drop-shadow-[0_2px_2px_rgba(0,0,0,0.1)] dark:drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
-                   Reliance <span className="bg-clip-text text-transparent bg-gradient-to-b from-emerald-500 to-green-600 dark:from-emerald-400 dark:to-green-500">CBG Central</span>
+                   Test <span className="bg-clip-text text-transparent bg-gradient-to-b from-emerald-500 to-green-600 dark:from-emerald-400 dark:to-green-500">CBG Central</span>
                  </h1>
               </div>
 
@@ -623,7 +623,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl animate-pulse z-0"></div>
                 
                 <div className="relative mb-8 z-10">
-                   <img src="/logo.webp" alt="Reliance Logo" className="w-28 h-28 mx-auto object-contain drop-shadow-[0_10px_20px_rgba(16,185,129,0.3)] transition-all hover:scale-105" 
+                   <img src="/logo.webp" alt="Test Logo" className="w-28 h-28 mx-auto object-contain drop-shadow-[0_10px_20px_rgba(16,185,129,0.3)] transition-all hover:scale-105" 
                         onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
                    <div className="hidden w-24 h-24 mx-auto bg-gradient-to-br from-emerald-400 to-green-600 rounded-3xl flex-col items-center justify-center shadow-[0_10px_30px_rgba(16,185,129,0.4)] border border-white/20">
                       <Shield size={48} className="text-white drop-shadow-md" />
@@ -631,7 +631,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
                 </div>
 
                 <h1 className="text-4xl font-black text-white tracking-widest uppercase mb-2 drop-shadow-lg relative z-10">
-                  Reliance <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-300">CBG</span>
+                  Test <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-300">CBG</span>
                 </h1>
                 <h2 className="text-[11px] font-bold text-slate-400 tracking-[0.4em] uppercase mb-12 relative z-10">Secure Deployment Network</h2>
                 
