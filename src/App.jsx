@@ -1791,37 +1791,122 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
 // ==========================================
 // ✏️ GLOBAL EDIT MODAL
 // ==========================================
+// ==========================================
+// ✏️ FAANG-STYLE DEPLOYMENT EDIT MODAL
+// ==========================================
 function EditModal({ record, onClose, onSave }) {
-  const [formData, setFormData] = useState(record);
-  const handleSubmit = (e) => { e.preventDefault(); onSave(formData); };
+  // Check if they had a custom location saved so we can populate the dropdown perfectly!
+  const isCustomLoc = record.location && !LOCATIONS.includes(record.location);
+  
+  const [fd, setFd] = useState({
+    ...record,
+    locationMode: isCustomLoc ? 'Other' : (record.location || LOCATIONS[0]),
+    customLocation: isCustomLoc ? record.location : ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const finalLoc = fd.locationMode === 'Other' ? fd.customLocation : fd.locationMode;
+    const { locationMode, customLocation, ...dataToSave } = fd;
+    dataToSave.location = finalLoc;
+    dataToSave.name = (dataToSave.name || '').toUpperCase();
+    onSave(dataToSave);
+  };
+
+  // 🦋 META-STYLE DESIGN TOKENS
+  const inputClass = "w-full bg-white dark:bg-[#0f172a] border-2 border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 px-4 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20 hover:border-slate-300 dark:hover:border-slate-600 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] placeholder:text-slate-400 placeholder:font-medium";
+  const labelClass = "block text-[11px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 ml-1";
+
   return (
-    <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950/50">
-          <h3 className="font-bold text-slate-900 dark:text-slate-200 flex items-center gap-2"><Edit2 size={16} className="text-indigo-600 dark:text-indigo-400" /> Edit Record</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"><X size={20} /></button>
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/90 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
+      <div className="bg-slate-50 dark:bg-slate-900 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] w-full max-w-xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-200 dark:border-slate-800">
+        
+        {/* Sleek Header */}
+        <div className="px-8 py-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-[#0f172a] shrink-0">
+          <h3 className="font-black text-slate-900 dark:text-white flex items-center gap-3 text-xl uppercase tracking-tight">
+            <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 flex items-center justify-center"><Edit2 size={18} /></div>
+            Modify Record
+          </h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors bg-slate-100 dark:bg-slate-800 p-2.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700"><X size={18} /></button>
         </div>
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Date</label><input type="date" required value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none focus:border-indigo-500 [color-scheme:light] dark:[color-scheme:dark]" /></div>
-            <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Shift</label><select value={formData.shift} onChange={(e) => setFormData({...formData, shift: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none focus:border-indigo-500"><option value="Day Shift">Day Shift</option><option value="Night Shift">Night Shift</option></select></div>
-          </div>
-          <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Employee Name</label><input type="text" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none focus:border-indigo-500 uppercase" /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Phone</label><input type="tel" required pattern="[0-9]{10}" maxLength="10" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/\D/g, '')})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-mono font-bold outline-none focus:border-indigo-500" /></div>
-            <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Designation</label><select value={formData.designation} onChange={(e) => setFormData({...formData, designation: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none focus:border-indigo-500">{DESIGNATIONS.map(d => <option key={d} value={d}>{d.split(' - ')[0]}</option>)}</select></div>
-          </div>
-          <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Inside Location</label><select value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none focus:border-indigo-500">{LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}</select></div>
-          <div className="pt-4 flex gap-3">
-            <button type="button" onClick={onClose} className="flex-1 py-3 rounded-lg font-bold text-sm bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">Cancel</button>
-            <button type="submit" className="flex-1 py-3 rounded-lg font-bold text-sm bg-indigo-600 text-white flex items-center justify-center gap-2"><Save size={16} /> Save</button>
+
+        {/* 🧠 Connecting the form to the button with an ID! */}
+        <form id="edit-deployment-form" onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+          
+          <div className="bg-white dark:bg-[#0f172a] p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+            
+            <div>
+              <label className={labelClass}>Mission Date</label>
+              <div className="relative">
+                <Calendar size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500" />
+                <input type="date" required value={fd.date || ''} onChange={(e) => setFd({...fd, date: e.target.value})} className={`${inputClass} pl-12 cursor-pointer [color-scheme:light] dark:[color-scheme:dark]`} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>Shift</label>
+                <select value={fd.shift || ''} onChange={(e) => setFd({...fd, shift: e.target.value})} className={`${inputClass} cursor-pointer`}>
+                  <option value="Day Shift">Day Shift</option>
+                  <option value="Night Shift">Night Shift</option>
+                  <option value="Weekly Off">Weekly Off</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Clearance</label>
+                <select value={fd.designation || ''} onChange={(e) => setFd({...fd, designation: e.target.value})} className={`${inputClass} cursor-pointer`}>
+                  {DESIGNATIONS.map(d => <option key={d} value={d}>{d.split(' - ')[0]}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className={labelClass}>Operative Name</label>
+              <div className="relative">
+                <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input type="text" required placeholder="Full Name..." value={fd.name || ''} onChange={(e) => setFd({...fd, name: e.target.value})} className={`${inputClass} pl-12 uppercase`} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>Commlink</label>
+                <div className="relative">
+                  <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input type="tel" required pattern="[0-9]{10}" placeholder="10 Digits" maxLength="10" value={fd.phone || ''} onChange={(e) => setFd({...fd, phone: e.target.value.replace(/\D/g, '')})} className={`${inputClass} pl-11 font-mono`} />
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>Post</label>
+                <select value={fd.locationMode || ''} onChange={(e) => setFd({...fd, locationMode: e.target.value})} className={`${inputClass} cursor-pointer`}>
+                  {LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {fd.locationMode === 'Other' && (
+              <div className="animate-in fade-in slide-in-from-top-2 pt-2">
+                <label className="block text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1.5 ml-1">Specify Sector</label>
+                <input type="text" required placeholder="e.g. Server Room A" value={fd.customLocation || ''} onChange={(e) => setFd({...fd, customLocation: e.target.value})} className={`${inputClass} border-blue-300 dark:border-blue-500/50 bg-blue-50/30 dark:bg-blue-900/10`} />
+              </div>
+            )}
+            
           </div>
         </form>
+
+        <div className="p-6 bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-slate-800 flex gap-3 shrink-0 rounded-b-[2.5rem]">
+          <button type="button" onClick={onClose} className="w-1/3 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Abort</button>
+          
+          {/* ✨ MAGIC: form="edit-deployment-form" perfectly syncs it! */}
+          <button type="submit" form="edit-deployment-form" className="flex-1 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest bg-blue-600 text-white flex items-center justify-center gap-2 hover:bg-blue-700 shadow-lg shadow-blue-600/20 active:scale-95 transition-all">
+            <Save size={16} /> Update Record
+          </button>
+        </div>
+        
       </div>
     </div>
   );
 }
-
 function FilterSelect({ label, value, onChange, options, type = "select" }) {
   return (
     //   Notice the "w-full sm:w-auto" right here! That's the mobile magic!
