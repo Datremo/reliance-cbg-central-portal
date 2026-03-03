@@ -3,40 +3,82 @@ import { supabase } from './supabaseClient';
 import { 
   Plus, Trash2, Calendar, MapPin, Users, Shield, LogOut, 
   Filter, CheckCircle, Smartphone, Monitor, Activity,  Leaf, Zap,Eye, EyeOff, Clock,BarChart2, PieChart, TrendingUp, Target,
-  X, Search, ChevronDown, Download, Edit2, Save, Sun, Moon, Lock, Mail,RefreshCw, Copy, BookOpen, Briefcase, Phone, Menu, Unlock, ArrowRight,ArrowLeft, AlertTriangle, Camera, FileText, Image as ImageIcon
+  X, Search, ChevronDown, Download, Edit2, Save, Sun, Moon, Lock, Mail,RefreshCw, Copy, BookOpen, Briefcase, Phone, Menu, Unlock, ArrowRight,ArrowLeft, AlertTriangle, Camera, FileText, Image as ImageIcon,Settings, User, PlusCircle
 } from 'lucide-react';
-// 👑 THE 26 VIP COMMISSIONED SITES
-const COMMISSIONED_SITES = [
-  "Vadodara", "Jhajjar 1", "Panipat", "Nagpur", "Nanded", "Hoshiarpur", "Barabanki", "Prayagraj 1", "Satna", "Kakinada 1", "Kota", "Indore", "Nagothane", "Bhopal", "Malegaon", "Raipur", "Jabalpur", "Dhenkanal 1", "Kurkumbh", "Bilaspur", "Hapur", "Nellore", "Akola", "Haidergarh", "Kakinada 2", "Kurnool"
-];
-const SITES_BY_STATE = {
-  "Madhya Pradesh": ["Satna", "Balaghat", "Jabalpur", "Bhopal", "Indore", "Sehore"],
-  "Maharashtra": ["Kurkumbh", "Nagothane", "Malegaon", "Akola", "Nagpur", "Solapur", "Nanded", "Yavatmal"],
-  "Uttar Pradesh": ["Barabanki", "Haidergarh", "Hapur", "Prayagraj 1", "Prayagraj 2", "Unnao", "Chandauli","Ayodhya", "Pilibhit", "Ambedkar Nagar", "Noida"],
-  "Rajasthan": ["Suratgarh", "Kota"],
-  "Punjab": ["Mansa", "Hoshiarpur", "Ludhiana 1", "Ludhiana 2"],
-  "Odisha":["Dhenkanal 1" , "Dhenkanal 2", "Choudwar"],
-  "Haryana": ["Panipat", "Jhajjar 1", "Jhajjar 2", "Jind 1", "Jind 2"],
-  "Gujarat": ["Vadodara", "Navsari 1", "Navsari 2"],
-  "Chatttisgarh": ["Bilaspur", "Raipur"],
-  "Andhra Pradesh": ["Rajahmundry 1", "Rajahmundry 2", "Vijaywada", "Kakinada 1", "Kakinada 2", "Kakinada 3", "Nellore", "Kurnool", "Prakasam 1", "Prakasam 2"],
-  "Telangana": ["Warangal"],
-};
-const SITES = Object.values(SITES_BY_STATE).flat();
+
+// ✨ THESE CONSTANTS STAY OUTSIDE (Because they are just normal text, no hooks!)
 const LOCATIONS = ["Main Gate", "Weigh Bridge", "MTCC", "Patrolling", "SAP Operator", "Other"];
 const DESIGNATIONS = ["SS - Security Supervisor", "SG - Security Guard"];
 const CONTACT_ROLES = ["State In-Charge", "Plant In-Charge","Safety In-Charge", "Site Store Team", "Operations In-Charge","Microlink", "Other"];
-//   NEW HELPER FUNCTION: Making phone numbers gorgeous (12345 67890)
+
+// 📞 HELPER FUNCTION STAYS OUTSIDE TOO!
 const formatPhone = (phone) => {
   if (!phone) return "N/A";
   const cleaned = ('' + phone).replace(/\D/g, '');
   if (cleaned.length === 10) return `${cleaned.slice(0, 5)} ${cleaned.slice(5)}`;
   return phone;
 };
+
+// 👑 THE MASTER APP COMPONENT STARTS HERE!
 export default function App() {
+  // 🧠 OUR NEW DYNAMIC SITES BRAIN
+  const [globalSites, setGlobalSites] = useState([]);
+
+  // ✨ THE VIP LISTS: These MUST sit right here so the whole app can see them!
+  const SITES = globalSites.map(site => site.name);
+  
+  const SITES_BY_STATE = globalSites.reduce((acc, site) => {
+    const state = site.state_name || 'Unassigned';
+    if (!acc[state]) acc[state] = [];
+    acc[state].push(site.name);
+    return acc;
+  }, {});
+
+  const STATE_NAMES = Object.keys(SITES_BY_STATE).filter(k => k !== 'Unassigned').sort();
+  
+  const commissionedSiteNames = globalSites
+    .filter(site => site.status === 'commissioned')
+    .map(site => site.name);
+
+  // 📡 THE DATABASE FETCH LOGIC
+  const fetchSites = async () => {
+    const { data, error } = await supabase
+      .from('sites')
+      .select('*')
+      .order('name', { ascending: true });
+      
+    if (!error && data) {
+      setGlobalSites(data);
+    } else {
+      console.error("Failed to fetch sites:", error);
+    }
+  };
+
+  // 🚀 Trigger the fetch when the app boots up!
+  useEffect(() => {
+    fetchSites();
+  }, []);
+
+  // ⚙️ Handlers for the Settings Panel
+  const handleAddSite = async (newSiteName, newStateName) => {
+    const { error } = await supabase.from('sites').insert([{ 
+      name: newSiteName.toUpperCase(), 
+      state_name: newStateName,
+      status: 'project' 
+    }]);
+    if (!error) fetchSites();
+  };
+
+  const handleToggleSiteStatus = async (siteId, currentStatus) => {
+    const newStatus = currentStatus === 'commissioned' ? 'project' : 'commissioned';
+    const { error } = await supabase.from('sites').update({ status: newStatus }).eq('id', siteId);
+    if (!error) fetchSites();
+  };
+
+  // 👇 YOUR ORIGINAL STATES CONTINUE HERE! 👇
   const [session, setSession] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
   const [deployments, setDeployments] = useState([]);
+  const [userProfile, setUserProfile] = useState(null);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
   const [theme, setTheme] = useState('light');
@@ -282,26 +324,33 @@ const toggleIncidentStatus = async (inc) => {
         <div className="flex flex-col md:flex-row min-h-screen">
           {userProfile.role === 'admin' ? (
             <AdminDesktopView 
-  userProfile={userProfile} 
-  deployments={deployments} 
-  contacts={contacts} 
-  incidents={incidents} 
-  weeklyReports={weeklyReports}
-  isLoading={isLoadingData} 
-  onToggleAck={toggleIncidentStatus} 
-  onDeleteIncident={deleteIncident}
-  onLogout={() => supabase.auth.signOut()} 
-  onEdit={setEditingRecord} 
-  onDelete={setDeletingRecord} 
-  onView={setViewingRecord} 
-  onAddContact={() => setEditingContact({ name: '', phone: '', designation: '', state_name: '', site: '', email: '', company: '' })} 
-  onEditContact={setEditingContact} 
-  onDeleteContact={setDeletingContact} 
-  onViewContact={setViewingContact}
-  onImportCSV={handleCSVImport} 
-  theme={theme} 
-  toggleTheme={toggleTheme} 
-/>
+              userProfile={userProfile} 
+              deployments={deployments} 
+              contacts={contacts} 
+              incidents={incidents} 
+              weeklyReports={weeklyReports}
+              isLoading={isLoadingData} 
+              onToggleAck={toggleIncidentStatus} 
+              onDeleteIncident={deleteIncident}
+              onLogout={() => supabase.auth.signOut()} 
+              onEdit={setEditingRecord} 
+              onDelete={setDeletingRecord} 
+              onView={setViewingRecord} 
+              onAddContact={() => setEditingContact({ name: '', phone: '', designation: '', state_name: '', site: '', email: '', company: '' })} 
+              onEditContact={setEditingContact} 
+              onDeleteContact={setDeletingContact} 
+              onViewContact={setViewingContact}
+              onImportCSV={handleCSVImport} 
+              theme={theme} 
+              toggleTheme={toggleTheme} 
+              globalSites={globalSites}
+              SITES={SITES}
+              COMMISSIONED_SITES={commissionedSiteNames}
+              SITES_BY_STATE={SITES_BY_STATE}
+              STATE_NAMES={STATE_NAMES}
+              onAddSite={handleAddSite}
+              onToggleSite={handleToggleSiteStatus}
+            />
           ) : (
             <SupervisorMobileView userProfile={userProfile} deployments={deployments} incidents={incidents} weeklyReports={weeklyReports} isLoading={isLoadingData} fetchDeployments={fetchDeployments} fetchIncidents={fetchIncidents} fetchWeeklyReports={fetchWeeklyReports} onLogout={() => supabase.auth.signOut()} onEdit={setEditingRecord} onDelete={setDeletingRecord} onView={setViewingRecord} onToggleAck={toggleIncidentStatus} onDeleteIncident={deleteIncident} onAddContact={() => setEditingContact({ name: '', phone: '', designation: 'SS - Security Supervisor', state_name: '', site: '', email: '', company: '' })} onEditContact={setEditingContact} onDeleteContact={setDeletingContact} theme={theme} toggleTheme={toggleTheme} />
           )}
@@ -312,8 +361,7 @@ const toggleIncidentStatus = async (inc) => {
         {viewingRecord && <ViewModal record={viewingRecord} onClose={() => setViewingRecord(null)} />}
         
         {/*   NEW: Modals for Contacts! */}
-        {editingContact && <ContactFormModal record={editingContact} onClose={() => setEditingContact(null)} onSave={saveContact} />}
-        {deletingContact && <DeleteModal record={deletingContact} onClose={() => setDeletingContact(null)} onConfirm={confirmDeleteContact} type="contact" />}
+        {editingContact && <ContactFormModal record={editingContact} onClose={() => setEditingContact(null)} onSave={saveContact} SITES={SITES} SITES_BY_STATE={SITES_BY_STATE} STATE_NAMES={STATE_NAMES} />}           {deletingContact && <DeleteModal record={deletingContact} onClose={() => setDeletingContact(null)} onConfirm={confirmDeleteContact} type="contact" />}
         {viewingContact && <ContactViewModal record={viewingContact} onClose={() => setViewingContact(null)} />}
       </div>
     </div>
@@ -450,7 +498,7 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
                   {/*   DEEP CARVED INPUT */}
                   <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={loginPhase !== 'idle'}
                     className="w-full pl-11 pr-4 py-3.5 bg-slate-50/80 dark:bg-[#0B1120]/80 border border-slate-200/50 dark:border-slate-800/50 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_3px_8px_rgba(0,0,0,0.6)]"
-                    placeholder="auth@reliance-cbg.com" />
+                    placeholder="auth@test.cbg.com" />
                 </div>
               </div>
 
@@ -953,9 +1001,10 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
 // ==========================================
 // ADMIN VIEW (MASTER PORTAL + COMMAND CENTER)
 // ==========================================
-function AdminDesktopView({ userProfile, deployments, contacts, incidents, weeklyReports, isLoading, onToggleAck, onDeleteIncident, onLogout, onEdit, onView, onDelete, onAddContact, onEditContact, onDeleteContact, onViewContact, onImportCSV, theme, toggleTheme }) {  //   TAB STATE TO SWITCH BETWEEN DEPLOYMENTS & CONTACTS
+function AdminDesktopView({ userProfile, deployments, contacts, incidents, weeklyReports, isLoading, onToggleAck, onDeleteIncident, onLogout, onEdit, onView, onDelete, onAddContact, onEditContact, onDeleteContact, onViewContact, onImportCSV, theme, toggleTheme, globalSites, SITES, COMMISSIONED_SITES, SITES_BY_STATE, STATE_NAMES, onAddSite, onToggleSite }) {
   const [activeTab, setActiveTab] = useState('deployments'); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showSettings, setShowSettings] = useState(false); // ✨ NEW: Settings Toggle!
   
   // ✨ NEW: TODAY'S INCIDENT TRACKER LOGIC
   const todayStr = new Date().toISOString().split('T')[0];
@@ -979,6 +1028,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
   // Contact Omni-Search
   const [contactSearchTerm, setContactSearchTerm] = useState("");
 
+  // ✨ RESTORED: Your flawless state-to-site logic!
   const availableSites = filterState === "All" ? SITES : SITES_BY_STATE[filterState] || [];
   
   // 🧠 1. THE MASTER FILTER ENGINE
@@ -1137,7 +1187,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
         <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800 bg-slate-950/50">
           <div className="flex items-center">
             <Shield size={20} className="text-indigo-500 mr-3" />
-            <span className="font-bold text-sm tracking-widest text-white flex items-center gap-2">RELIANCE CBG COMMAND</span>
+            <span className="font-bold text-sm tracking-widest text-white flex items-center gap-2">TEST CBG COMMAND</span>
           </div>
           {/* Mobile Close Button */}
           <button className="md:hidden text-slate-400 hover:text-white bg-slate-800 p-1.5 rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
@@ -1229,6 +1279,10 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
               )}
             </div>
 
+            {/* ✨ NEW: SETTINGS GEAR BUTTON */}
+            <button onClick={() => setShowSettings(true)} className="p-2 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors shadow-sm">
+               <Settings size={18} />
+            </button>
             <button onClick={toggleTheme} className="p-2 text-slate-500 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors">
                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
@@ -1236,6 +1290,12 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
         </header>
 
         <div className="flex-1 overflow-auto p-4 sm:p-6 custom-scrollbar">
+          
+          {/* 🛑 INTERCEPT: SHOW SETTINGS IF ACTIVE! */}
+          {showSettings ? (
+            <AdminSettingsView userProfile={userProfile} globalSites={globalSites} STATE_NAMES={STATE_NAMES} onAddSite={onAddSite} onToggleStatus={onToggleSite} onClose={() => setShowSettings(false)} />
+          ) : (
+            <>
           
           {/* ===================================== */}
           {/* TAB: DEPLOYMENT MATRIX VIEW (COMMAND CENTER) */}
@@ -1442,7 +1502,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
                     <input type="text" placeholder="Search Guard Name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors" />
                   </div>
                   <FilterSelect label="Date" value={filterDate} onChange={setFilterDate} type="date" />
-                  <FilterSelect label="State" value={filterState} onChange={(e) => { setFilterState(e); setFilterSite("All"); }} options={Object.keys(SITES_BY_STATE).sort()} />
+                  <FilterSelect label="State" value={filterState} onChange={(e) => { setFilterState(e); setFilterSite("All"); }} options={STATE_NAMES} />
                   <FilterSelect label="Site" value={filterSite} onChange={setFilterSite} options={[...availableSites].sort()} />
                   <FilterSelect label="Shift" value={filterShift} onChange={setFilterShift} options={["Day Shift", "Night Shift"]} />
                   <FilterSelect label="Role" value={filterDesignation} onChange={setFilterDesignation} options={["SS", "SG"]} />
@@ -1605,8 +1665,10 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
               </div>
             </>
           )}
-        {activeTab === 'incidents' && <AdminIncidentView incidents={incidents} isLoading={isLoading} onAcknowledge={onToggleAck} onDelete={onDeleteIncident} />}
-        {activeTab === 'weekly' && <AdminWeeklyView weeklyReports={weeklyReports} isLoading={isLoading} />}
+        {activeTab === 'incidents' && <AdminIncidentView incidents={incidents} isLoading={isLoading} onAcknowledge={onToggleAck} onDelete={onDeleteIncident} SITES={SITES} />}
+        {activeTab === 'weekly' && <AdminWeeklyView weeklyReports={weeklyReports} isLoading={isLoading} COMMISSIONED_SITES={COMMISSIONED_SITES} />}
+            </>
+          )}
         </div>
         
       </main>
@@ -1733,7 +1795,7 @@ function DeleteModal({ record, onClose, onConfirm, type }) {
 // ==========================================
 // ✏️ CONTACT FORM MODAL (UPGRADED)
 // ==========================================
-function ContactFormModal({ record, onClose, onSave }) {
+function ContactFormModal({ record, onClose, onSave, SITES, SITES_BY_STATE, STATE_NAMES }) {
   //   SMART LOGIC: Checks if we are editing someone with a custom designation
   const isCustomInitial = record.designation && !CONTACT_ROLES.includes(record.designation);
 
@@ -1794,10 +1856,10 @@ function ContactFormModal({ record, onClose, onSave }) {
             
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">State</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">State / Region</label>
                 <select value={formData.state_name || ''} onChange={(e) => setFormData({...formData, state_name: e.target.value, site: ''})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none focus:border-indigo-500">
                   <option value="">-- None --</option>
-                  {Object.keys(SITES_BY_STATE).map(s => <option key={s} value={s}>{s}</option>)}
+                  {STATE_NAMES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
               <div>
@@ -2128,16 +2190,16 @@ function IncidentMobileHistory({ incidents, isLoading }) {
   );
 }
 
-function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete }) {
+function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete, SITES }) {
   const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
   const [filterState, setFilterState] = useState("All");
   const [filterSite, setFilterSite] = useState("All");
   const [viewingInc, setViewingInc] = useState(null);
 
-  const availableSites = filterState === "All" ? SITES : SITES_BY_STATE[filterState] || [];
+  const availableSites = SITES;
   const filtered = incidents.filter(i => {
     const dMatch = filterDate === '' || (i.created_at || '').startsWith(filterDate);
-    const stMatch = filterState === "All" || (SITES_BY_STATE[filterState] && SITES_BY_STATE[filterState].includes(i.site));
+    const stMatch = filterState === "All" || i.state_name === filterState;
     const siMatch = filterSite === "All" || i.site === filterSite;
     return dMatch && stMatch && siMatch;
   });
@@ -2190,7 +2252,7 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete }) {
     <div className="space-y-6">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 flex flex-wrap gap-4 items-end">
         <FilterSelect label="Date" value={filterDate} onChange={setFilterDate} type="date" />
-        <FilterSelect label="State" value={filterState} onChange={e => {setFilterState(e); setFilterSite("All");}} options={Object.keys(SITES_BY_STATE).sort()} />
+        <FilterSelect label="State" value={filterState} onChange={e => {setFilterState(e); setFilterSite("All");}} options={[...new Set(incidents.map(i => i.state_name).filter(Boolean))].sort()} />
         <FilterSelect label="Site" value={filterSite} onChange={setFilterSite} options={[...availableSites].sort()} />
       </div>
 
@@ -2432,7 +2494,7 @@ function WeeklyMobileHistory({ weeklyReports, isLoading }) {
 // 📈 VIP OPERATIONS & THREAT MATRIX (CSO DASHBOARD)
 // ==========================================
 
-function AdminWeeklyView({ weeklyReports, isLoading }) {
+function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES }) {
   const [filterDate, setFilterDate] = useState('');
   const [filterSite, setFilterSite] = useState("All");
   const [viewingRep, setViewingRep] = useState(null);
@@ -2957,6 +3019,227 @@ function AdminWeeklyView({ weeklyReports, isLoading }) {
         </div>
       )}
 
+    </div>
+  );
+}
+
+// ==========================================
+// ⚙️ GOD-MODE SETTINGS PANEL (UPGRADED!)
+// ==========================================
+function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, onToggleStatus, onClose }) {
+  const [activeTab, setActiveTab] = useState('profile');
+  
+  // Site Form States
+  const [newSiteInput, setNewSiteInput] = useState('');
+  const [newStateSelection, setNewStateSelection] = useState(''); 
+  const [customStateInput, setCustomStateInput] = useState(''); 
+  
+  // ✨ NEW: The Network Filter Brain!
+  const [networkFilter, setNetworkFilter] = useState('All');
+
+  // ✨ NEW: User Roster States
+  const [allProfiles, setAllProfiles] = useState([]);
+  const [isLoadingProfiles, setIsLoadingProfiles] = useState(false);
+
+  // 📡 FETCH ALL PROFILES WHEN PROFILE TAB OPENS!
+  useEffect(() => {
+    if (activeTab === 'profile') {
+      const fetchProfiles = async () => {
+        setIsLoadingProfiles(true);
+        const { data, error } = await supabase.from('profiles').select('*').order('role', { ascending: true });
+        if (!error && data) setAllProfiles(data);
+        setIsLoadingProfiles(false);
+      };
+      fetchProfiles();
+    }
+  }, [activeTab]);
+
+  const submitNewSite = (e) => {
+    e.preventDefault();
+    if (newSiteInput.trim()) {
+      const finalState = newStateSelection === 'NEW' ? customStateInput.trim() : newStateSelection;
+      if (!finalState) return alert("Please select or enter a state!");
+      
+      onAddSite(newSiteInput.trim(), finalState);
+      setNewSiteInput('');
+      setNewStateSelection('');
+      setCustomStateInput('');
+    }
+  };
+
+  // 🗺️ ✨ MAGIC: Filter & Segregate all sites beautifully by State!
+  const displaySites = globalSites.filter(s => networkFilter === 'All' ? true : s.status === networkFilter);
+  
+  const groupedSites = displaySites.reduce((acc, site) => {
+    const state = site.state_name || 'UNASSIGNED';
+    if (!acc[state]) acc[state] = [];
+    acc[state].push(site);
+    return acc;
+  }, {});
+  const sortedStates = Object.keys(groupedSites).sort();
+
+  return (
+    <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50 dark:bg-slate-950 p-4 sm:p-8 animate-in fade-in duration-300 h-full">
+      
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-8 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
+            <Settings className="text-indigo-500" /> System Control
+          </h1>
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Admin Access</p>
+        </div>
+        <button onClick={onClose} className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors active:scale-95 shadow-sm border border-slate-200 dark:border-slate-700">
+          <X size={20} />
+        </button>
+      </div>
+
+      {/* TABS */}
+      <div className="flex gap-2 mb-8 bg-slate-200/50 dark:bg-slate-800/50 p-1.5 rounded-2xl w-max border border-slate-200 dark:border-slate-800 shadow-inner mx-auto sm:mx-0">
+        <button onClick={() => setActiveTab('profile')} className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'profile' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>MANAGE PROFILE</button>
+        <button onClick={() => setActiveTab('sites')} className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'sites' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>Site Network</button>
+      </div>
+
+      {/* 👤 TAB 1: SYSTEM ACCESS ROSTER */}
+      {activeTab === 'profile' && (
+        <div className="space-y-8 animate-in slide-in-from-bottom-4">
+          
+          {/* YOUR PROFILE (THE BOSS) */}
+          <div className="max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-sm flex items-center gap-6">
+            <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl flex items-center justify-center border border-indigo-200 dark:border-indigo-500/20 shadow-lg shadow-indigo-500/30">
+              <User size={40} />
+            </div>
+            <div>
+              <h2 className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">ADMINISTRATOR</h2>
+              <p className="text-2xl font-black text-slate-900 dark:text-white uppercase leading-none mb-2">{userProfile.name}</p>
+              <div className="flex gap-2">
+                <span className="inline-block bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-sm">Node: {userProfile.site}</span>
+                <span className="inline-block bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-sm">Lvl: {userProfile.role}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* EVERYONE ELSE'S PROFILES */}
+          <div>
+            <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 ml-1 flex items-center gap-2"><Users size={16}/> Global Security Roster</h3>
+            
+            {isLoadingProfiles ? (
+              <div className="p-10 text-center font-bold text-indigo-500 animate-pulse">Decrypting User Vault...</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {allProfiles.map(profile => (
+                  <div key={profile.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm flex items-center gap-4 hover:shadow-md transition-all group">
+                    <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center font-black text-xl shrink-0 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-500/20 group-hover:text-indigo-600 transition-colors">
+                      {profile.name ? profile.name[0] : '?'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase truncate leading-tight">{profile.name}</h4>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase mt-0.5 truncate flex items-center gap-1"><MapPin size={10}/> {profile.site}</p>
+                    </div>
+                    <div className="shrink-0">
+                      <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-sm ${profile.role === 'admin' ? 'bg-rose-500 text-white' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'}`}>
+                        {profile.role === 'admin' ? 'Admin' : 'Officer'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 🌍 TAB 2: SITE NETWORK MANAGER */}
+      {activeTab === 'sites' && (
+        <div className="space-y-8 animate-in slide-in-from-bottom-4">
+          
+          {/* THE DEPLOYMENT WIDGET */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden max-w-3xl">
+            <div className="absolute -right-10 -top-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest mb-6 flex items-center gap-2 relative z-10"><PlusCircle size={18} className="text-indigo-500"/> Establish New Tracking Node</h3>
+            
+            <form onSubmit={submitNewSite} className="flex flex-col sm:flex-row gap-4 relative z-10">
+              
+              <select value={newStateSelection} onChange={e => setNewStateSelection(e.target.value)} className="w-full sm:w-1/3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-xs font-bold text-slate-900 dark:text-white uppercase focus:border-indigo-500 outline-none shadow-inner">
+                <option value="">-- SELECT STATE --</option>
+                {STATE_NAMES.map(s => <option key={s} value={s}>{s}</option>)}
+                <option value="NEW">+ ADD NEW STATE</option>
+              </select>
+              
+              {/* ✨ THE MAGIC REVEAL BOX FOR NEW STATES! */}
+              {newStateSelection === 'NEW' && (
+                <div className="w-full sm:w-1/3 animate-in fade-in slide-in-from-left-4">
+                  <input type="text" placeholder="NEW STATE NAME..." value={customStateInput} onChange={e => setCustomStateInput(e.target.value)} className="w-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 rounded-xl px-4 py-3.5 text-xs font-bold text-slate-900 dark:text-white uppercase focus:border-indigo-500 outline-none shadow-inner" />
+                </div>
+              )}
+              
+              <div className="flex-1 flex gap-2">
+                <input type="text" value={newSiteInput} onChange={(e) => setNewSiteInput(e.target.value)} placeholder="ENTER SITE NAME..." className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-xs font-bold text-slate-900 dark:text-white uppercase focus:border-indigo-500 outline-none shadow-inner" />
+                <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 sm:px-8 rounded-xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-indigo-500/25 shrink-0 flex items-center gap-2">
+                  <Zap size={14}/> Deploy
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* ✨ THE GORGEOUS STATE-SEGREGATED NETWORK GRID */}
+          <div>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-6 ml-1">
+              <div>
+                <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><MapPin size={16}/> Global Network Map</h3>
+                <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1">Viewing: {displaySites.length} Total Nodes</p>
+              </div>
+
+              {/* ✨ YOUR NEW VIEW FILTERS! */}
+              <div className="inline-flex bg-slate-200/50 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner w-full sm:w-auto">
+                <button onClick={() => setNetworkFilter('All')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${networkFilter === 'All' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>All</button>
+                <button onClick={() => setNetworkFilter('commissioned')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${networkFilter === 'commissioned' ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' : 'text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400'}`}>Commissioned</button>
+                <button onClick={() => setNetworkFilter('project')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${networkFilter === 'project' ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20' : 'text-slate-500 hover:text-amber-600 dark:hover:text-amber-400'}`}>Projects</button>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {sortedStates.map(stateName => {
+                const sitesInState = groupedSites[stateName].sort((a,b) => a.name.localeCompare(b.name));
+                const commissionedCount = sitesInState.filter(s => s.status === 'commissioned').length;
+                
+                return (
+                  <div key={stateName} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden flex flex-col max-h-[400px]">
+                    
+                    {/* STATE HEADER */}
+                    <div className="bg-slate-50 dark:bg-slate-950/50 p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
+                      <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">{stateName}</h4>
+                      <span className="text-[9px] font-black text-slate-500 bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded-md uppercase tracking-widest">
+                        {commissionedCount}/{sitesInState.length} Live
+                      </span>
+                    </div>
+
+                    {/* SITES LIST */}
+                    <div className="p-3 overflow-y-auto custom-scrollbar flex flex-col gap-2">
+                      {sitesInState.map(site => (
+                        <div key={site.id} className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800/50 group hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-colors">
+                          <div className="flex items-center gap-3">
+                            {/* The Glowing Status Dot */}
+                            <div className={`w-2 h-2 rounded-full shadow-sm ${site.status === 'commissioned' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse' : 'bg-amber-400'}`}></div>
+                            <span className={`text-xs font-black uppercase ${site.status === 'commissioned' ? 'text-slate-800 dark:text-slate-200' : 'text-slate-500'}`}>{site.name}</span>
+                          </div>
+                          
+                          {/* The Action Button */}
+                          <button onClick={() => onToggleStatus(site.id, site.status)} className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all active:scale-95 ${site.status === 'commissioned' ? 'bg-slate-200 text-slate-500 hover:bg-rose-100 hover:text-rose-600 dark:bg-slate-800 dark:hover:bg-rose-900/40 dark:hover:text-rose-400' : 'bg-indigo-50 text-indigo-600 hover:bg-emerald-500 hover:text-white dark:bg-indigo-500/10 dark:text-indigo-400 shadow-sm border border-indigo-200 dark:border-indigo-500/20'}`}>
+                            {site.status === 'commissioned' ? 'Revert' : 'Commission'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+        </div>
+      )}
     </div>
   );
 }
