@@ -3,7 +3,7 @@ import { supabase } from './supabaseClient';
 import { 
   Plus, Trash2, Calendar, MapPin, Users, Shield, LogOut, 
   Filter, CheckCircle, Smartphone, Monitor, Activity,  Leaf, Zap,Eye, EyeOff, Clock,BarChart2, PieChart, TrendingUp, Target,
-  X, Search, ChevronDown, Download, Edit2, Save, Sun, Moon, Lock, Mail,RefreshCw, Copy, BookOpen, Briefcase, Phone, Menu, Unlock, ArrowRight,ArrowLeft, AlertTriangle, Camera, FileText, Image as ImageIcon,Settings, User, PlusCircle
+  X, Search, ChevronDown, Download, Edit2, Save, Sun, Moon, Sparkles, Lock, Mail,RefreshCw, Copy, BookOpen, Briefcase, Phone, Menu, Unlock, ArrowRight,ArrowLeft, AlertTriangle, Camera, FileText, Image as ImageIcon,Settings, User, PlusCircle
 } from 'lucide-react';
 
 // ✨ THESE CONSTANTS STAY OUTSIDE (Because they are just normal text, no hooks!)
@@ -17,6 +17,21 @@ const formatPhone = (phone) => {
   const cleaned = ('' + phone).replace(/\D/g, '');
   if (cleaned.length === 10) return `${cleaned.slice(0, 5)} ${cleaned.slice(5)}`;
   return phone;
+};
+
+// 🇮🇳 ✨ THE BULLETPROOF IST TIMEZONE FIXER!
+const getISTDate = (offsetDays = 0) => {
+  const d = new Date();
+  // Force the browser/server to calculate exactly what time it is in India right now
+  const istString = d.toLocaleString("en-US", {timeZone: "Asia/Kolkata"});
+  const istDate = new Date(istString);
+  istDate.setDate(istDate.getDate() + offsetDays);
+  
+  // Manually construct the YYYY-MM-DD string so UTC never touches it!
+  const year = istDate.getFullYear();
+  const month = String(istDate.getMonth() + 1).padStart(2, '0');
+  const day = String(istDate.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 // 👑 THE MASTER APP COMPONENT STARTS HERE!
@@ -73,6 +88,14 @@ export default function App() {
     const newStatus = currentStatus === 'commissioned' ? 'project' : 'commissioned';
     const { error } = await supabase.from('sites').update({ status: newStatus }).eq('id', siteId);
     if (!error) fetchSites();
+  };
+
+  const handleDeleteSite = async (siteId, siteName) => {
+    if (window.confirm(`Are you SURE you want to permanently delete the site "${siteName}"? This cannot be undone!`)) {
+      const { error } = await supabase.from('sites').delete().eq('id', siteId);
+      if (error) alert(`Vault Error: ${error.message} (Make sure no logs are attached to it first!)`);
+      else fetchSites();
+    }
   };
 
   // 👇 YOUR ORIGINAL STATES CONTINUE HERE! 👇
@@ -182,6 +205,30 @@ const toggleIncidentStatus = async (inc) => {
       alert(`🚨 Vault Error: ${error.message}`); // This will snitch if the column is missing!
     } else {
       fetchIncidents();
+    }
+  };
+
+// ✨ NEW: WEEKLY LEDGER GOD-MODE CONTROLS
+  const [editingWeekly, setEditingWeekly] = useState(null);
+
+  const deleteWeeklyReport = async (id) => {
+    if(window.confirm("Are you absolutely sure you want to delete this MIS report?")) {
+      const { error } = await supabase.from('weekly_reports').delete().eq('id', id);
+      if (error) alert(`Vault Error: ${error.message}`);
+      else fetchWeeklyReports();
+    }
+  };
+
+  const updateWeeklyReport = async (updatedData) => {
+    const { id, created_at, ...updatePayload } = updatedData;
+    const { error } = await supabase.from('weekly_reports').update(updatePayload).eq('id', id);
+    
+    if (error) {
+      alert(`Vault Rejection: ${error.message}`);
+    } else {
+      fetchWeeklyReports();
+      setEditingWeekly(null);
+      alert("✅ MIS Report successfully updated and resent to Command!");
     }
   };
 
@@ -338,6 +385,8 @@ const toggleIncidentStatus = async (inc) => {
               contacts={contacts} 
               incidents={incidents} 
               weeklyReports={weeklyReports}
+              onDeleteSite={handleDeleteSite}
+              onDeleteWeekly={deleteWeeklyReport}
               isLoading={isLoadingData} 
               onToggleAck={toggleIncidentStatus} 
               onDeleteIncident={deleteIncident}
@@ -361,7 +410,7 @@ const toggleIncidentStatus = async (inc) => {
               onToggleSite={handleToggleSiteStatus}
             />
           ) : (
-            <SupervisorMobileView userProfile={userProfile} deployments={deployments} incidents={incidents} weeklyReports={weeklyReports} isLoading={isLoadingData} fetchDeployments={fetchDeployments} fetchIncidents={fetchIncidents} fetchWeeklyReports={fetchWeeklyReports} onLogout={handleInstantLogout} onEdit={setEditingRecord} onDelete={setDeletingRecord} onView={setViewingRecord} onToggleAck={toggleIncidentStatus} onDeleteIncident={deleteIncident} onAddContact={() => setEditingContact({ name: '', phone: '', designation: 'SS - Security Supervisor', state_name: '', site: '', email: '', company: '' })} onEditContact={setEditingContact} onDeleteContact={setDeletingContact} theme={theme} toggleTheme={toggleTheme} />
+            <SupervisorMobileView userProfile={userProfile} deployments={deployments} incidents={incidents} weeklyReports={weeklyReports} isLoading={isLoadingData} fetchDeployments={fetchDeployments} fetchIncidents={fetchIncidents} fetchWeeklyReports={fetchWeeklyReports} onEditWeekly={setEditingWeekly} onLogout={handleInstantLogout} onEdit={setEditingRecord} onDelete={setDeletingRecord} onView={setViewingRecord} onToggleAck={toggleIncidentStatus} onDeleteIncident={deleteIncident} onAddContact={() => setEditingContact({ name: '', phone: '', designation: 'SS - Security Supervisor', state_name: '', site: '', email: '', company: '' })} onEditContact={setEditingContact} onDeleteContact={setDeletingContact} theme={theme} toggleTheme={toggleTheme} />
           )}
         </div>
           {/* Modals for Deployments */}
@@ -372,6 +421,9 @@ const toggleIncidentStatus = async (inc) => {
         {/*   NEW: Modals for Contacts! */}
         {editingContact && <ContactFormModal record={editingContact} onClose={() => setEditingContact(null)} onSave={saveContact} SITES={SITES} SITES_BY_STATE={SITES_BY_STATE} STATE_NAMES={STATE_NAMES} />}           {deletingContact && <DeleteModal record={deletingContact} onClose={() => setDeletingContact(null)} onConfirm={confirmDeleteContact} type="contact" />}
         {viewingContact && <ContactViewModal record={viewingContact} onClose={() => setViewingContact(null)} />}
+      
+        {editingWeekly && <WeeklyEditModal record={editingWeekly} onClose={() => setEditingWeekly(null)} onSave={updateWeeklyReport} />}
+      
       </div>
     </div>
   );
@@ -553,7 +605,7 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
 // ==========================================
 // 📱 SUPERVISOR iOS-STYLE COMMAND HUB + CINEMATIC INTRO
 // ==========================================
-function SupervisorMobileView({ userProfile, deployments, incidents, weeklyReports, isLoading, fetchDeployments, fetchIncidents, fetchWeeklyReports, onLogout, onEdit, onDelete, onView, onDeleteIncident, theme, toggleTheme }) {
+function SupervisorMobileView({ userProfile, deployments, incidents, weeklyReports, isLoading, fetchDeployments, fetchIncidents, fetchWeeklyReports, onEditWeekly, onLogout, onEdit, onDelete, onView, onDeleteIncident, theme, toggleTheme }) {
   // ✨ NEW: iOS App States
   const [currentApp, setCurrentApp] = useState('hub'); // 'hub', 'deployment', 'incident', 'weekly'
   const [appTab, setAppTab] = useState('form'); // 'form' or 'history'
@@ -679,7 +731,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
         {currentApp === 'incident' && appTab === 'history' && <IncidentMobileHistory incidents={incidents} isLoading={isLoading} onDeleteIncident={onDeleteIncident} />}
 
         {currentApp === 'weekly' && appTab === 'form' && <WeeklyMobileForm userProfile={userProfile} fetchWeeklyReports={fetchWeeklyReports} setActiveTab={setAppTab} />}
-        {currentApp === 'weekly' && appTab === 'history' && <WeeklyMobileHistory weeklyReports={weeklyReports} isLoading={isLoading} />}
+        {currentApp === 'weekly' && appTab === 'history' && <WeeklyMobileHistory weeklyReports={weeklyReports} isLoading={isLoading} onEditWeekly={onEditWeekly} />}
       </div>
     </div>
   );
@@ -779,7 +831,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
   );
 }
 function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fillerName, deployments}) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getISTDate();
   const [date, setDate] = useState(today);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState(false);
@@ -788,26 +840,20 @@ function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fil
 
   const addPerson = () => setPersonnel([...personnel, { id: Date.now(), shift: "Day Shift", designation: "SG - Security Guard", name: "", phone: "", location: "Main Gate", customLocation: "" }]);
   const updatePerson = (id, field, value) => setPersonnel(personnel.map(p => p.id === id ? { ...p, [field]: value } : p));
-  //   THE TIME-TRAVEL MAGIC WAND!
+  
   const handleAutoFill = () => {
-    // 1. Calculate exactly what yesterday's date was!
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-    // 2. Search the vault for yesterday's logs at this specific site
+    const yesterdayStr = getISTDate(-1);
     const yesterdayLogs = (deployments || []).filter(d => d.date === yesterdayStr);
 
     if (yesterdayLogs.length === 0) {
-      alert("Oops! 🥺 I couldn't find any deployments from yesterday to copy!");
+      alert("No previous deployments found to clone, captain! 🕵️‍♀️");
       return;
     }
 
-    // 3. Map the old data into our brand new form boxes!
     const copiedPersonnel = yesterdayLogs.map((log, index) => {
       const isStandardLocation = LOCATIONS.includes(log.location);
       return {
-        id: Date.now() + index, // Gives them fresh unique IDs so React doesn't panic!
+        id: Date.now() + index,
         shift: log.shift || "Day Shift",
         designation: log.designation || "SG - Security Guard",
         name: log.name || "",
@@ -816,8 +862,6 @@ function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fil
         customLocation: isStandardLocation ? "" : log.location
       };
     });
-
-    // 4. BAM! Populate the form instantly!
     setPersonnel(copiedPersonnel);
   };
 
@@ -834,9 +878,8 @@ function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fil
     setIsSubmitting(false);
 
     if (error) {
-  // This is the big one! It will show us the RLS or Check Constraint error.
-  alert(`Vault Error: ${error.message} (Code: ${error.code})`);
-} else {
+      alert(`Vault Error: ${error.message} (Code: ${error.code})`);
+    } else {
       setSuccessMsg(true);
       fetchDeployments();
       setTimeout(() => {
@@ -847,84 +890,105 @@ function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fil
     }
   };
 
-   return (
-    <form onSubmit={handleSubmit} className="p-4 space-y-5">
+  // 🦋 META-STYLE DESIGN TOKENS
+  // Crisp white background, thick visible borders, slight inner shadow, and a bright blue focus glow!
+  const inputClass = "w-full bg-white dark:bg-[#0f172a] border-2 border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 px-4 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20 hover:border-slate-300 dark:hover:border-slate-600 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] placeholder:text-slate-400 placeholder:font-medium";
+  const labelClass = "block text-[11px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 ml-1";
+
+  return (
+    <form onSubmit={handleSubmit} className="p-4 space-y-6 bg-slate-50/50 dark:bg-slate-950/20 rounded-3xl">
       
-      {/*   THE MAGIC WAND BUTTON */}
-      <button type="button" onClick={handleAutoFill} className="w-full py-3.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 rounded-xl text-xs font-black uppercase tracking-widest flex justify-center items-center gap-2 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all shadow-sm group">
-        <Copy size={16} className="group-hover:scale-110 transition-transform" /> 
-        Auto-Fill Yesterday's Shift
+      {/* 🪄 FAANG AI-Style Magic Wand */}
+      <button type="button" onClick={handleAutoFill} className="w-full py-4 bg-white dark:bg-slate-900 border-2 border-transparent bg-clip-padding relative rounded-2xl text-[11px] font-black uppercase tracking-widest flex justify-center items-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95 group before:absolute before:inset-0 before:-z-10 before:m-[-2px] before:rounded-[18px] before:bg-gradient-to-r before:from-blue-500 before:to-purple-500 text-slate-800 dark:text-white">
+        <Sparkles size={16} className="group-hover:scale-110 transition-transform text-blue-500" /> 
+        Clone Yesterday's Roster
       </button>
 
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        <label className={labelClass}>Mission Date</label>
         <div className="relative">
-          <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-bold outline-none [color-scheme:light] dark:[color-scheme:dark]" />
+          <Calendar size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500" />
+          <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className={`${inputClass} pl-12 cursor-pointer [color-scheme:light] dark:[color-scheme:dark]`} />
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         {personnel.map((person, index) => (
-          <div key={person.id} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-            <div className="bg-slate-50 dark:bg-slate-800/50 px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-              <span className="text-xs font-bold text-slate-500 uppercase">Entry #{index + 1}</span>
-              {personnel.length > 1 && <button type="button" onClick={() => setPersonnel(personnel.filter(p => p.id !== person.id))} className="text-slate-400 hover:text-red-500"><X size={16} /></button>}
+          <div key={person.id} className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden transition-all relative">
+            
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/80 dark:bg-slate-800/30">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 flex items-center justify-center font-black">{index + 1}</div>
+                <span className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">Operative Data</span>
+              </div>
+              {personnel.length > 1 && <button type="button" onClick={() => setPersonnel(personnel.filter(p => p.id !== person.id))} className="text-slate-400 hover:text-white hover:bg-rose-500 p-2 rounded-full transition-colors"><X size={16} /></button>}
             </div>
-            <div className="p-4 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+            
+            <div className="p-6 space-y-5">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Shift</label>
-                  <select value={person.shift} onChange={(e) => updatePerson(person.id, 'shift', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-semibold outline-none focus:border-indigo-500">
+                  <label className={labelClass}>Shift</label>
+                  <select value={person.shift} onChange={(e) => updatePerson(person.id, 'shift', e.target.value)} className={`${inputClass} cursor-pointer`}>
                     <option value="Day Shift">Day Shift</option>
                     <option value="Night Shift">Night Shift</option>
-                    <option value="Weekly Off">Weekly Off/Leave</option>
+                    <option value="Weekly Off">Weekly Off</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Role</label>
-                  <select value={person.designation} onChange={(e) => updatePerson(person.id, 'designation', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-semibold outline-none focus:border-indigo-500">
+                  <label className={labelClass}>Clearance</label>
+                  <select value={person.designation} onChange={(e) => updatePerson(person.id, 'designation', e.target.value)} className={`${inputClass} cursor-pointer`}>
                     {DESIGNATIONS.map(d => <option key={d} value={d}>{d.split(' - ')[0]}</option>)}
                   </select>
                 </div>
               </div>
+
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Full Name</label>
-                <input type="text" required placeholder="Employee Name" value={person.name} onChange={(e) => updatePerson(person.id, 'name', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none uppercase placeholder:normal-case focus:border-indigo-500" />
+                <label className={labelClass}>Operative Name</label>
+                <div className="relative">
+                  <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input type="text" required placeholder="Full Name..." value={person.name} onChange={(e) => updatePerson(person.id, 'name', e.target.value)} className={`${inputClass} pl-12 uppercase`} />
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Phone</label>
-                  <input type="tel" required pattern="[0-9]{10}" placeholder="10 Digits" maxLength="10" value={person.phone} onChange={(e) => updatePerson(person.id, 'phone', e.target.value.replace(/\D/g, ''))} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-mono font-medium outline-none focus:border-indigo-500" />
+                  <label className={labelClass}>Commlink</label>
+                  <div className="relative">
+                    <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input type="tel" required pattern="[0-9]{10}" placeholder="10 Digits" maxLength="10" value={person.phone} onChange={(e) => updatePerson(person.id, 'phone', e.target.value.replace(/\D/g, ''))} className={`${inputClass} pl-11 font-mono`} />
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Location</label>
-                  <select value={person.location} onChange={(e) => updatePerson(person.id, 'location', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-semibold outline-none focus:border-indigo-500">
+                  <label className={labelClass}>Post</label>
+                  <select value={person.location} onChange={(e) => updatePerson(person.id, 'location', e.target.value)} className={`${inputClass} cursor-pointer`}>
                     {LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
                   </select>
                 </div>
               </div>
+
               {person.location === 'Other' && (
-                <input type="text" required placeholder="Specify location" value={person.customLocation} onChange={(e) => updatePerson(person.id, 'customLocation', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg py-2.5 px-3 text-sm font-semibold outline-none focus:border-indigo-500" />
+                <div className="animate-in fade-in slide-in-from-top-2">
+                  <input type="text" required placeholder="Specify sector exactly..." value={person.customLocation} onChange={(e) => updatePerson(person.id, 'customLocation', e.target.value)} className={inputClass} />
+                </div>
               )}
             </div>
           </div>
         ))}
 
-        <button type="button" onClick={addPerson} className="w-full py-4 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-white rounded-xl text-sm font-bold flex justify-center items-center gap-2">
-          <Plus size={18} /> ADD PERSONNEL
+        <button type="button" onClick={addPerson} className="w-full py-5 rounded-[2rem] border-2 border-dashed border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all text-xs font-black uppercase tracking-widest flex justify-center items-center gap-2">
+          <Plus size={18} /> Append Another Operative
         </button>
       </div>
 
-      <button type="submit" disabled={isSubmitting} className={`w-full py-4 rounded-xl font-bold text-base shadow-lg flex justify-center items-center gap-2 ${successMsg ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/50' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-900/20'}`}>
-        {isSubmitting ? 'SAVING TO VAULT...' : successMsg ? <><CheckCircle size={20} /> RECORDED</> : 'SUBMIT DEPLOYMENT'}
+      <button type="submit" disabled={isSubmitting} className={`w-full py-4 rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-xl transition-all flex justify-center items-center gap-2 ${successMsg ? 'bg-emerald-500 text-white shadow-emerald-500/25' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/25 active:scale-95'}`}>
+        {isSubmitting ? 'ENCRYPTING...' : successMsg ? <><CheckCircle size={20} /> SECURED</> : 'TRANSMIT DEPLOYMENT'}
       </button>
     </form>
   );
 }
 
 function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onView }) {
-  const [viewDate, setViewDate] = useState(new Date().toISOString().split('T')[0]);
+  const [viewDate, setViewDate] = useState(getISTDate());
   const [isCopied, setIsCopied] = useState(false);
 
   if (isLoading) return <div className="p-10 text-center text-indigo-500 font-bold animate-pulse">Syncing with cloud vault...</div>;
@@ -1019,6 +1083,10 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
             </div>
 
             <div className="flex justify-end border-t border-slate-100 dark:border-slate-800/50 pt-3 mt-1 gap-2">
+              {/* ✨ NEW: THE VIEW BUTTON! */}
+              <button onClick={() => onView(row)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-500 hover:text-emerald-600 bg-slate-50 hover:bg-emerald-50 dark:bg-slate-800 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-400 rounded-lg transition-colors">
+                <Eye size={14} /> View 
+              </button>
               <button onClick={() => onEdit(row)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-500 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 dark:bg-slate-800 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 rounded-lg transition-colors">
                 <Edit2 size={14} /> Edit 
               </button>
@@ -1036,13 +1104,12 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
 // ==========================================
 // ADMIN VIEW (MASTER PORTAL + COMMAND CENTER)
 // ==========================================
-function AdminDesktopView({ userProfile, deployments, contacts, incidents, weeklyReports, isLoading, onToggleAck, onDeleteIncident, onLogout, onEdit, onView, onDelete, onAddContact, onEditContact, onDeleteContact, onViewContact, onImportCSV, theme, toggleTheme, globalSites, SITES, COMMISSIONED_SITES, SITES_BY_STATE, STATE_NAMES, onAddSite, onToggleSite }) {
-  const [activeTab, setActiveTab] = useState('deployments'); 
+function AdminDesktopView({ userProfile, deployments, contacts, incidents, weeklyReports, isLoading, onToggleAck, onDeleteIncident, onLogout, onEdit, onView, onDelete, onAddContact, onEditContact, onDeleteContact, onViewContact, onImportCSV, theme, toggleTheme, globalSites = [], SITES = [], COMMISSIONED_SITES = [], SITES_BY_STATE = {}, STATE_NAMES = [], onAddSite, onToggleSite, onDeleteSite, onDeleteWeekly }) {  const [activeTab, setActiveTab] = useState('deployments'); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false); // ✨ NEW: Settings Toggle!
   
   // ✨ NEW: TODAY'S INCIDENT TRACKER LOGIC
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getISTDate();
   const todaysIncidents = incidents ? incidents.filter(i => (i.created_at || '').startsWith(todayStr)) : [];
   const siteIncidentCounts = {};
   todaysIncidents.forEach(inc => {
@@ -1053,7 +1120,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
   // Deployment Filters
   const [filterState, setFilterState] = useState("All");
   const [filterSite, setFilterSite] = useState("All");
-  const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
+  const [filterDate, setFilterDate] = useState(getISTDate());
   const [filterShift, setFilterShift] = useState("All");
   const [filterDesignation, setFilterDesignation] = useState("All");
   const [filterLocation, setFilterLocation] = useState("All"); //   NEW: Location Filter
@@ -1068,8 +1135,11 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
   
   // 🧠 1. THE MASTER FILTER ENGINE
   const filteredData = deployments.filter(d => {
-    const stateMatch = filterState === "All" || (SITES_BY_STATE[filterState] && SITES_BY_STATE[filterState].includes(d.site));
-    const siteMatch = filterSite === "All" || d.site === filterSite;
+    // ✨ SAFETY NET: Force old database logs to UPPERCASE!
+    const safeSiteName = (d.site || "").toUpperCase();
+
+    const stateMatch = filterState === "All" || (SITES_BY_STATE[filterState] && SITES_BY_STATE[filterState].includes(safeSiteName));
+    const siteMatch = filterSite === "All" || safeSiteName === filterSite;
     const dateMatch = filterDate === "" || d.date === filterDate;
     const shiftMatch = filterShift === "All" || d.shift === filterShift;
     const designationMatch = filterDesignation === "All" || (d.designation && d.designation.startsWith(filterDesignation));
@@ -1328,7 +1398,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
           
           {/* 🛑 INTERCEPT: SHOW SETTINGS IF ACTIVE! */}
           {showSettings ? (
-            <AdminSettingsView userProfile={userProfile} globalSites={globalSites} STATE_NAMES={STATE_NAMES} onAddSite={onAddSite} onToggleStatus={onToggleSite} onClose={() => setShowSettings(false)} />
+            <AdminSettingsView userProfile={userProfile} globalSites={globalSites} STATE_NAMES={STATE_NAMES} onAddSite={onAddSite} onToggleStatus={onToggleSite} onDeleteSite={onDeleteSite} onClose={() => setShowSettings(false)} />
           ) : (
             <>
           
@@ -1337,12 +1407,18 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
           {/* ===================================== */}
           {activeTab === 'deployments' && (
             <>
-              {/*   THE VIP SWITCH */}
+              {/* ✨ DYNAMIC VIP SWITCH */}
               <div className="mb-6 flex justify-center sm:justify-start">
                 <div className="inline-flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner w-full sm:w-auto">
-                  <button onClick={() => setSiteTier('All')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${siteTier === 'All' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>Total 56</button>
-                  <button onClick={() => setSiteTier('Commissioned')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${siteTier === 'Commissioned' ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' : 'text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400'}`}>Operational - 26 </button>
-                  <button onClick={() => setSiteTier('Project')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${siteTier === 'Project' ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/20' : 'text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400'}`}>Projects</button>
+                  <button onClick={() => setSiteTier('All')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${siteTier === 'All' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
+                    Total {globalSites?.length || 0}
+                  </button>
+                  <button onClick={() => setSiteTier('Commissioned')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${siteTier === 'Commissioned' ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' : 'text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400'}`}>
+                    Operational - {COMMISSIONED_SITES?.length || 0}
+                  </button>
+                  <button onClick={() => setSiteTier('Project')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${siteTier === 'Project' ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/20' : 'text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400'}`}>
+                    Projects - {(globalSites?.length || 0) - (COMMISSIONED_SITES?.length || 0)}
+                  </button>
                 </div>
               </div>
 
@@ -1395,7 +1471,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
                 {/*   THE NEW MTCC ACTIVE NODES CARD (WITH SECRET HOVER!) */}
                 <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-visible group cursor-help z-10">
                    <div className="absolute -right-4 -top-4 w-24 h-24 bg-amber-500/10 rounded-full blur-xl group-hover:bg-amber-500/20 transition-all"></div>
-                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><Target size={12} className="text-amber-500"/> MTCC Active Nodes</p>
+                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><Target size={12} className="text-amber-500"/> MTCC Active Sites</p>
                    <h3 className="text-3xl font-black text-slate-900 dark:text-white">{mtccActiveSitesCount} <span className="text-sm text-slate-400 font-bold uppercase tracking-widest">Sites Online</span></h3>
                    
                    {/* 🕵️‍♀️ THE MAGIC MTCC HOVER REVEAL */}
@@ -1530,25 +1606,26 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
               </div>
 
               {/* 🎛️ TIER 3: DATA TABLE & FILTERS */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden flex flex-col mt-6">
                 <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex flex-wrap gap-3 items-end">
                   <div className="flex-1 min-w-[200px] sm:min-w-[250px] relative">
                     <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input type="text" placeholder="Search Guard Name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors" />
                   </div>
+                  
+                  {/* ✨ FIXED: The Filters now use the live data! */}
                   <FilterSelect label="Date" value={filterDate} onChange={setFilterDate} type="date" />
                   <FilterSelect label="State" value={filterState} onChange={(e) => { setFilterState(e); setFilterSite("All"); }} options={STATE_NAMES} />
                   <FilterSelect label="Site" value={filterSite} onChange={setFilterSite} options={[...availableSites].sort()} />
-                  <FilterSelect label="Shift" value={filterShift} onChange={setFilterShift} options={["Day Shift", "Night Shift"]} />
+                  <FilterSelect label="Shift" value={filterShift} onChange={setFilterShift} options={["Day Shift", "Night Shift", "Weekly Off"]} />
                   <FilterSelect label="Role" value={filterDesignation} onChange={setFilterDesignation} options={["SS", "SG"]} />
-                  {/*   LOCATION FILTER BUILT RIGHT IN! */}
                   <FilterSelect label="Loc" value={filterLocation} onChange={setFilterLocation} options={LOCATIONS} />
                   
                   <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0 ml-auto">
                     <button onClick={exportToCSV} className="text-xs font-black tracking-widest text-white bg-emerald-600 hover:bg-emerald-500 px-4 py-2.5 rounded-xl transition-all shadow-md shadow-emerald-600/20 flex items-center gap-2 transform hover:-translate-y-0.5">
                       <Download size={14} /> EXPORT
                     </button>
-                    <button onClick={() => { setFilterState("All"); setFilterSite("All"); setFilterDate(new Date().toISOString().split('T')[0]); setFilterShift("All"); setFilterDesignation("All"); setFilterLocation("All"); setSearchTerm(""); }} className="text-xs font-black tracking-widest text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 px-4 py-2.5 rounded-xl transition-colors hover:bg-slate-300 dark:hover:bg-slate-700">
+                    <button onClick={() => { setFilterState("All"); setFilterSite("All"); setFilterDate(getISTDate()); setFilterShift("All"); setFilterDesignation("All"); setFilterLocation("All"); setSearchTerm(""); }} className="text-xs font-black tracking-widest text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 px-4 py-2.5 rounded-xl transition-colors hover:bg-slate-300 dark:hover:bg-slate-700">
                       CLEAR
                     </button>
                   </div>
@@ -1700,8 +1777,8 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
               </div>
             </>
           )}
-        {activeTab === 'incidents' && <AdminIncidentView incidents={incidents} isLoading={isLoading} onAcknowledge={onToggleAck} onDelete={onDeleteIncident} SITES={SITES} />}
-        {activeTab === 'weekly' && <AdminWeeklyView weeklyReports={weeklyReports} isLoading={isLoading} COMMISSIONED_SITES={COMMISSIONED_SITES} />}
+        {activeTab === 'incidents' && <AdminIncidentView incidents={incidents} isLoading={isLoading} onAcknowledge={onToggleAck} onDelete={onDeleteIncident} SITES={SITES} STATE_NAMES={STATE_NAMES} SITES_BY_STATE={SITES_BY_STATE} />}
+        {activeTab === 'weekly' && <AdminWeeklyView weeklyReports={weeklyReports} isLoading={isLoading} COMMISSIONED_SITES={COMMISSIONED_SITES} SITES={SITES} STATE_NAMES={STATE_NAMES} SITES_BY_STATE={SITES_BY_STATE} onDeleteWeekly={onDeleteWeekly} />}
             </>
           )}
         </div>
@@ -1830,8 +1907,7 @@ function DeleteModal({ record, onClose, onConfirm, type }) {
 // ==========================================
 // ✏️ CONTACT FORM MODAL (UPGRADED)
 // ==========================================
-function ContactFormModal({ record, onClose, onSave, SITES, SITES_BY_STATE, STATE_NAMES }) {
-  //   SMART LOGIC: Checks if we are editing someone with a custom designation
+function ContactFormModal({ record, onClose, onSave, SITES = [], SITES_BY_STATE = {}, STATE_NAMES = [] }) {
   const isCustomInitial = record.designation && !CONTACT_ROLES.includes(record.designation);
 
   const [formData, setFormData] = useState({
@@ -1842,87 +1918,111 @@ function ContactFormModal({ record, onClose, onSave, SITES, SITES_BY_STATE, STAT
 
   const handleSubmit = (e) => { 
     e.preventDefault(); 
-    // Figure out which designation to save!
     const finalDesignation = formData.designationMode === 'Other' ? formData.customDesignation : formData.designationMode;
-    
-    // Clean up the data before saving
     const { designationMode, customDesignation, ...dataToSave } = formData;
-    dataToSave.designation = finalDesignation.toUpperCase(); // Save it nice and capitalized!
-    
+    dataToSave.designation = finalDesignation.toUpperCase(); 
     onSave(dataToSave); 
   };
   
   const availableSites = formData.state_name ? (SITES_BY_STATE[formData.state_name] || []) : SITES;
 
+  // 🦋 META-STYLE DESIGN TOKENS
+  const inputClass = "w-full bg-white dark:bg-[#0f172a] border-2 border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 px-4 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20 hover:border-slate-300 dark:hover:border-slate-600 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] placeholder:text-slate-400 placeholder:font-medium";
+  const labelClass = "block text-[11px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 ml-1";
+
   return (
-    <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950/50">
-          <h3 className="font-bold text-slate-900 dark:text-slate-200 flex items-center gap-2">
-            <BookOpen size={16} className="text-indigo-600 dark:text-indigo-400" /> 
-            {record.id ? 'Edit Contact' : 'New Contact'}
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/90 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
+      <div className="bg-slate-50 dark:bg-slate-900 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] w-full max-w-xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-200 dark:border-slate-800">
+        
+        {/* Sleek Header */}
+        <div className="px-8 py-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-[#0f172a] shrink-0">
+          <h3 className="font-black text-slate-900 dark:text-white flex items-center gap-3 text-xl uppercase tracking-tight">
+            <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 flex items-center justify-center"><BookOpen size={18} /></div>
+            {record.id ? 'Modify Identity' : 'New Identity'}
           </h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"><X size={20} /></button>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors bg-slate-100 dark:bg-slate-800 p-2.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700"><X size={18} /></button>
         </div>
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
+
+        <form id="contact-form" onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
           
-          <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Full Name *</label><input type="text" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none focus:border-indigo-500 uppercase" placeholder="e.g. MAYANK DWIVEDI" /></div>
-          
-          <div className="grid grid-cols-2 gap-3">
-            <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Phone *</label><input type="tel" required pattern="[0-9]{10}" maxLength="10" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/\D/g, '')})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-mono font-bold outline-none focus:border-indigo-500" placeholder="10 Digits" /></div>
+          <div className="bg-white dark:bg-[#0f172a] p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
             <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Designation *</label>
-              <select required value={formData.designationMode} onChange={(e) => setFormData({...formData, designationMode: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none focus:border-indigo-500">
-                {CONTACT_ROLES.map(d => <option key={d} value={d}>{d}</option>)}
-              </select>
+              <label className={labelClass}>Identity / Full Name</label>
+              <input type="text" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value.toUpperCase()})} className={`${inputClass} uppercase`} placeholder="e.g. MAYANK DWIVEDI" />
             </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>Commlink / Phone</label>
+                <div className="relative">
+                  <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input type="tel" required pattern="[0-9]{10}" maxLength="10" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/\D/g, '')})} className={`${inputClass} pl-11 font-mono`} placeholder="10 Digits" />
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>Clearance Level</label>
+                <select required value={formData.designationMode} onChange={(e) => setFormData({...formData, designationMode: e.target.value})} className={`${inputClass} cursor-pointer`}>
+                  {CONTACT_ROLES.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {formData.designationMode === 'Other' && (
+              <div className="animate-in fade-in slide-in-from-top-2 pt-2">
+                <label className="block text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1.5 ml-1">Custom Designation</label>
+                <input type="text" required placeholder="e.g. HR Manager" value={formData.customDesignation} onChange={(e) => setFormData({...formData, customDesignation: e.target.value})} className={`${inputClass} border-blue-300 dark:border-blue-500/50 bg-blue-50/30 dark:bg-blue-900/10`} />
+              </div>
+            )}
           </div>
 
-          {/*   MAGIC TEXT BOX: Only shows if 'Other' is selected! */}
-          {formData.designationMode === 'Other' && (
-            <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-              <label className="block text-[10px] font-bold text-indigo-500 uppercase mb-1">Custom Designation *</label>
-              <input type="text" required placeholder="e.g. HR Manager" value={formData.customDesignation} onChange={(e) => setFormData({...formData, customDesignation: e.target.value})} className="w-full bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none focus:border-indigo-500" />
-            </div>
-          )}
-
-          <div className="border-t border-slate-100 dark:border-slate-800 pt-3 mt-2">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 text-center">Optional Details</p>
+          <div className="bg-white dark:bg-[#0f172a] p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-5 flex items-center gap-2"><MapPin size={12}/> Optional Telemetry</h4>
             
-            <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="grid grid-cols-2 gap-4 mb-5">
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">State / Region</label>
-                <select value={formData.state_name || ''} onChange={(e) => setFormData({...formData, state_name: e.target.value, site: ''})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none focus:border-indigo-500">
+                <label className={labelClass}>State Region</label>
+                <select value={formData.state_name || ''} onChange={(e) => setFormData({...formData, state_name: e.target.value, site: ''})} className={`${inputClass} cursor-pointer`}>
                   <option value="">-- None --</option>
                   {STATE_NAMES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Site</label>
-                <select value={formData.site || ''} onChange={(e) => setFormData({...formData, site: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none focus:border-indigo-500">
+                <label className={labelClass}>Node Site</label>
+                <select value={formData.site || ''} onChange={(e) => setFormData({...formData, site: e.target.value})} className={`${inputClass} cursor-pointer`}>
                   <option value="">-- None --</option>
                   {availableSites.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Email</label><input type="email" value={formData.email || ''} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none focus:border-indigo-500" placeholder="name@company.com" /></div>
-              <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Work / Company</label><input type="text" value={formData.company || ''} onChange={(e) => setFormData({...formData, company: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-bold outline-none focus:border-indigo-500" placeholder="e.g. RBG Security" /></div>
-              
-              {/*   NEW NOTES SECTION */}
+            <div className="space-y-5">
               <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Notes</label>
-                <textarea value={formData.notes || ''} onChange={(e) => setFormData({...formData, notes: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm font-medium outline-none focus:border-indigo-500 min-h-[80px] resize-y placeholder:text-slate-400" placeholder="Add any important details here..."></textarea>
+                <label className={labelClass}>Email Address</label>
+                <div className="relative">
+                  <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input type="email" value={formData.email || ''} onChange={(e) => setFormData({...formData, email: e.target.value})} className={`${inputClass} pl-11`} placeholder="operative@company.com" />
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>Organization</label>
+                <div className="relative">
+                  <Briefcase size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input type="text" value={formData.company || ''} onChange={(e) => setFormData({...formData, company: e.target.value})} className={`${inputClass} pl-11`} placeholder="e.g. RBG Security" />
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>Internal Notes</label>
+                <textarea value={formData.notes || ''} onChange={(e) => setFormData({...formData, notes: e.target.value})} className={`${inputClass} min-h-[100px] resize-y py-4`} placeholder="Add strategic details here..."></textarea>
               </div>
             </div>
           </div>
-
-          <div className="pt-4 flex gap-3 sticky bottom-0 bg-white dark:bg-slate-900 pb-1">
-            <button type="button" onClick={onClose} className="flex-1 py-3 rounded-lg font-bold text-sm bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">Cancel</button>
-            <button type="submit" className="flex-1 py-3 rounded-lg font-bold text-sm bg-indigo-600 text-white flex items-center justify-center gap-2"><Save size={16} /> Save</button>
-          </div>
         </form>
+
+        <div className="p-6 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-800 flex gap-3 shrink-0">
+          <button type="button" onClick={onClose} className="w-1/3 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Abort</button>
+          <button type="submit" form="contact-form" className="flex-1 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest bg-blue-600 text-white flex items-center justify-center gap-2 hover:bg-blue-700 shadow-lg shadow-blue-600/20 active:scale-95 transition-all">                 <Save size={16} /> Save Identity
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -2119,7 +2219,7 @@ function IncidentMobileForm({ userProfile, fetchIncidents, setActiveTab }) {
 }
 
 function IncidentMobileHistory({ incidents, isLoading }) {
-  const [viewDate, setViewDate] = useState(new Date().toISOString().split('T')[0]);
+  const [viewDate, setViewDate] = useState(getISTDate());
   const [viewingInc, setViewingInc] = useState(null); // ✨ NEW: Modal Brain!
 
   // ✨ NEW: If they clear the date, they see ALL past reports!
@@ -2225,18 +2325,34 @@ function IncidentMobileHistory({ incidents, isLoading }) {
   );
 }
 
-function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete, SITES }) {
-  const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
+function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete, SITES = [], STATE_NAMES = [], SITES_BY_STATE = {} }) {
+  const [filterDate, setFilterDate] = useState(getISTDate());
   const [filterState, setFilterState] = useState("All");
   const [filterSite, setFilterSite] = useState("All");
+  const [searchTerm, setSearchTerm] = useState(""); // ✨ NEW: Global Search Brain!
   const [viewingInc, setViewingInc] = useState(null);
 
-  const availableSites = SITES;
+  // ✨ FIXED: Cascading Site List based on selected State!
+  const availableSites = filterState === "All" ? SITES : SITES_BY_STATE[filterState] || [];
+  
   const filtered = incidents.filter(i => {
     const dMatch = filterDate === '' || (i.created_at || '').startsWith(filterDate);
-    const stMatch = filterState === "All" || i.state_name === filterState;
-    const siMatch = filterSite === "All" || i.site === filterSite;
-    return dMatch && stMatch && siMatch;
+    
+    // ✨ SAFETY NET: Force old database logs to UPPERCASE so they match your new clean UI!
+    const safeSiteName = (i.site || "").toUpperCase();
+    
+    const stMatch = filterState === "All" || (SITES_BY_STATE[filterState] && SITES_BY_STATE[filterState].includes(safeSiteName));
+    const siMatch = filterSite === "All" || safeSiteName === filterSite;
+    
+    // ✨ NEW: The Omni-Search Math!
+    const q = searchTerm.toLowerCase();
+    const searchMatch = searchTerm === "" || 
+      (i.incident_name || "").toLowerCase().includes(q) ||
+      (i.incident_location || "").toLowerCase().includes(q) ||
+      (i.reported_by || "").toLowerCase().includes(q) ||
+      (i.details || "").toLowerCase().includes(q);
+
+    return dMatch && stMatch && siMatch && searchMatch;
   });
 
   const downloadPhoto = (e, url, idx) => {
@@ -2286,9 +2402,20 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete, SITE
   return (
     <div className="space-y-6">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 flex flex-wrap gap-4 items-end">
+        
+        {/* ✨ NEW GLOBAL SEARCH BAR */}
+        <div className="flex-1 min-w-[200px] relative">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input type="text" placeholder="Search Incidents (Name, Location, Reporter)..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-rose-500 transition-colors" />
+        </div>
+
         <FilterSelect label="Date" value={filterDate} onChange={setFilterDate} type="date" />
-        <FilterSelect label="State" value={filterState} onChange={e => {setFilterState(e); setFilterSite("All");}} options={[...new Set(incidents.map(i => i.state_name).filter(Boolean))].sort()} />
+        {/* ✨ FIXED: State Dropdown now perfectly uses STATE_NAMES! */}
+        <FilterSelect label="State" value={filterState} onChange={e => {setFilterState(e); setFilterSite("All");}} options={STATE_NAMES} />
         <FilterSelect label="Site" value={filterSite} onChange={setFilterSite} options={[...availableSites].sort()} />
+        
+        {/* ✨ Cute little clear button! */}
+        <button onClick={() => { setFilterDate(''); setFilterState('All'); setFilterSite('All'); setSearchTerm(''); }} className="text-[10px] font-black tracking-widest text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-2.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">CLEAR</button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -2429,7 +2556,7 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab }) {
   return (
     <form onSubmit={handleSubmit} className="p-4 space-y-6">
       <div className="bg-emerald-50 dark:bg-emerald-500/10 p-5 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 shadow-sm">
-        <h3 className="font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest text-xs mb-3 flex items-center gap-2"><Calendar size={16}/> Select Ledger Dates</h3>
+        <h3 className="font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest text-xs mb-3 flex items-center gap-2"><Calendar size={16}/> Select MIS Report Dates</h3>
         <div className="grid grid-cols-2 gap-3">
           <div><label className="block text-[9px] font-black text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-widest mb-1">Date From</label><input type="date" required value={fd.dateFrom} onChange={(e) => setFd({...fd, dateFrom: e.target.value})} className="w-full bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-500/30 rounded-lg py-2.5 px-3 text-sm font-bold outline-none text-emerald-800 dark:text-emerald-200 [color-scheme:light] dark:[color-scheme:dark]" /></div>
           <div><label className="block text-[9px] font-black text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-widest mb-1">Date To</label><input type="date" required value={fd.dateTo} onChange={(e) => setFd({...fd, dateTo: e.target.value})} className="w-full bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-500/30 rounded-lg py-2.5 px-3 text-sm font-bold outline-none text-emerald-800 dark:text-emerald-200 [color-scheme:light] dark:[color-scheme:dark]" /></div>
@@ -2498,25 +2625,121 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab }) {
     </form>
   );
 }
-function WeeklyMobileHistory({ weeklyReports, isLoading }) {
-  if (isLoading) return <div className="p-8 text-center text-slate-500 font-bold animate-pulse">Loading report...</div>;
+function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
+  const [viewingRep, setViewingRep] = useState(null); // ✨ NEW: The Modal Brain!
+
+  if (isLoading) return <div className="p-8 text-center text-slate-500 font-bold animate-pulse">Loading ledgers...</div>;
   
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-4 pb-24">
       {weeklyReports.map(rep => (
-        <div key={rep.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border-l-4 border-emerald-500 border-y border-r border-y-slate-200 border-r-slate-200 dark:border-y-slate-800 dark:border-r-slate-800 relative">
+        <div key={rep.id} onClick={() => setViewingRep(rep)} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border-l-4 border-emerald-500 border-y border-r border-y-slate-200 border-r-slate-200 dark:border-y-slate-800 dark:border-r-slate-800 relative cursor-pointer active:scale-95 transition-transform group">
           <div className="absolute top-4 right-4 bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 font-black text-[10px] uppercase tracking-widest px-2 py-1 rounded">Sr. {rep.sr_no}</div>
           <h4 className="font-black text-slate-900 dark:text-white uppercase text-sm mb-1">{rep.site}</h4>
           <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase mb-4"><Calendar size={10} className="inline mr-1"/>{rep.date_from} TO {rep.date_to}</p>
           
-          <div className="grid grid-cols-3 gap-2 text-[10px] font-bold text-center border-t border-slate-100 dark:border-slate-800 pt-3">
+          <div className="grid grid-cols-3 gap-2 text-[10px] font-bold text-center border-t border-slate-100 dark:border-slate-800 pt-3 mb-3">
             <div className="bg-slate-50 dark:bg-slate-950 p-2 rounded"><span className="text-slate-400 block mb-1">Dispatch</span><span className="text-slate-700 dark:text-slate-300">{(parseInt(rep.disp_solid||0) + parseInt(rep.disp_gas||0) + parseInt(rep.disp_scrap||0))} Total</span></div>
             <div className="bg-slate-50 dark:bg-slate-950 p-2 rounded"><span className="text-slate-400 block mb-1">Receipt</span><span className="text-slate-700 dark:text-slate-300">{(parseInt(rep.rec_company||0) + parseInt(rep.rec_contractor||0))} Total</span></div>
             <div className="bg-slate-50 dark:bg-slate-950 p-2 rounded"><span className="text-slate-400 block mb-1">Footfall</span><span className="text-slate-700 dark:text-slate-300">{(parseInt(rep.foot_contractor||0) + parseInt(rep.foot_ril||0) + parseInt(rep.foot_visitor||0) + parseInt(rep.foot_gov||0))} Total</span></div>
           </div>
+
+          <div className="grid grid-cols-2 gap-2 mt-2">
+            {/* ✨ THE NEW EDIT BUTTON */}
+            <button onClick={(e) => { e.stopPropagation(); onEditWeekly(rep); }} className="w-full py-2.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400 flex justify-center items-center gap-1.5 hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-100 dark:border-indigo-800/50">
+               <Edit2 size={14}/> Edit / Resend
+            </button>
+            <button onClick={() => setViewingRep(rep)} className="w-full py-2.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 flex justify-center items-center gap-1.5 hover:bg-emerald-100 transition-colors shadow-sm border border-emerald-100 dark:border-emerald-800/50">
+               <Eye size={14}/> View Report
+            </button>
+          </div>
         </div>
       ))}
-      {weeklyReports.length === 0 && <p className="text-center text-slate-500 text-sm mt-10 font-medium">No MIS Report found.</p>}
+      {weeklyReports.length === 0 && <p className="text-center text-slate-500 text-sm mt-10 font-medium">No weekly ledgers found.</p>}
+
+      {/* ✨ THE MAGICAL MOBILE MODAL FOR SUPERVISORS */}
+      {viewingRep && (
+        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[100] flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in duration-200" onClick={() => setViewingRep(null)}>
+          {/* ✨ Notice: Made it max-w-5xl so the table has room to breathe on tablets! */}
+          <div className="bg-white dark:bg-slate-900 w-full sm:max-w-5xl h-[85vh] sm:h-auto sm:max-h-[85vh] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+            <div className="h-1.5 w-12 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mt-3 sm:hidden shrink-0"></div>
+            
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start bg-slate-50 dark:bg-slate-950/50 shrink-0">
+               <div>
+                 <span className="text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">Sr No. {viewingRep.sr_no}</span>
+                 <h2 className="text-lg font-black text-slate-900 dark:text-white mt-3 uppercase leading-tight">{viewingRep.site}</h2>
+                 <p className="text-[10px] font-bold text-slate-500 mt-1">Logged: {viewingRep.date_from} to {viewingRep.date_to}</p>
+               </div>
+               <button onClick={() => setViewingRep(null)} className="p-2 text-slate-400 hover:text-emerald-500 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full shadow-sm"><X size={16} /></button>
+            </div>
+            
+            {/* 📋 THE GLORIOUS HORIZONTAL SCROLL TABLE! */}
+            <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar bg-white dark:bg-slate-900">
+               <div className="overflow-x-auto border border-slate-300 dark:border-slate-700 rounded-xl shadow-sm custom-scrollbar pb-2">
+                 <table className="w-max min-w-full border-collapse text-center text-[10px] font-black uppercase tracking-widest">
+                   <thead>
+                     <tr className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 min-w-[60px]">Sr. No.</th>
+                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 min-w-[100px]">SITE</th>
+                       <th colSpan="3" className="border border-slate-300 dark:border-slate-700 p-3 bg-emerald-100/50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-400">DISPATCH</th>
+                       <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 bg-indigo-100/50 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-400">RECEIPT</th>
+                       <th colSpan="3" className="border border-slate-300 dark:border-slate-700 p-3 bg-amber-100/50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400">OGP</th>
+                       <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 bg-blue-100/50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400">VEHICLE</th>
+                       <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 bg-purple-100/50 dark:bg-purple-900/20 text-purple-800 dark:text-purple-400">CON/RIL STAFF</th>
+                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 text-rose-600 dark:text-rose-400">VISITOR</th>
+                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 text-rose-600 dark:text-rose-400">GOV.<br/>OFF.</th>
+                       <th colSpan="4" className="border border-slate-300 dark:border-slate-700 p-3 bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white">DEPLOYMENT</th>
+                     </tr>
+                     <tr className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400">
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">SOLID</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">GAS</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">SCRAP</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">COMPANY</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">CONTRACTOR</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">NRGP</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">RMGP</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">RMGP IN</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2 px-1">CON.<br/>VEH</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2 px-1">CO.<br/>VEH</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2 px-1">CON.<br/>WORKER</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2 px-1">RIL<br/>EMP.</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">Day SS</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">Day SG</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">Night SS</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">Night SG</th>
+                     </tr>
+                   </thead>
+                   <tbody>
+                     <tr className="text-slate-900 dark:text-white bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.sr_no}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-3 text-emerald-600 dark:text-emerald-400">{viewingRep.site}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.disp_solid || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.disp_gas || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-3 text-rose-500">{viewingRep.disp_scrap || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.rec_company || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.rec_contractor || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.ogp_nrgp || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-3 text-amber-500">{viewingRep.ogp_rmgp || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-3 text-emerald-500">{viewingRep.ogp_rmgp_in || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.veh_contractor || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.veh_company || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.foot_contractor || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.foot_ril || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-3 text-purple-500">{viewingRep.foot_visitor || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-3 text-purple-500">{viewingRep.foot_gov || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.dep_day_ss || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.dep_day_sg || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.dep_night_ss || 0}</td>
+                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.dep_night_sg || 0}</td>
+                     </tr>
+                   </tbody>
+                 </table>
+               </div>
+            </div>
+            
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2529,18 +2752,25 @@ function WeeklyMobileHistory({ weeklyReports, isLoading }) {
 // 📈 VIP OPERATIONS & THREAT MATRIX (CSO DASHBOARD)
 // ==========================================
 
-function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES }) {
+function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SITES = [], STATE_NAMES = [], SITES_BY_STATE = {} ,onDeleteWeekly }) {
   const [filterDate, setFilterDate] = useState('');
+  const [filterState, setFilterState] = useState("All"); // ✨ NEW: State Filter!
   const [filterSite, setFilterSite] = useState("All");
   const [viewingRep, setViewingRep] = useState(null);
 
-  // 1. FILTER ENGINE (STRICT POSTING DATE LOGIC)
-  const uniqueSites = [...new Set(weeklyReports.map(r => r.site))];
+  // ✨ FIXED: Cascading Site List so it never shows garbage states again!
+  const availableSites = filterState === "All" ? SITES : SITES_BY_STATE[filterState] || [];
+
+  // 1. FILTER ENGINE (STRICT POSTING DATE & NEW STATE LOGIC)
   const filtered = weeklyReports.filter(r => {
-    // ✨ FIX: Now it ONLY looks at the exact day the supervisor clicked "Submit" (created_at)!
     const dMatch = filterDate === '' || (r.created_at && r.created_at.startsWith(filterDate));
-    const sMatch = filterSite === "All" || r.site === filterSite;
-    return dMatch && sMatch;
+    
+    // ✨ SAFETY NET: Force old database logs to UPPERCASE!
+    const safeSiteName = (r.site || "").toUpperCase();
+
+    const stMatch = filterState === "All" || (SITES_BY_STATE[filterState] && SITES_BY_STATE[filterState].includes(safeSiteName));
+    const sMatch = filterSite === "All" || safeSiteName === filterSite;
+    return dMatch && stMatch && sMatch;
   });
 
   // 2. MATH HELPERS
@@ -2560,9 +2790,11 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES }) {
   let vehCon = 0, vehCo = 0;
   let footCon = 0, footRil = 0;
   
-  // Track Government Visits strictly for the top KPI card
   let tGov = 0;
   const govVisitsList = [];
+  
+  // ✨ NEW: Strict Deficit Tracker! (No hiding behind other sites!)
+  let totalStrictDeficit = 0;
 
   // This uses "filtered", so it perfectly obeys your site dropdown!
   filtered.forEach(r => {
@@ -2577,8 +2809,15 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES }) {
 
     // 3. OGP
     nrgp += num(r.ogp_nrgp);
-    rmgpOut += num(r.ogp_rmgp);
-    rmgpIn += num(r.ogp_rmgp_in);
+    const rOut = num(r.ogp_rmgp);
+    const rIn = num(r.ogp_rmgp_in);
+    rmgpOut += rOut;
+    rmgpIn += rIn;
+    
+    // ✨ ADD TO STRICT DEFICIT ONLY IF IT'S A LOSS!
+    if (rOut > rIn) {
+      totalStrictDeficit += (rOut - rIn);
+    }
 
     // 4. VEHICLES
     vehCon += num(r.veh_contractor);
@@ -2598,7 +2837,8 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES }) {
     }
   });
 
-  const assetDeficit = rmgpOut - rmgpIn;
+  // Use the STRICT deficit so the alarm triggers perfectly!
+  const assetDeficit = totalStrictDeficit;
   const grandTotalDispatch = tSolid + tGas + tScrap;
   const isAssetAlert = assetDeficit > 0;
 
@@ -2623,7 +2863,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES }) {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `CSO_Master_Audit_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `CSO_Master_Audit_${getISTDate()}.csv`;
     a.click();
   };
 // ✨ NEW: THE ANOMALY DETECTOR (Week-over-Week Spikes!)
@@ -2660,9 +2900,12 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES }) {
       {/* 🟢 ZONE 1: COMMAND BAR */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 flex flex-wrap justify-between items-end gap-4 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-3xl rounded-full pointer-events-none"></div>
-        <div className="flex flex-wrap gap-4 relative z-10">
+        <div className="flex flex-wrap gap-3 relative z-10">
           <FilterSelect label="Filter Date" value={filterDate} onChange={setFilterDate} type="date" />
-          <FilterSelect label="VIP Site" value={filterSite} onChange={setFilterSite} options={uniqueSites.sort()} />
+          {/* ✨ FIXED: Proper State and Site cascading dropdowns! */}
+          <FilterSelect label="State" value={filterState} onChange={e => {setFilterState(e); setFilterSite("All");}} options={STATE_NAMES} />
+          <FilterSelect label="VIP Site" value={filterSite} onChange={setFilterSite} options={[...availableSites].sort()} />
+          <button onClick={() => { setFilterDate(''); setFilterState('All'); setFilterSite('All'); }} className="text-[10px] font-black tracking-widest text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors h-max mb-0.5">CLEAR</button>
         </div>
         <button onClick={exportMasterAudit} className="relative z-10 px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 active:scale-95">
           <Download size={16} /> Export Master Audit
@@ -3035,7 +3278,12 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES }) {
                </div>
              </div>
 
-             <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 flex justify-end shrink-0">
+             <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 flex justify-between shrink-0">
+               {/* ✨ THE NEW ADMIN DELETE BUTTON! */}
+               <button onClick={() => { onDeleteWeekly(viewingRep.id); setViewingRep(null); }} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-black text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 transition-colors shadow-sm border border-rose-200 dark:border-rose-800 uppercase tracking-widest">
+                 <Trash2 size={16} /> Delete
+               </button>
+
                <button onClick={() => {
                   const r = viewingRep;
                   const row1 = ["Sr_No", "SITE", "Date_From", "Date_To", "DISPATCH", "", "", "RECEIPT", "", "OGP", "", "", "VEHICLE", "", "CONTRACTOR/ RIL STAFF", "", "VISITOR", "GOV. OFFICIAL", "DEPLOYMENT", "", "", ""];
@@ -3061,7 +3309,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES }) {
 // ==========================================
 // ⚙️ GOD-MODE SETTINGS PANEL (UPGRADED!)
 // ==========================================
-function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, onToggleStatus, onClose }) {
+function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, onToggleStatus, onDeleteSite, onClose }) {
   const [activeTab, setActiveTab] = useState('profile');
   
   // Site Form States
@@ -3069,8 +3317,9 @@ function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, o
   const [newStateSelection, setNewStateSelection] = useState(''); 
   const [customStateInput, setCustomStateInput] = useState(''); 
   
-  // ✨ NEW: The Network Filter Brain!
+  // ✨ The Network Filter & Search Brain!
   const [networkFilter, setNetworkFilter] = useState('All');
+  const [siteSearchTerm, setSiteSearchTerm] = useState(''); // 🔍 NEW: Omni-search state!
 
   // ✨ NEW: User Roster States
   const [allProfiles, setAllProfiles] = useState([]);
@@ -3103,7 +3352,11 @@ function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, o
   };
 
   // 🗺️ ✨ MAGIC: Filter & Segregate all sites beautifully by State!
-  const displaySites = globalSites.filter(s => networkFilter === 'All' ? true : s.status === networkFilter);
+  const displaySites = globalSites.filter(s => {
+    const matchesFilter = networkFilter === 'All' ? true : s.status === networkFilter;
+    const matchesSearch = siteSearchTerm === '' || s.name.toLowerCase().includes(siteSearchTerm.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
   
   const groupedSites = displaySites.reduce((acc, site) => {
     const state = site.state_name || 'UNASSIGNED';
@@ -3148,7 +3401,7 @@ function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, o
               <h2 className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">ADMINISTRATOR</h2>
               <p className="text-2xl font-black text-slate-900 dark:text-white uppercase leading-none mb-2">{userProfile.name}</p>
               <div className="flex gap-2">
-                <span className="inline-block bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-sm">Node: {userProfile.site}</span>
+                <span className="inline-block bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-sm">Site: {userProfile.site}</span>
                 <span className="inline-block bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-sm">Lvl: {userProfile.role}</span>
               </div>
             </div>
@@ -3191,26 +3444,27 @@ function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, o
           {/* THE DEPLOYMENT WIDGET */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden max-w-3xl">
             <div className="absolute -right-10 -top-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-            <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest mb-6 flex items-center gap-2 relative z-10"><PlusCircle size={18} className="text-indigo-500"/> Establish New Tracking Node</h3>
+            <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest mb-6 flex items-center gap-2 relative z-10"><PlusCircle size={18} className="text-indigo-500"/> Establish New Tracking Site</h3>
             
-            <form onSubmit={submitNewSite} className="flex flex-col sm:flex-row gap-4 relative z-10">
-              
-              <select value={newStateSelection} onChange={e => setNewStateSelection(e.target.value)} className="w-full sm:w-1/3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-xs font-bold text-slate-900 dark:text-white uppercase focus:border-indigo-500 outline-none shadow-inner">
+            <form onSubmit={submitNewSite} className="flex flex-col gap-3 relative z-10">
+              {/* ✨ STATE DROPDOWN */}
+              <select value={newStateSelection} onChange={e => setNewStateSelection(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-xs font-bold text-slate-900 dark:text-white uppercase focus:border-indigo-500 outline-none shadow-inner">
                 <option value="">-- SELECT STATE --</option>
-                {STATE_NAMES.map(s => <option key={s} value={s}>{s}</option>)}
+                {STATE_NAMES?.map(s => <option key={s} value={s}>{s}</option>)}
                 <option value="NEW">+ ADD NEW STATE</option>
               </select>
               
               {/* ✨ THE MAGIC REVEAL BOX FOR NEW STATES! */}
               {newStateSelection === 'NEW' && (
-                <div className="w-full sm:w-1/3 animate-in fade-in slide-in-from-left-4">
-                  <input type="text" placeholder="NEW STATE NAME..." value={customStateInput} onChange={e => setCustomStateInput(e.target.value)} className="w-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 rounded-xl px-4 py-3.5 text-xs font-bold text-slate-900 dark:text-white uppercase focus:border-indigo-500 outline-none shadow-inner" />
+                <div className="w-full animate-in fade-in slide-in-from-top-2">
+                  <input type="text" placeholder="ENTER NEW STATE NAME..." value={customStateInput} onChange={e => setCustomStateInput(e.target.value)} className="w-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 rounded-xl px-4 py-3 text-xs font-bold text-slate-900 dark:text-white uppercase focus:border-indigo-500 outline-none shadow-inner" />
                 </div>
               )}
               
-              <div className="flex-1 flex gap-2">
-                <input type="text" value={newSiteInput} onChange={(e) => setNewSiteInput(e.target.value)} placeholder="ENTER SITE NAME..." className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-xs font-bold text-slate-900 dark:text-white uppercase focus:border-indigo-500 outline-none shadow-inner" />
-                <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 sm:px-8 rounded-xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-indigo-500/25 shrink-0 flex items-center gap-2">
+              {/* ✨ SITE NAME & DEPLOY BUTTON */}
+              <div className="flex gap-2">
+                <input type="text" value={newSiteInput} onChange={(e) => setNewSiteInput(e.target.value)} placeholder="ENTER SITE NAME..." className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-xs font-bold text-slate-900 dark:text-white uppercase focus:border-indigo-500 outline-none shadow-inner" />
+                <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 rounded-xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-md shadow-indigo-500/25 shrink-0 flex items-center gap-2">
                   <Zap size={14}/> Deploy
                 </button>
               </div>
@@ -3222,17 +3476,24 @@ function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, o
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-6 ml-1">
               <div>
                 <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><MapPin size={16}/> Global Network Map</h3>
-                <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1">Viewing: {displaySites.length} Total Nodes</p>
+                <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1">Viewing: {displaySites.length} Total Sites</p>
               </div>
 
-              {/* ✨ YOUR NEW VIEW FILTERS! */}
-              <div className="inline-flex bg-slate-200/50 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner w-full sm:w-auto">
-                <button onClick={() => setNetworkFilter('All')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${networkFilter === 'All' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>All</button>
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                {/* 🔍 ✨ THE NEW SEARCH BAR! */}
+                <div className="relative w-full sm:w-48">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input type="text" placeholder="Search Site..." value={siteSearchTerm} onChange={(e) => setSiteSearchTerm(e.target.value)} className="w-full pl-8 pr-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors shadow-sm" />
+                </div>
+
+                {/* ✨ YOUR VIEW FILTERS! */}
+                <div className="inline-flex bg-slate-200/50 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner w-full sm:w-auto shrink-0">
+                  <button onClick={() => setNetworkFilter('All')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${networkFilter === 'All' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>All</button>
                 <button onClick={() => setNetworkFilter('commissioned')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${networkFilter === 'commissioned' ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' : 'text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400'}`}>Commissioned</button>
                 <button onClick={() => setNetworkFilter('project')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${networkFilter === 'project' ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20' : 'text-slate-500 hover:text-amber-600 dark:hover:text-amber-400'}`}>Projects</button>
               </div>
             </div>
-            
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {sortedStates.map(stateName => {
                 const sitesInState = groupedSites[stateName].sort((a,b) => a.name.localeCompare(b.name));
@@ -3259,10 +3520,17 @@ function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, o
                             <span className={`text-xs font-black uppercase ${site.status === 'commissioned' ? 'text-slate-800 dark:text-slate-200' : 'text-slate-500'}`}>{site.name}</span>
                           </div>
                           
-                          {/* The Action Button */}
-                          <button onClick={() => onToggleStatus(site.id, site.status)} className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all active:scale-95 ${site.status === 'commissioned' ? 'bg-slate-200 text-slate-500 hover:bg-rose-100 hover:text-rose-600 dark:bg-slate-800 dark:hover:bg-rose-900/40 dark:hover:text-rose-400' : 'bg-indigo-50 text-indigo-600 hover:bg-emerald-500 hover:text-white dark:bg-indigo-500/10 dark:text-indigo-400 shadow-sm border border-indigo-200 dark:border-indigo-500/20'}`}>
-                            {site.status === 'commissioned' ? 'Revert' : 'Commission'}
-                          </button>
+                          {/* The Action Buttons */}
+                          <div className="flex items-center gap-1.5">
+                            <button onClick={() => onToggleStatus(site.id, site.status)} className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all active:scale-95 ${site.status === 'commissioned' ? 'bg-slate-200 text-slate-500 hover:bg-rose-100 hover:text-rose-600 dark:bg-slate-800 dark:hover:bg-rose-900/40 dark:hover:text-rose-400' : 'bg-indigo-50 text-indigo-600 hover:bg-emerald-500 hover:text-white dark:bg-indigo-500/10 dark:text-indigo-400 shadow-sm border border-indigo-200 dark:border-indigo-500/20'}`}>
+                              {site.status === 'commissioned' ? 'Revert' : 'Commission'}
+                            </button>
+                            
+                            {/* ✨ THE NEW DELETE BUTTON */}
+                            <button onClick={() => onDeleteSite(site.id, site.name)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors">
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -3275,6 +3543,101 @@ function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, o
 
         </div>
       )}
+    </div>
+  );
+}
+
+// ==========================================
+// ✏️ WEEKLY LEDGER EDIT MODAL
+// ==========================================
+function WeeklyEditModal({ record, onClose, onSave }) {
+  const [fd, setFd] = useState({...record});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    await onSave(fd);
+    setIsSubmitting(false);
+  };
+
+  const renderInput = (valKey) => (
+    <td className="border border-slate-300 dark:border-slate-700 p-0">
+      <input type="number" required value={fd[valKey] || ''} onChange={(e) => setFd({...fd, [valKey]: e.target.value})} className="w-14 sm:w-20 bg-transparent text-center py-3 text-sm font-bold text-slate-900 dark:text-white outline-none focus:bg-indigo-50 dark:focus:bg-indigo-900/30 transition-colors" />
+    </td>
+  );
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[120] flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col">
+        
+        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-indigo-50 dark:bg-indigo-950/30 shrink-0">
+          <div>
+            <h3 className="font-black text-indigo-700 dark:text-indigo-400 flex items-center gap-2 uppercase tracking-widest text-sm sm:text-base"><Edit2 size={18} /> Edit & Resend Report</h3>
+            <p className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">{record.site} • Sr No. {record.sr_no}</p>
+          </div>
+          <button onClick={onClose} className="p-2 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-800 rounded-full shadow-sm"><X size={18} /></button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="p-4 overflow-y-auto overflow-x-auto custom-scrollbar flex-1 bg-slate-50/50 dark:bg-slate-950/50">
+            <table className="w-max min-w-full border-collapse border border-slate-300 dark:border-slate-700 text-center text-[10px] font-black uppercase tracking-widest bg-white dark:bg-slate-900">
+              <thead>
+                <tr className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                  <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 min-w-[60px]">Sr. No.</th>
+                  <th colSpan="3" className="border border-slate-300 dark:border-slate-700 p-2 bg-emerald-100/50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-400">DISPATCH</th>
+                  <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 bg-indigo-100/50 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-400">RECEIPT</th>
+                  <th colSpan="3" className="border border-slate-300 dark:border-slate-700 p-2 bg-amber-100/50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400">OGP</th>
+                  <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 bg-blue-100/50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400">VEHICLE</th>
+                  <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 bg-purple-100/50 dark:bg-purple-900/20 text-purple-800 dark:text-purple-400">CON/RIL STAFF</th>
+                  <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 text-rose-600 dark:text-rose-400">VISITOR</th>
+                  <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 text-rose-600 dark:text-rose-400">GOV.<br/>OFF.</th>
+                  <th colSpan="4" className="border border-slate-300 dark:border-slate-700 p-2 bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white">DEPLOYMENT</th>
+                </tr>
+                <tr className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400">
+                  <th className="border border-slate-300 dark:border-slate-700 p-2">SOLID</th>
+                  <th className="border border-slate-300 dark:border-slate-700 p-2">GAS</th>
+                  <th className="border border-slate-300 dark:border-slate-700 p-2">SCRAP</th>
+                  <th className="border border-slate-300 dark:border-slate-700 p-2">COMPANY</th>
+                  <th className="border border-slate-300 dark:border-slate-700 p-2">CONTRACTOR</th>
+                  <th className="border border-slate-300 dark:border-slate-700 p-2">NRGP</th>
+                  <th className="border border-slate-300 dark:border-slate-700 p-2">RMGP</th>
+                  <th className="border border-slate-300 dark:border-slate-700 p-2">RMGP IN</th>
+                  <th className="border border-slate-300 dark:border-slate-700 p-2 px-1">CON.<br/>VEH</th>
+                  <th className="border border-slate-300 dark:border-slate-700 p-2 px-1">CO.<br/>VEH</th>
+                  <th className="border border-slate-300 dark:border-slate-700 p-2 px-1">CON.<br/>WORKER</th>
+                  <th className="border border-slate-300 dark:border-slate-700 p-2 px-1">RIL<br/>EMP.</th>
+                  <th className="border border-slate-300 dark:border-slate-700 p-2">Day SS</th>
+                  <th className="border border-slate-300 dark:border-slate-700 p-2">Day SG</th>
+                  <th className="border border-slate-300 dark:border-slate-700 p-2">Night SS</th>
+                  <th className="border border-slate-300 dark:border-slate-700 p-2">Night SG</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                  <td className="border border-slate-300 dark:border-slate-700 p-0"><input type="text" required value={fd.sr_no || ''} onChange={(e) => setFd({...fd, sr_no: e.target.value})} className="w-16 sm:w-20 bg-transparent text-center py-3 text-sm font-bold outline-none focus:bg-indigo-50 dark:focus:bg-indigo-900/30" /></td>
+                  {renderInput('disp_solid')}{renderInput('disp_gas')}{renderInput('disp_scrap')}
+                  {renderInput('rec_company')}{renderInput('rec_contractor')}
+                  {renderInput('ogp_nrgp')}{renderInput('ogp_rmgp')}{renderInput('ogp_rmgp_in')}
+                  {renderInput('veh_contractor')}{renderInput('veh_company')}
+                  {renderInput('foot_contractor')}{renderInput('foot_ril')}
+                  {renderInput('foot_visitor')}{renderInput('foot_gov')}
+                  {renderInput('dep_day_ss')}{renderInput('dep_day_sg')}
+                  {renderInput('dep_night_ss')}{renderInput('dep_night_sg')}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex gap-3 shrink-0">
+            <button type="button" onClick={onClose} className="flex-1 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 transition-colors">Cancel</button>
+            <button type="submit" disabled={isSubmitting} className="flex-1 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest bg-indigo-600 text-white flex items-center justify-center gap-2 hover:bg-indigo-700 shadow-lg shadow-indigo-900/20 transition-all">
+              {isSubmitting ? <RefreshCw className="animate-spin" size={16} /> : <><Save size={40} /> Update MIS Report</>}
+            </button>
+          </div>
+        </form>
+
+      </div>
     </div>
   );
 }
