@@ -651,13 +651,18 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
                    <p className="text-xs text-indigo-300 uppercase tracking-widest font-semibold">Select Authorized Officer</p>
                 </div>
 
-                <div className="space-y-3 max-h-[50vh] overflow-y-auto custom-scrollbar pr-2">
-                  {allowedSupervisors.map((name, idx) => (
-                    <button key={idx} onClick={() => selectName(name)} className="w-full py-5 bg-white/5 hover:bg-indigo-500/20 border border-white/10 hover:border-indigo-400/50 rounded-2xl font-black text-sm text-white uppercase transition-all flex justify-between items-center px-6 group shadow-lg">
-                      {name} <ArrowRight size={18} className="text-indigo-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                    </button>
-                  ))}
-                </div>
+                {/* ✨ DYNAMIC SUPERVISOR BUTTONS (Powered by your comma-separated logic!) */}
+        <div className="w-full max-w-sm flex flex-col gap-4 relative z-10 mt-6">
+          {allowedSupervisors.map((supName, index) => (
+            <button 
+              key={index}
+              onClick={() => selectName(supName)} 
+              className="w-full bg-slate-900/80 backdrop-blur-md border border-slate-800 hover:bg-slate-700 text-white font-black uppercase tracking-widest py-4 rounded-2xl transition-all shadow-lg shadow-black/20 active:scale-95"
+            >
+              {supName}
+            </button>
+          ))}
+        </div>
                 
                 <div className="mt-6 pt-5 border-t border-indigo-500/20">
                   <p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest text-center mb-3">Not on the list?</p>
@@ -2281,10 +2286,6 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete }) {
 // 📋 WEEKLY LEDGER REPORT MODULE (EXACT PAPER COPY)
 // ==========================================
 
-// ==========================================
-// 📋 WEEKLY LEDGER REPORT MODULE (EXACT PAPER COPY)
-// ==========================================
-
 function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab }) {
   const [fd, setFd] = useState({
     dateFrom: '', dateTo: '', srNo: '',
@@ -2455,29 +2456,60 @@ function AdminWeeklyView({ weeklyReports, isLoading }) {
 
   let totalDispatch = 0;
 
-  // 3. CSO METRIC CALCULATORS (Updated for Totals)
+  // 🧠 3. CSO METRIC CALCULATORS (The Ultimate 5-in-4 Matrix!)
   let tSolid = 0, tGas = 0, tScrap = 0;
-  let totalReceipt = 0, totalFootfall = 0, totalVehicles = 0;
-  let rmgpOut = 0, rmgpIn = 0, govVisitors = 0, totalContractors = 0;
+  let recCo = 0, recCon = 0;
+  let nrgp = 0, rmgpOut = 0, rmgpIn = 0;
+  let vehCon = 0, vehCo = 0;
+  let footCon = 0, footRil = 0;
+  
+  // Track Government Visits strictly for the top KPI card
+  let tGov = 0;
+  const govVisitsList = [];
 
+  // This uses "filtered", so it perfectly obeys your site dropdown!
   filtered.forEach(r => {
+    // 1. DISPATCH
     tSolid += num(r.disp_solid);
     tGas += num(r.disp_gas);
     tScrap += num(r.disp_scrap);
-    totalReceipt += num(r.rec_company) + num(r.rec_contractor);
-    totalFootfall += num(r.foot_contractor) + num(r.foot_ril) + num(r.foot_visitor) + num(r.foot_gov);
-    totalVehicles += num(r.veh_contractor) + num(r.veh_company);
+
+    // 2. RECEIPT
+    recCo += num(r.rec_company);
+    recCon += num(r.rec_contractor);
+
+    // 3. OGP
+    nrgp += num(r.ogp_nrgp);
     rmgpOut += num(r.ogp_rmgp);
     rmgpIn += num(r.ogp_rmgp_in);
-    govVisitors += num(r.foot_gov) + num(r.foot_visitor);
-    totalContractors += num(r.foot_contractor);
+
+    // 4. VEHICLES
+    vehCon += num(r.veh_contractor);
+    vehCo += num(r.veh_company);
+
+    // 5. STAFF / WORKERS
+    footCon += num(r.foot_contractor);
+    footRil += num(r.foot_ril);
+
+    // GOV VISITS
+    const govCount = num(r.foot_gov);
+    tGov += govCount;
+    if (govCount > 0) {
+      const existing = govVisitsList.find(x => x.site === r.site);
+      if (existing) existing.count += govCount;
+      else govVisitsList.push({ site: r.site, count: govCount });
+    }
   });
 
-  const grandTotalDispatch = tSolid + tGas + tScrap;
-
   const assetDeficit = rmgpOut - rmgpIn;
+  const grandTotalDispatch = tSolid + tGas + tScrap;
   const isAssetAlert = assetDeficit > 0;
-  const isGhostAlert = totalVehicles > totalContractors && totalVehicles > 0;
+
+  // 📋 COMPLIANCE LOGIC (Stays Global, ignores the filter!)
+  const commissionedSites = typeof COMMISSIONED_SITES !== 'undefined' ? COMMISSIONED_SITES : uniqueSites;
+  const submittedSitesList = [...new Set(weeklyReports.map(r => r.site))]; // Uses ALL reports
+  const pendingSitesList = commissionedSites.filter(s => !submittedSitesList.includes(s));
+  const complianceRate = Math.round((submittedSitesList.length / commissionedSites.length) * 100) || 0;
 
   // 4. THE MASTER EXCEL EXPORTER! 🟢
   const exportMasterAudit = () => {
@@ -2497,6 +2529,33 @@ function AdminWeeklyView({ weeklyReports, isLoading }) {
     a.download = `CSO_Master_Audit_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
   };
+// ✨ NEW: THE ANOMALY DETECTOR (Week-over-Week Spikes!)
+  const anomalies = [];
+  // We use all reports (unfiltered) to find anomalies across the whole network
+  const allSites = [...new Set(weeklyReports.map(r => r.site))];
+
+  allSites.forEach(site => {
+    // Sort reports for this site by newest first
+    const siteReps = weeklyReports.filter(r => r.site === site).sort((a, b) => num(b.sr_no) - num(a.sr_no));
+    
+    if (siteReps.length >= 2) {
+      const curr = siteReps[0]; // This Week
+      const prev = siteReps[1]; // Last Week
+
+      const checkSpike = (key, label) => {
+        const diff = num(curr[key]) - num(prev[key]);
+        if (diff >= 50) anomalies.push({ site, label, prev: num(prev[key]), curr: num(curr[key]), diff });
+      };
+
+      // Check for drastic jumps!
+      checkSpike('disp_scrap', 'Scrap');
+      checkSpike('disp_gas', 'Gas/Slurry');
+      checkSpike('rec_company', 'Receipts (Co)');
+      checkSpike('rec_contractor', 'Receipts (Con)');
+    }
+  });
+  // Sort biggest spikes to the top
+  anomalies.sort((a, b) => b.diff - a.diff);
 
   return (
     <div className="space-y-6">
@@ -2524,169 +2583,242 @@ function AdminWeeklyView({ weeklyReports, isLoading }) {
           <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">RMGP Deficit</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border-t-4 border-emerald-500 border-x border-b border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Material Flow</h3>
-            <Activity size={16} className="text-emerald-500"/>
-          </div>
-          <div className="text-2xl font-black text-slate-900 dark:text-white">{totalDispatch} <span className="text-sm text-slate-400">OUT</span></div>
-          <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">{totalReceipt} Received</p>
+        {/* CHART 2: GOVT OFFICIALS VISIT 🏛️ */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between relative group">
+           <div className="flex justify-between items-start mb-4">
+             <div>
+               <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Govt Officials Visit</h3>
+               <p className="text-[9px] font-bold text-amber-500 uppercase mt-1">
+                 {filterSite === "All" ? "Global Network" : `Site: ${filterSite}`}
+               </p>
+             </div>
+             <AlertTriangle size={16} className={tGov > 0 ? 'text-amber-500 animate-pulse' : 'text-slate-400'}/>
+           </div>
+
+           <div className="flex items-end gap-3">
+             <div className="text-3xl font-black text-slate-900 dark:text-white">{tGov}</div>
+             <div className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${tGov > 0 ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'}`}>
+               {tGov > 0 ? 'Alert' : 'Clear'}
+             </div>
+           </div>
+
+           {/* ✨ MAGICAL HOVER TOOLTIP FOR GOVT VISITS */}
+           {govVisitsList.length > 0 && (
+             <div className="absolute top-[80%] left-0 mt-2 w-full bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 text-[10px] font-black p-4 rounded-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 z-50 shadow-2xl border border-slate-700 flex flex-col gap-2 transform translate-y-2 group-hover:translate-y-0">
+               <span className="text-amber-400 dark:text-amber-600 border-b border-slate-600 dark:border-slate-300 pb-1.5 mb-1 uppercase tracking-widest">Visit Logs</span>
+               {govVisitsList.map((v, i) => (
+                 <div key={i} className="flex justify-between items-center">
+                   <span className="uppercase">{v.site}</span>
+                   <span className="text-amber-400 dark:text-amber-600">{v.count} Officials</span>
+                 </div>
+               ))}
+             </div>
+           )}
         </div>
 
-        <div className={`bg-white dark:bg-slate-900 p-5 rounded-2xl border-t-4 shadow-sm transition-all ${isGhostAlert ? 'border-amber-500 dark:shadow-[0_0_15px_rgba(245,158,11,0.15)]' : 'border-blue-500 border-slate-200 dark:border-slate-800'}`}>
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Ghost Anomaly</h3>
-            <AlertTriangle size={16} className={isGhostAlert ? 'text-amber-500' : 'text-blue-500'}/>
-          </div>
-          <div className={`text-2xl font-black ${isGhostAlert ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>{totalVehicles} <span className="text-sm text-slate-400">VEH</span></div>
-          <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">Vs {totalContractors} Contractors</p>
+        {/* CHART 3: COMPLIANCE ROLLCALL 📋 */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between relative group">
+           <div className="flex justify-between items-start mb-4">
+             <div>
+               <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Compliance Status</h3>
+               <p className="text-[9px] font-bold text-indigo-500 uppercase mt-1">Submission Rollcall</p>
+             </div>
+             <CheckCircle size={16} className="text-indigo-500"/>
+           </div>
+
+           <div>
+             <div className="flex justify-between items-end mb-2">
+               <span className="text-3xl font-black text-slate-900 dark:text-white leading-none">{complianceRate}%</span>
+               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                 {submittedSitesList.length} / {commissionedSites.length}
+               </span>
+             </div>
+             <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 overflow-hidden border border-slate-200 dark:border-slate-700">
+               <div style={{width: `${complianceRate}%`}} className={`h-full transition-all duration-1000 ${complianceRate === 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`}></div>
+             </div>
+           </div>
+
+           {/* ✨ MASSIVE HOVER TOOLTIP FOR COMPLIANCE */}
+           <div className="absolute top-[80%] right-0 mt-2 w-72 bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 p-4 rounded-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 z-50 shadow-2xl border border-slate-700 flex flex-col gap-4 transform translate-y-2 group-hover:translate-y-0">
+             
+             <div className="flex flex-col gap-1.5">
+               <span className="text-[10px] font-black text-emerald-400 dark:text-emerald-600 border-b border-slate-600 dark:border-slate-300 pb-1.5 uppercase tracking-widest">Submitted ({submittedSitesList.length})</span>
+               <div className="flex flex-wrap gap-1 mt-1">
+                 {submittedSitesList.length === 0 ? <span className="text-[9px] text-slate-400">None</span> : submittedSitesList.map(s => <span key={s} className="text-[8.5px] font-bold uppercase tracking-wider bg-slate-700 dark:bg-slate-200 px-2 py-1 rounded">{s}</span>)}
+               </div>
+             </div>
+
+             <div className="flex flex-col gap-1.5">
+               <span className="text-[10px] font-black text-rose-400 dark:text-rose-600 border-b border-slate-600 dark:border-slate-300 pb-1.5 uppercase tracking-widest">Pending ({pendingSitesList.length})</span>
+               <div className="flex flex-wrap gap-1 mt-1">
+                 {pendingSitesList.length === 0 ? <span className="text-[9px] text-slate-400">All Clear!</span> : pendingSitesList.map(s => <span key={s} className="text-[8.5px] font-bold uppercase tracking-wider bg-slate-700 dark:bg-slate-200 px-2 py-1 rounded">{s}</span>)}
+               </div>
+             </div>
+            </div>
+            </div>
+          {/* KPI 4: SURGE ANOMALIES (Fills the empty space!) 🚨 */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between relative group cursor-help">
+           <div className="flex justify-between items-start mb-4">
+             <div>
+               <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Surge Anomalies</h3>
+               <p className="text-[9px] font-bold text-rose-500 uppercase mt-1">Wk/Wk Spikes &gt; 50</p>
+             </div>
+             <TrendingUp size={16} className={anomalies.length > 0 ? 'text-rose-500 animate-pulse' : 'text-slate-400'}/>
+           </div>
+
+           <div className="flex items-end gap-3">
+             <div className="text-3xl font-black text-slate-900 dark:text-white">{anomalies.length}</div>
+             <div className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase shadow-sm ${anomalies.length > 0 ? 'bg-rose-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'}`}>
+               {anomalies.length > 0 ? 'Detected' : 'Clear'}
+             </div>
+           </div>
+
+           {/* ✨ MASSIVE HOVER TOOLTIP FOR ANOMALIES */}
+           {anomalies.length > 0 && (
+             <div className="absolute top-[80%] right-0 mt-2 w-max min-w-[200px] bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 p-4 rounded-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 z-50 shadow-2xl border border-slate-700 flex flex-col gap-2 transform translate-y-2 group-hover:translate-y-0">
+               <span className="text-[10px] font-black text-rose-400 dark:text-rose-600 border-b border-slate-600 dark:border-slate-300 pb-1.5 mb-1 uppercase tracking-widest">Drastic Changes Detected</span>
+               {anomalies.map((a, i) => (
+                 <div key={i} className="flex flex-col bg-slate-700 dark:bg-slate-200 p-2 rounded-lg">
+                   <div className="flex justify-between items-center border-b border-slate-600 dark:border-slate-300 pb-1 mb-1">
+                     <span className="text-[9px] font-black uppercase">{a.site}</span>
+                     <span className="text-[9px] font-black text-rose-400 dark:text-rose-600">+{a.diff}</span>
+                   </div>
+                   <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase">{a.label}: <span className="line-through opacity-70">{a.prev}</span> ➔ {a.curr}</span>
+                 </div>
+               ))}
+             </div>
+           )}
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border-t-4 border-purple-500 border-x border-b border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Audit Risk</h3>
-            <Users size={16} className="text-purple-500"/>
-          </div>
-          <div className="text-2xl font-black text-slate-900 dark:text-white">{govVisitors} <span className="text-sm text-slate-400">EXT</span></div>
-          <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">Gov/Visitor Presence</p>
-        </div>
       </div>
 
       {/* 📊 ZONE 3: THE TRIPLE-THREAT VISUAL MATRIX */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div >
         
-        {/* CHART 1: ASSET LEAKAGE */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col">
-           <div className="flex justify-between items-start mb-6">
-             <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Asset Leakage (OGP)</h3>
-             <Shield size={16} className="text-indigo-500"/>
-           </div>
-           {/* ✨ FIX: Forced explicit height and proper flex columns */}
-           <div className="h-40 flex items-end justify-between gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
-             {filtered.slice(0, 10).map((r, i) => {
-               const outH = (num(r.ogp_rmgp) / maxOgp) * 100;
-               const inH = (num(r.ogp_rmgp_in) / maxOgp) * 100;
-               return (
-                 <div key={i} className="flex-1 h-full flex items-end justify-center gap-1 group relative">
-                   <div style={{height: `${Math.max(outH, 2)}%`}} className="w-full max-w-[14px] bg-amber-400 dark:bg-amber-500 rounded-t-sm transition-all group-hover:opacity-80"></div>
-                   <div style={{height: `${Math.max(inH, 2)}%`}} className="w-full max-w-[14px] bg-emerald-400 dark:bg-emerald-500 rounded-t-sm transition-all group-hover:opacity-80"></div>
-                   <div className="absolute bottom-full mb-2 bg-slate-800 text-white text-[9px] font-bold py-1 px-2 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10">
-                     {r.site}<br/>Out: {num(r.ogp_rmgp)} | In: {num(r.ogp_rmgp_in)}
-                   </div>
-                 </div>
-               );
-             })}
-             {filtered.length === 0 && <div className="w-full text-center text-slate-400 text-xs font-bold mt-10">No data</div>}
-           </div>
-           <div className="flex justify-center gap-4 mt-4 shrink-0">
-             <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-amber-400 dark:bg-amber-500 rounded-sm"></div><span className="text-[9px] font-bold text-slate-500 uppercase">RMGP OUT</span></div>
-             <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-emerald-400 dark:bg-emerald-500 rounded-sm"></div><span className="text-[9px] font-bold text-slate-500 uppercase">RMGP IN</span></div>
-           </div>
-        </div>
-
-        {/* CHART 2: GHOST VEHICLE ANOMALY */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col">
-           <div className="flex justify-between items-start mb-6">
-             <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Ghost Vehicle Radar</h3>
-             <AlertTriangle size={16} className="text-blue-500"/>
-           </div>
-           {/* ✨ FIX: Forced explicit height */}
-           <div className="h-40 flex items-end justify-between gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
-             {filtered.slice(0, 10).map((r, i) => {
-               const isGhost = num(r.veh_contractor) > num(r.foot_contractor);
-               const workH = (num(r.foot_contractor) / maxTraffic) * 100;
-               const vehH = (num(r.veh_contractor) / maxTraffic) * 100;
-               return (
-                 <div key={i} className="flex-1 h-full flex items-end justify-center gap-1 group relative">
-                   <div style={{height: `${Math.max(workH, 2)}%`}} className="w-full max-w-[14px] bg-blue-400 dark:bg-blue-500 rounded-t-sm transition-all group-hover:opacity-80"></div>
-                   <div style={{height: `${Math.max(vehH, 2)}%`}} className={`w-full max-w-[14px] rounded-t-sm transition-all group-hover:opacity-80 ${isGhost ? 'bg-rose-500' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
-                   <div className="absolute bottom-full mb-2 bg-slate-800 text-white text-[9px] font-bold py-1 px-2 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10">
-                     {r.site}<br/>Workers: {num(r.foot_contractor)} | Veh: {num(r.veh_contractor)}
-                   </div>
-                 </div>
-               );
-             })}
-             {filtered.length === 0 && <div className="w-full text-center text-slate-400 text-xs font-bold mt-10">No data</div>}
-           </div>
-           <div className="flex justify-center gap-4 mt-4 shrink-0">
-             <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-blue-400 dark:bg-blue-500 rounded-sm"></div><span className="text-[9px] font-bold text-slate-500 uppercase">Con. Worker</span></div>
-             <div className="flex items-center gap-1.5"><div className="w-2 h-2 bg-slate-300 dark:bg-slate-600 rounded-sm"></div><span className="text-[9px] font-bold text-slate-500 uppercase">Con. Vehicle</span></div>
-           </div>
-        </div>
-
-        {/* CHART 3: MATERIAL FLOW COMMAND (PROFESSIONAL VERTICAL TOTALS) */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col min-h-[320px]">
+        {/* 🚨 THE SYMMETRICAL 4-CHART EXECUTIVE ROW */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
+        
+        {/* CHART 1: MATERIAL FLOW (DISPATCH) */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group">
            <div className="flex justify-between items-start mb-6 shrink-0">
              <div>
-               <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Material Flow Command</h3>
-               <p className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase mt-1 flex items-center gap-1.5">
-                 <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></div>
-                 {filterSite === "All" ? "Global Aggregation" : `Node Focus: ${filterSite}`}
-               </p>
+               <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Dispatch</h3>
+               <p className="text-[9px] font-bold text-emerald-500 uppercase mt-1 flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></div>{filterSite === "All" ? "Global Network" : filterSite}</p>
              </div>
-             <Activity size={16} className="text-rose-500"/>
+             <Activity size={16} className="text-emerald-500"/>
            </div>
-           
-           {/* ✨ THE BAR ENGINE WITH TACTICAL GRID LINES */}
-           <div className="flex-1 relative flex items-end justify-around gap-6 px-4 pb-2 border-b border-slate-100 dark:border-slate-800/50 mb-2">
-              
-              {/* 🏁 BACKGROUND GRID LINES (Professional Aesthetic) */}
-              <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-4 pb-2 opacity-[0.05] dark:opacity-[0.1]">
-                <div className="w-full border-t border-slate-900 dark:border-slate-100"></div>
-                <div className="w-full border-t border-slate-900 dark:border-slate-100"></div>
-                <div className="w-full border-t border-slate-900 dark:border-slate-100"></div>
-                <div className="w-full border-t border-slate-900 dark:border-slate-100"></div>
-              </div>
-
-              {/* Solid Material Bar */}
+           <div className="flex-1 relative flex items-end justify-around gap-4 px-2 pb-2 border-b border-slate-100 dark:border-slate-800/50 mb-2">
+              <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-2 pb-2 opacity-[0.05] dark:opacity-[0.1]">{[...Array(5)].map((_, i) => <div key={i} className="w-full border-t border-slate-900 dark:border-slate-100"></div>)}</div>
+              {/* Bars */}
               <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
-                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-slate-800 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl">
-                  {tSolid}
-                </div>
-                <div 
-                  style={{ height: `${(tSolid / (grandTotalDispatch || 1)) * 100}%`, minHeight: tSolid > 0 ? '4px' : '0' }} 
-                  className="w-full max-w-[32px] bg-slate-400 dark:bg-slate-500 rounded-t-lg transition-all duration-1000 ease-out shadow-sm group-hover/bar:brightness-110"
-                ></div>
-                <span className="mt-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">Solid</span>
+                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-slate-800 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">{tSolid}</div>
+                <div style={{ height: `${(tSolid / (Math.max(tSolid, tGas, tScrap, 1))) * 100}%`, minHeight: tSolid > 0 ? '4px' : '0' }} className="w-full max-w-[28px] bg-slate-400 dark:bg-slate-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
+                <span className="mt-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Solid</span>
               </div>
-
-              {/* Gas / Slurry Bar */}
               <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
-                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-indigo-600 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl">
-                  {tGas}
-                </div>
-                <div 
-                  style={{ height: `${(tGas / (grandTotalDispatch || 1)) * 100}%`, minHeight: tGas > 0 ? '4px' : '0' }} 
-                  className="w-full max-w-[32px] bg-indigo-500 rounded-t-lg transition-all duration-1000 ease-out shadow-sm group-hover/bar:brightness-110"
-                ></div>
-                <span className="mt-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">Gas</span>
+                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-indigo-600 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">{tGas}</div>
+                <div style={{ height: `${(tGas / (Math.max(tSolid, tGas, tScrap, 1))) * 100}%`, minHeight: tGas > 0 ? '4px' : '0' }} className="w-full max-w-[28px] bg-indigo-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
+                <span className="mt-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Gas</span>
               </div>
-
-              {/* Scrap Bar - THE RED FLAG */}
               <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
-                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-rose-600 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl">
-                  {tScrap}
-                </div>
-                <div 
-                  style={{ height: `${(tScrap / (grandTotalDispatch || 1)) * 100}%`, minHeight: tScrap > 0 ? '4px' : '0' }} 
-                  className="w-full max-w-[32px] bg-rose-500 rounded-t-lg transition-all duration-1000 ease-out shadow-[0_-2px_10px_rgba(244,63,94,0.3)] group-hover/bar:brightness-110"
-                ></div>
-                <span className="mt-3 text-[9px] font-black text-rose-500 uppercase tracking-widest animate-pulse">Scrap</span>
+                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-rose-600 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">{tScrap}</div>
+                <div style={{ height: `${(tScrap / (Math.max(tSolid, tGas, tScrap, 1))) * 100}%`, minHeight: tScrap > 0 ? '4px' : '0' }} className="w-full max-w-[28px] bg-rose-500 rounded-t-lg transition-all duration-1000 shadow-[0_-2px_10px_rgba(244,63,94,0.3)] group-hover/bar:brightness-110"></div>
+                <span className="mt-3 text-[9px] font-black text-rose-500 uppercase tracking-widest text-center animate-pulse">Scrap</span>
               </div>
-           </div>
-
-           {/* Summary Footer */}
-           <div className="mt-4 flex justify-between items-center bg-slate-50 dark:bg-slate-950/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-             <div className="flex flex-col">
-               <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total Network Dispatch</span>
-               <span className="text-base font-black text-slate-900 dark:text-white leading-none">{grandTotalDispatch.toLocaleString()} <span className="text-[10px] opacity-40">units</span></span>
-             </div>
-             <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-emerald-500 shadow-sm">
-                <TrendingUp size={16}/>
-             </div>
            </div>
         </div>
 
+        {/* CHART 2: INBOUND RECEIPTS */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group">
+           <div className="flex justify-between items-start mb-6 shrink-0">
+             <div>
+               <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Receipts</h3>
+               <p className="text-[9px] font-bold text-blue-500 uppercase mt-1 flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse"></div>{filterSite === "All" ? "Global Network" : filterSite}</p>
+             </div>
+             <Activity size={16} className="text-blue-500"/>
+           </div>
+           <div className="flex-1 relative flex items-end justify-around gap-6 px-4 pb-2 border-b border-slate-100 dark:border-slate-800/50 mb-2">
+              <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-4 pb-2 opacity-[0.05] dark:opacity-[0.1]">{[...Array(5)].map((_, i) => <div key={i} className="w-full border-t border-slate-900 dark:border-slate-100"></div>)}</div>
+              {/* Bars */}
+              <div className="flex flex-col items-center group/bar h-full justify-end relative z-10 w-16">
+                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-blue-600 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">{recCo}</div>
+                <div style={{ height: `${(recCo / (Math.max(recCo, recCon, 1))) * 100}%`, minHeight: recCo > 0 ? '4px' : '0' }} className="w-full max-w-[32px] bg-blue-400 dark:bg-blue-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
+                <span className="mt-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Company</span>
+              </div>
+              <div className="flex flex-col items-center group/bar h-full justify-end relative z-10 w-16">
+                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-slate-700 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">{recCon}</div>
+                <div style={{ height: `${(recCon / (Math.max(recCo, recCon, 1))) * 100}%`, minHeight: recCon > 0 ? '4px' : '0' }} className="w-full max-w-[32px] bg-slate-400 dark:bg-slate-600 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
+                <span className="mt-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Contractor</span>
+              </div>
+           </div>
+        </div>
+
+        {/* CHART 3: ASSET RECOVERY (OGP) */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group">
+           <div className="flex justify-between items-start mb-6 shrink-0">
+             <div>
+               <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">OGP Assets</h3>
+               <p className="text-[9px] font-bold text-amber-500 uppercase mt-1 flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-amber-500 animate-pulse"></div>{filterSite === "All" ? "Global Network" : filterSite}</p>
+             </div>
+             <Shield size={16} className="text-amber-500"/>
+           </div>
+           <div className="flex-1 relative flex items-end justify-around gap-4 px-2 pb-2 border-b border-slate-100 dark:border-slate-800/50 mb-2">
+              <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-2 pb-2 opacity-[0.05] dark:opacity-[0.1]">{[...Array(5)].map((_, i) => <div key={i} className="w-full border-t border-slate-900 dark:border-slate-100"></div>)}</div>
+              {/* Bars */}
+              <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
+                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-slate-800 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">{rmgpOut}</div>
+                <div style={{ height: `${(rmgpOut / (Math.max(rmgpOut, rmgpIn, nrgp, 1))) * 100}%`, minHeight: rmgpOut > 0 ? '4px' : '0' }} className="w-full max-w-[28px] bg-amber-400 dark:bg-amber-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
+                <span className="mt-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">RMGP Out</span>
+              </div>
+              <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
+                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-emerald-600 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">{rmgpIn}</div>
+                <div style={{ height: `${(rmgpIn / (Math.max(rmgpOut, rmgpIn, nrgp, 1))) * 100}%`, minHeight: rmgpIn > 0 ? '4px' : '0' }} className="w-full max-w-[28px] bg-emerald-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
+                <span className="mt-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">RMGP In</span>
+              </div>
+              <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
+                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-rose-600 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">{nrgp}</div>
+                <div style={{ height: `${(nrgp / (Math.max(rmgpOut, rmgpIn, nrgp, 1))) * 100}%`, minHeight: nrgp > 0 ? '4px' : '0' }} className="w-full max-w-[28px] bg-rose-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110 shadow-[0_-2px_10px_rgba(244,63,94,0.3)]"></div>
+                <span className="mt-3 text-[9px] font-black text-rose-500 uppercase tracking-widest text-center">NRGP</span>
+              </div>
+           </div>
+        </div>
+
+        {/* CHART 4: OPERATIONS (STAFF & VEHICLES) */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group">
+           <div className="flex justify-between items-start mb-6 shrink-0">
+             <div>
+               <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Site Presence</h3>
+               <p className="text-[9px] font-bold text-indigo-500 uppercase mt-1 flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse"></div>{filterSite === "All" ? "Global Network" : filterSite}</p>
+             </div>
+             <Users size={16} className="text-indigo-500"/>
+           </div>
+           <div className="flex-1 relative flex items-end justify-around gap-2 px-1 pb-2 border-b border-slate-100 dark:border-slate-800/50 mb-2">
+              <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-1 pb-2 opacity-[0.05] dark:opacity-[0.1]">{[...Array(5)].map((_, i) => <div key={i} className="w-full border-t border-slate-900 dark:border-slate-100"></div>)}</div>
+              {/* Bars (4 of them!) */}
+              <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
+                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-slate-800 text-white text-[9px] font-black py-1 px-1.5 rounded-lg pointer-events-none shadow-xl border border-white/10">{footCon}</div>
+                <div style={{ height: `${(footCon / (Math.max(footCon, footRil, vehCon, vehCo, 1))) * 100}%`, minHeight: footCon > 0 ? '4px' : '0' }} className="w-full max-w-[20px] bg-blue-400 dark:bg-blue-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
+                <span className="mt-3 text-[8px] font-black text-slate-400 uppercase tracking-widest text-center">Con<br/>Wrk</span>
+              </div>
+              <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
+                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-indigo-600 text-white text-[9px] font-black py-1 px-1.5 rounded-lg pointer-events-none shadow-xl border border-white/10">{footRil}</div>
+                <div style={{ height: `${(footRil / (Math.max(footCon, footRil, vehCon, vehCo, 1))) * 100}%`, minHeight: footRil > 0 ? '4px' : '0' }} className="w-full max-w-[20px] bg-indigo-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
+                <span className="mt-3 text-[8px] font-black text-slate-400 uppercase tracking-widest text-center">RIL<br/>Emp</span>
+              </div>
+              <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
+                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-slate-600 text-white text-[9px] font-black py-1 px-1.5 rounded-lg pointer-events-none shadow-xl border border-white/10">{vehCon}</div>
+                <div style={{ height: `${(vehCon / (Math.max(footCon, footRil, vehCon, vehCo, 1))) * 100}%`, minHeight: vehCon > 0 ? '4px' : '0' }} className="w-full max-w-[20px] bg-slate-400 dark:bg-slate-600 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
+                <span className="mt-3 text-[8px] font-black text-slate-400 uppercase tracking-widest text-center">Con<br/>Veh</span>
+              </div>
+              <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
+                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-teal-600 text-white text-[9px] font-black py-1 px-1.5 rounded-lg pointer-events-none shadow-xl border border-white/10">{vehCo}</div>
+                <div style={{ height: `${(vehCo / (Math.max(footCon, footRil, vehCon, vehCo, 1))) * 100}%`, minHeight: vehCo > 0 ? '4px' : '0' }} className="w-full max-w-[20px] bg-teal-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
+                <span className="mt-3 text-[8px] font-black text-slate-400 uppercase tracking-widest text-center">Co<br/>Veh</span>
+              </div>
+           </div>
+        </div>
+
+      </div>
       </div>
 
       {/* 🗂️ ZONE 4: TACTICAL LEDGER WALL (The Cards) */}
