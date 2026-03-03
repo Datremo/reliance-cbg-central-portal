@@ -116,6 +116,15 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // ⚡ ✨ NEW: THE INSTANT LOGOUT MAGIC!
+  const handleInstantLogout = async () => {
+    // 1. Instantly wipe the local brain so the screen switches to the cinematic login IMMEDIATELY!
+    setSession(null);
+    setUserProfile(null);
+    
+    // 2. Let Supabase officially kill the cloud token in the background while the user is already gone!
+    supabase.auth.signOut(); 
+  };
   const fetchProfile = async (userId) => {
     // Only fetching real roles from the vault!
     const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
@@ -332,7 +341,7 @@ const toggleIncidentStatus = async (inc) => {
               isLoading={isLoadingData} 
               onToggleAck={toggleIncidentStatus} 
               onDeleteIncident={deleteIncident}
-              onLogout={() => supabase.auth.signOut()} 
+              onLogout={handleInstantLogout} 
               onEdit={setEditingRecord} 
               onDelete={setDeletingRecord} 
               onView={setViewingRecord} 
@@ -352,7 +361,7 @@ const toggleIncidentStatus = async (inc) => {
               onToggleSite={handleToggleSiteStatus}
             />
           ) : (
-            <SupervisorMobileView userProfile={userProfile} deployments={deployments} incidents={incidents} weeklyReports={weeklyReports} isLoading={isLoadingData} fetchDeployments={fetchDeployments} fetchIncidents={fetchIncidents} fetchWeeklyReports={fetchWeeklyReports} onLogout={() => supabase.auth.signOut()} onEdit={setEditingRecord} onDelete={setDeletingRecord} onView={setViewingRecord} onToggleAck={toggleIncidentStatus} onDeleteIncident={deleteIncident} onAddContact={() => setEditingContact({ name: '', phone: '', designation: 'SS - Security Supervisor', state_name: '', site: '', email: '', company: '' })} onEditContact={setEditingContact} onDeleteContact={setDeletingContact} theme={theme} toggleTheme={toggleTheme} />
+            <SupervisorMobileView userProfile={userProfile} deployments={deployments} incidents={incidents} weeklyReports={weeklyReports} isLoading={isLoadingData} fetchDeployments={fetchDeployments} fetchIncidents={fetchIncidents} fetchWeeklyReports={fetchWeeklyReports} onLogout={handleInstantLogout} onEdit={setEditingRecord} onDelete={setDeletingRecord} onView={setViewingRecord} onToggleAck={toggleIncidentStatus} onDeleteIncident={deleteIncident} onAddContact={() => setEditingContact({ name: '', phone: '', designation: 'SS - Security Supervisor', state_name: '', site: '', email: '', company: '' })} onEditContact={setEditingContact} onDeleteContact={setDeletingContact} theme={theme} toggleTheme={toggleTheme} />
           )}
         </div>
           {/* Modals for Deployments */}
@@ -555,6 +564,32 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
   const [fillerName, setFillerName] = useState('');
   const allowedSupervisors = userProfile.name ? userProfile.name.split(',').map(n => n.trim()) : [];
 
+  // 🛡️ ✨ NEW: THE INVISIBLE BACK-BUTTON TRAP!
+  useEffect(() => {
+    // 1. Push a fake state into their browser history immediately
+    window.history.pushState({ noBackExits: true }, '');
+
+    // 2. Listen for them trying to swipe or hit the back button
+    const handlePopState = (e) => {
+      // Push it AGAIN so they are trapped inside the app!
+      window.history.pushState({ noBackExits: true }, '');
+      
+      // If they are deep in an app, just take them back to the hub!
+      if (currentApp !== 'hub') {
+        setCurrentApp('hub');
+      } else {
+        // If they are ALREADY on the hub and trying to leave, maybe show a tiny cute alert?
+        // (Optional: You can remove this alert if it's annoying!)
+        console.log("Trapped the back button! They must use the logout button to exit.");
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    // Clean up if the component unmounts
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [currentApp]); // Re-runs anytime they change apps so the trap resets!
+
   const handleCustomSubmit = (e) => {
     e.preventDefault();
     if(customName.trim().length > 0) selectName(customName.trim());
@@ -611,7 +646,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
 
           <button onClick={() => { setCurrentApp('weekly'); setAppTab('form'); }} className="aspect-square bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center gap-4 hover:shadow-md transition-all active:scale-95 group">
             <div className="w-16 h-16 bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform"><BookOpen size={32} className="stroke-[1.5]"/></div>
-            <span className="font-black text-slate-700 dark:text-slate-300 text-[11px] text-center uppercase tracking-widest">Weekly<br/>Ledger</span>
+            <span className="font-black text-slate-700 dark:text-slate-300 text-[11px] text-center uppercase tracking-widest">MIS<br/>REPORT</span>
           </button>
         </div>
       </div>
@@ -2458,13 +2493,13 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab }) {
       </div>
 
       <button type="submit" disabled={isSubmitting} className="w-full py-4 rounded-xl font-black text-sm bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-900/20 flex justify-center items-center gap-2 uppercase tracking-widest mt-6">
-        {isSubmitting ? 'SYNCING...' : <><BookOpen size={18} /> SUBMIT LEDGER</>}
+        {isSubmitting ? 'SYNCING...' : <><BookOpen size={18} /> SUBMIT Report</>}
       </button>
     </form>
   );
 }
 function WeeklyMobileHistory({ weeklyReports, isLoading }) {
-  if (isLoading) return <div className="p-8 text-center text-slate-500 font-bold animate-pulse">Loading ledgers...</div>;
+  if (isLoading) return <div className="p-8 text-center text-slate-500 font-bold animate-pulse">Loading report...</div>;
   
   return (
     <div className="p-4 space-y-4">
@@ -2481,7 +2516,7 @@ function WeeklyMobileHistory({ weeklyReports, isLoading }) {
           </div>
         </div>
       ))}
-      {weeklyReports.length === 0 && <p className="text-center text-slate-500 text-sm mt-10 font-medium">No weekly ledgers found.</p>}
+      {weeklyReports.length === 0 && <p className="text-center text-slate-500 text-sm mt-10 font-medium">No MIS Report found.</p>}
     </div>
   );
 }
