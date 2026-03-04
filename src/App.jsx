@@ -20,46 +20,60 @@ const formatPhone = (phone) => {
 };
 
 // ==========================================
-// 🌍 THE MULTI-LINGUAL TRANSLATION BRAIN
+// 🌍 THE MULTI-LINGUAL TRANSLATION BRAIN (NOW WITH PLACEHOLDERS!)
 // ==========================================
 const TRANSLATIONS = {
   en: {
     hub: { title: "Security Dashboard", apps: "Secure Apps", dep: "Daily Deployment", inc: "Incident Report", mis: "MIS Report", misSub: "Submit Ledger", overview: "Overview" },
     nav: { back: "Back", newEntry: "New Entry", viewLogs: "View Logs", clear: "CLEAR", dateFilter: "Date Filter" },
     dep: { clone: "Copy Yesterday's Deployment", date: "Deployment Date", shift: "Shift", desig: "Designation", name: "Full Name", phone: "Phone No.", loc: "Location", customLoc: "Specify sector exactly...", addAnother: "Add another", submit: "SUBMIT DEPLOYMENT", encrypting: "ENCRYPTING...", recorded: "RECORDED", noLogs: "No deployment logs found for this date.", secData: "Security Data", day: "Day Shift", night: "Night Shift", off: "Weekly Off" },
-    inc: { title: "Incident Report", subtitle: "Direct uplink to Command Center.", type: "Incident Type / Name", occDate: "Occurrence Date & Time", repBy: "Reported By", ep: "EP Number", site: "Site Name", pin: "Pincode", exactLoc: "Location of Incident", details: "Details of Incident", findings: "Findings", action: "Action Taken", reco: "Follow-up & Recommendations", photo: "Photographic Evidence", attach: "Attach", submit: "SUBMIT REPORT", adminSeen: "Admin Acknowledged", pending: "Pending Review", timeOcc: "Time Occurred", timeRep: "Time Reported", copyWA: "WA COPY", copyFull: "Copy Full Report", noInc: "No incidents found for this date.", encrypting: "ENCRYPTING UPLINK..." },
+    inc: { title: "Incident Report", subtitle: "Direct uplink to Command Center.", type: "Incident Type / Name", occDate: "Occurrence Date & Time", repBy: "Reported By", ep: "EP Number", site: "Site Name", pin: "Pincode", exactLoc: "Location of Incident", details: "Details of Incident", findings: "Findings", action: "Action Taken", reco: "Follow-up & Recommendations", photo: "Photographic Evidence", attach: "Attach", submit: "SUBMIT REPORT", adminSeen: "Admin Acknowledged", pending: "Pending Review", timeOcc: "Time Occurred", timeRep: "Time Reported", copyWA: "WA COPY", copyFull: "Copy Full Report", noInc: "No incidents found for this date.", encrypting: "ENCRYPTING UPLINK...", 
+      // ✨ NEW PLACEHOLDERS!
+      phType: "e.g. Theft, Fire, Breach...", phRepBy: "Officer Name", phEp: "ID Number", phPin: "Code", phLoc: "Specific spot on site...", phDetails: "What exactly happened? Provide full context.", phFindings: "Investigative findings...", phAction: "Immediate response deployed...", phReco: "Suggested protocols to prevent recurrence..."
+    },
     mis: { selectDates: "Select MIS Report Dates", dateFrom: "Date From", dateTo: "Date To", register: "Official Register", submit: "SUBMIT Report", syncing: "SYNCING...", decrypting: "Decrypting Ledgers...", viewMaster: "View Master", editResend: "Edit / Resend", noLedgers: "No weekly ledgers found.", delete: "Delete Ledger", download: "Download .CSV" }
   },
   hi: {
     hub: { title: "सुरक्षा डैशबोर्ड", apps: "सिक्योर ऐप्स", dep: "डेली ड्यूटी (Deployment)", inc: "घटना रिपोर्ट (Incident)", mis: "MIS रिपोर्ट", misSub: "लेजर सबमिट करें", overview: "अवलोकन" },
     nav: { back: "पीछे", newEntry: "नई एंट्री", viewLogs: "पुराने लॉग्स", clear: "साफ़ करें", dateFilter: "तारीख चुनें" },
     dep: { clone: "कल की ड्यूटी कॉपी करें", date: "ड्यूटी की तारीख", shift: "शिफ्ट", desig: "पद ", name: "पूरा नाम", phone: "मोबाइल नंबर", loc: "लोकेशन", customLoc: "लोकेशन का नाम लिखें...", addAnother: "एक और जोड़ें", submit: "ड्यूटी सबमिट करें", encrypting: "सबमिट हो रहा है...", recorded: "सेव हो गया", noLogs: "इस तारीख की कोई ड्यूटी नहीं मिली।", secData: "सुरक्षा गार्ड डेटा", day: "डे शिफ्ट (Day)", night: "नाईट शिफ्ट (Night)", off: "वीकली ऑफ (Off)" },
-    inc: { title: "घटना रिपोर्ट", subtitle: "कमांड सेंटर को डायरेक्ट रिपोर्ट।", type: "घटना का प्रकार / नाम", occDate: "घटना की तारीख और समय", repBy: "रिपोर्ट करने वाले का नाम", ep: "EP नंबर", site: "साइट का नाम", pin: "पिनकोड", exactLoc: "घटना की सटीक लोकेशन", details: "घटना की पूरी जानकारी", findings: "जांच के नतीजे (Findings)", action: "क्या एक्शन लिया गया", reco: "सुझाव (Recommendations)", photo: "फोटो / सबूत", attach: "फोटो जोड़ें", submit: "रिपोर्ट सबमिट करें", adminSeen: "एडमिन ने देख लिया", pending: "अभी पेंडिंग है", timeOcc: "घटना का समय", timeRep: "रिपोर्ट करने का समय", copyWA: "WA कॉपी", copyFull: "पूरी रिपोर्ट कॉपी करें", noInc: "इस तारीख की कोई घटना नहीं मिली।", encrypting: "रिपोर्ट जा रही है..." },
+    inc: { title: "घटना रिपोर्ट", subtitle: "कमांड सेंटर को डायरेक्ट रिपोर्ट।", type: "घटना का प्रकार / नाम", occDate: "घटना की तारीख और समय", repBy: "रिपोर्ट करने वाले का नाम", ep: "EP नंबर", site: "साइट का नाम", pin: "पिनकोड", exactLoc: "घटना की सटीक लोकेशन", details: "घटना की पूरी जानकारी", findings: "जांच के नतीजे (Findings)", action: "क्या एक्शन लिया गया", reco: "सुझाव (Recommendations)", photo: "फोटो / सबूत", attach: "फोटो जोड़ें", submit: "रिपोर्ट सबमिट करें", adminSeen: "एडमिन ने देख लिया", pending: "अभी पेंडिंग है", timeOcc: "घटना का समय", timeRep: "रिपोर्ट करने का समय", copyWA: "WA कॉपी", copyFull: "पूरी रिपोर्ट कॉपी करें", noInc: "इस तारीख की कोई घटना नहीं मिली।", encrypting: "रिपोर्ट जा रही है...",
+      // ✨ NEW PLACEHOLDERS!
+      phType: "जैसे: चोरी, आग, लड़ाई...", phRepBy: "ऑफिसर का नाम", phEp: "आईडी नंबर", phPin: "पिनकोड", phLoc: "साइट पर किस जगह...", phDetails: "क्या हुआ था? पूरी जानकारी दें।", phFindings: "जांच में क्या पता चला...", phAction: "तुरंत क्या कदम उठाए गए...", phReco: "आगे से रोकने के सुझाव..."
+    },
     mis: { selectDates: "MIS रिपोर्ट की तारीख चुनें", dateFrom: "कब से (From)", dateTo: "कब तक (To)", register: "ऑफिशियल रजिस्टर", submit: "रिपोर्ट सबमिट करें", syncing: "सिंक हो रहा है...", decrypting: "लेजर लोड हो रहा है...", viewMaster: "मास्टर देखें", editResend: "एडिट / रीसेंड", noLedgers: "कोई MIS लेजर नहीं मिला।", delete: "डिलीट करें", download: "CSV डाउनलोड करें" }
   },
   mr: {
     hub: { title: "सुरक्षा डॅशबोर्ड", apps: "सिक्योर ॲप्स", dep: "डेली ड्युटी (Deployment)", inc: "घटना रिपोर्ट (Incident)", mis: "MIS रिपोर्ट", misSub: "लेजर सबमिट करा", overview: "आढावा" },
     nav: { back: "मागे", newEntry: "नवीन एंट्री", viewLogs: "जुने लॉग्स", clear: "क्लिअर", dateFilter: "तारीख निवडा" },
-    dep: { clone: "कालची ड्युटी कॉपी करा", date: "ड्युटीची तारीख", shift: "शिफ्ट", desig: "पद ", name: "पूर्ण नाव", phone: "मोबाईल नंबर", loc: "लोकेशन", customLoc: "लोकेशनचे नाव लिहा...", addAnother: "आणखी एक जोडा", submit: "ड्युटी सबमिट करा", encrypting: "सबमिट होत आहे...", recorded: "सेव्ह झाले", noLogs: "या तारखेची कोणतीही ड्युटी आढळली नाही.", secData: "सुरक्षा रक्षक डेटा", day: "डे शिफ्ट (Day)", night: "नाईट शिफ्ट (Night)", off: "वीकली ऑफ (Off)" },
-    inc: { title: "घटना रिपोर्ट", subtitle: "कमांड सेंटरला डायरेक्ट रिपोर्ट.", type: "घटनेचा प्रकार / नाव", occDate: "घटनेची तारीख आणि वेळ", repBy: "रिपोर्ट करणाऱ्याचे नाव", ep: "EP नंबर", site: "साईटचे नाव", pin: "पिनकोड", exactLoc: "घटनेची नेमकी लोकेशन", details: "घटनेची संपूर्ण माहिती", findings: "तपासाचे निष्कर्ष (Findings)", action: "काय ॲक्शन घेतली", reco: "सूचना (Recommendations)", photo: "फोटो / पुरावा", attach: "फोटो जोडा", submit: "रिपोर्ट सबमिट करा", adminSeen: "ॲडमिनने पाहिले", pending: "अजून पेंडिंग आहे", timeOcc: "घटनेची वेळ", timeRep: "रिपोर्ट केल्याची वेळ", copyWA: "WA कॉपी", copyFull: "संपूर्ण रिपोर्ट कॉपी करा", noInc: "या तारखेची कोणतीही घटना आढळली नाही.", encrypting: "रिपोर्ट जात आहे..." },
+    dep: { clone: "कालची ड्युटी कॉपी करा", date: "ड्युटीची तारीख", shift: "शिफ्ट", desig: "पद", name: "पूर्ण नाव", phone: "मोबाईल नंबर", loc: "लोकेशन", customLoc: "लोकेशनचे नाव लिहा...", addAnother: "आणखी एक जोडा", submit: "ड्युटी सबमिट करा", encrypting: "सबमिट होत आहे...", recorded: "सेव्ह झाले", noLogs: "या तारखेची कोणतीही ड्युटी आढळली नाही.", secData: "सुरक्षा रक्षक डेटा", day: "डे शिफ्ट (Day)", night: "नाईट शिफ्ट (Night)", off: "वीकली ऑफ (Off)" },
+    inc: { title: "घटना रिपोर्ट", subtitle: "कमांड सेंटरला डायरेक्ट रिपोर्ट.", type: "घटनेचा प्रकार / नाव", occDate: "घटनेची तारीख आणि वेळ", repBy: "रिपोर्ट करणाऱ्याचे नाव", ep: "EP नंबर", site: "साईटचे नाव", pin: "पिनकोड", exactLoc: "घटनेची नेमकी लोकेशन", details: "घटनेची संपूर्ण माहिती", findings: "तपासाचे निष्कर्ष (Findings)", action: "काय ॲक्शन घेतली", reco: "सूचना (Recommendations)", photo: "फोटो / पुरावा", attach: "फोटो जोडा", submit: "रिपोर्ट सबमिट करा", adminSeen: "ॲडमिनने पाहिले", pending: "अजून पेंडिंग आहे", timeOcc: "घटनेची वेळ", timeRep: "रिपोर्ट केल्याची वेळ", copyWA: "WA कॉपी", copyFull: "संपूर्ण रिपोर्ट कॉपी करा", noInc: "या तारखेची कोणतीही घटना आढळली नाही.", encrypting: "रिपोर्ट जात आहे...",
+      // ✨ NEW PLACEHOLDERS!
+      phType: "उदा: चोरी, आग, भांडण...", phRepBy: "अधिकाऱ्याचे नाव", phEp: "आयडी क्रमांक", phPin: "पिनकोड", phLoc: "नेमकी कोणती जागा...", phDetails: "नेमके काय घडले? संपूर्ण माहिती द्या.", phFindings: "तपासात काय आढळले...", phAction: "त्वरित काय कारवाई केली...", phReco: "पुढे असे घडू नये म्हणून सूचना..."
+    },
     mis: { selectDates: "MIS रिपोर्टची तारीख निवडा", dateFrom: "कधीपासून (From)", dateTo: "कधीपर्यंत (To)", register: "ऑफिशियल रजिस्टर", submit: "रिपोर्ट सबमिट करा", syncing: "सिंक होत आहे...", decrypting: "लेजर लोड होत आहे...", viewMaster: "मास्टर पहा", editResend: "एडिट / रीसेंड", noLedgers: "कोणतेही MIS लेजर आढळले नाही.", delete: "डिलीट करा", download: "CSV डाउनलोड करा" }
   },
   te: {
     hub: { title: "సెక్యూరిటీ డాష్‌బోర్డ్", apps: "సెక్యూర్ యాప్స్", dep: "డైలీ డ్యూటీ (Deployment)", inc: "సంఘటన రిపోర్ట్ (Incident)", mis: "MIS రిపోర్ట్", misSub: "లెడ్జర్ సబ్మిట్ చేయండి", overview: "అవలోకనం" },
     nav: { back: "వెనుకకు", newEntry: "కొత్త ఎంట్రీ", viewLogs: "పాత లాగ్స్", clear: "క్లియర్", dateFilter: "తేదీ ఎంచుకోండి" },
     dep: { clone: "నిన్నటి డ్యూటీ కాపీ చేయండి", date: "డ్యూటీ తేదీ", shift: "షిఫ్ట్", desig: "హోదా", name: "పూర్తి పేరు", phone: "మొబైల్ నంబర్", loc: "లోకేషన్", customLoc: "లోకేషన్ పేరు రాయండి...", addAnother: "ఇంకొకటి జోడించండి", submit: "డ్యూటీ సబ్మిట్ చేయండి", encrypting: "సబ్మిట్ అవుతోంది...", recorded: "సేవ్ చేయబడింది", noLogs: "ఈ తేదీకి డ్యూటీ రికార్డ్ లేదు.", secData: "సెక్యూరిటీ గార్డ్ డేటా", day: "డే షిఫ్ట్ (Day)", night: "నైట్ షిఫ్ట్ (Night)", off: "వీక్లీ ఆఫ్ (Off)" },
-    inc: { title: "సంఘటన రిపోర్ట్", subtitle: "కమాండ్ సెంటర్‌కు డైరెక్ట్ రిపోర్ట్.", type: "సంఘటన రకం / పేరు", occDate: "సంఘటన తేదీ మరియు సమయం", repBy: "రిపోర్ట్ చేసినవారి పేరు", ep: "EP నంబర్", site: "సైట్ పేరు", pin: "పిన్‌కోడ్", exactLoc: "సంఘటన జరిగిన ప్రదేశం", details: "సంఘటన పూర్తి వివరాలు", findings: "పరిశోధనలు (Findings)", action: "తీసుకున్న చర్య", reco: "సూచనలు (Recommendations)", photo: "ఫోటో / ఆధారం", attach: "ఫోటో జోడించండి", submit: "రిపోర్ట్ సబ్మిట్ చేయండి", adminSeen: "అడ్మిన్ చూశారు", pending: "ఇంకా పెండింగ్‌లో ఉంది", timeOcc: "సంఘటన సమయం", timeRep: "రిపోర్ట్ చేసిన సమయం", copyWA: "WA కాపీ", copyFull: "పూర్తి రిపోర్ట్ కాపీ చేయండి", noInc: "ఈ తేదీకి ఎలాంటి సంఘటన లేదు.", encrypting: "అప్‌లోడ్ అవుతోంది..." },
+    inc: { title: "సంఘటన రిపోర్ట్", subtitle: "కమాండ్ సెంటర్‌కు డైరెక్ట్ రిపోర్ట్.", type: "సంఘటన రకం / పేరు", occDate: "సంఘటన తేదీ మరియు సమయం", repBy: "రిపోర్ట్ చేసినవారి పేరు", ep: "EP నంబర్", site: "సైట్ పేరు", pin: "పిన్‌కోడ్", exactLoc: "సంఘటన జరిగిన ప్రదేశం", details: "సంఘటన పూర్తి వివరాలు", findings: "పరిశోధనలు (Findings)", action: "తీసుకున్న చర్య", reco: "సూచనలు (Recommendations)", photo: "ఫోటో / ఆధారం", attach: "ఫోటో జోడించండి", submit: "రిపోర్ట్ సబ్మిట్ చేయండి", adminSeen: "అడ్మిన్ చూశారు", pending: "ఇంకా పెండింగ్‌లో ఉంది", timeOcc: "సంఘటన సమయం", timeRep: "రిపోర్ట్ చేసిన సమయం", copyWA: "WA కాపీ", copyFull: "పూర్తి రిపోర్ట్ కాపీ చేయండి", noInc: "ఈ తేదీకి ఎలాంటి సంఘటన లేదు.", encrypting: "అప్‌లోడ్ అవుతోంది...",
+      // ✨ NEW PLACEHOLDERS!
+      phType: "ఉదా: దొంగతనం, అగ్నిప్రమాదం...", phRepBy: "ఆఫీసర్ పేరు", phEp: "ID నంబర్", phPin: "పిన్‌కోడ్", phLoc: "కచ్చితమైన ప్రదేశం...", phDetails: "ఏం జరిగింది? పూర్తి వివరాలు రాయండి.", phFindings: "విచారణలో ఏం తేలింది...", phAction: "వెంటనే తీసుకున్న చర్యలు...", phReco: "మళ్లీ జరగకుండా సూచనలు..."
+    },
     mis: { selectDates: "MIS రిపోర్ట్ తేదీని ఎంచుకోండి", dateFrom: "ఎప్పటినుండి (From)", dateTo: "ఎప్పటివరకు (To)", register: "అధికారిక రిజిస్టర్", submit: "రిపోర్ట్ సబ్మిట్ చేయండి", syncing: "సింక్ అవుతోంది...", decrypting: "లెడ్జర్ లోడ్ అవుతోంది...", viewMaster: "మాస్టర్ చూడండి", editResend: "ఎడిట్ / రీసెండ్", noLedgers: "ఎలాంటి MIS లెడ్జర్ లేదు.", delete: "డిలీట్ చేయండి", download: "CSV డౌన్‌లోడ్" }
   },
   pa: {
     hub: { title: "ਸੁਰੱਖਿਆ ਡੈਸ਼ਬੋਰਡ", apps: "ਸੁਰੱਖਿਅਤ ਐਪਸ", dep: "ਰੋਜ਼ਾਨਾ ਡਿਊਟੀ (Deployment)", inc: "ਘਟਨਾ ਰਿਪੋਰਟ (Incident)", mis: "MIS ਰਿਪੋਰਟ", misSub: "ਲੇਜਰ ਜਮ੍ਹਾਂ ਕਰੋ", overview: "ਸੰਖੇਪ ਜਾਣਕਾਰੀ" },
     nav: { back: "ਪਿੱਛੇ", newEntry: "ਨਵੀਂ ਐਂਟਰੀ", viewLogs: "ਪੁਰਾਣੇ ਲੌਗ", clear: "ਸਾਫ਼ ਕਰੋ", dateFilter: "ਤਾਰੀਖ ਚੁਣੋ" },
-    dep: { clone: "ਕੱਲ੍ਹ ਦੀ ਡਿਊਟੀ ਕਾਪੀ ਕਰੋ", date: "ਡਿਊਟੀ ਦੀ ਤਾਰੀਖ", shift: "ਸ਼ਿਫਟ", desig: "ਅਹੁਦਾ", name: "ਪੂਰਾ ਨਾਮ", phone: "ਮੋਬਾਈਲ ਨੰਬਰ", loc: "ਲੋਕੇਸ਼ਨ", customLoc: "ਲੋਕੇਸ਼ਨ ਦਾ ਨਾਮ ਲਿਖੋ...", addAnother: "ਇੱਕ ਹੋਰ ਜੋੜੋ", submit: "ਡਿਊਟੀ ਜਮ੍ਹਾਂ ਕਰੋ", encrypting: "ਜਮ੍ਹਾਂ ਹੋ ਰਿਹਾ ਹੈ...", recorded: "ਸੇਵ ਹੋ ਗਿਆ", noLogs: "ਇਸ ਤਾਰੀਖ ਦੀ ਕੋਈ ਡਿਊਟੀ ਨਹੀਂ ਮਿਲੀ।", secData: "ਸੁਰੱਖਿਆ ਡੇਟਾ", day: "ਡੇ ਸ਼ਿਫਟ (Day)", night: "ਨਾਈਟ ਸ਼ਿਫਟ (Night)", off: "ਵੀਕਲੀ ਆਫ (Off)" },
-    inc: { title: "ਘਟਨਾ ਰਿਪੋਰਟ", subtitle: "ਕਮਾਂਡ ਸੈਂਟਰ ਨੂੰ ਸਿੱਧੀ ਰਿਪੋਰਟ।", type: "ਘਟਨਾ ਦੀ ਕਿਸਮ / ਨਾਮ", occDate: "ਘਟਨਾ ਦੀ ਤਾਰੀਖ ਅਤੇ ਸਮਾਂ", repBy: "ਰਿਪੋਰਟ ਕਰਨ ਵਾਲੇ ਦਾ ਨਾਮ", ep: "EP ਨੰਬਰ", site: "ਸਾਈਟ ਦਾ ਨਾਮ", pin: "ਪਿਨਕੋਡ", exactLoc: "ਘਟਨਾ ਦੀ ਸਹੀ ਲੋਕੇਸ਼ਨ", details: "ਘਟਨਾ ਦੀ ਪੂਰੀ ਜਾਣਕਾਰੀ", findings: "ਜਾਂਚ ਦੇ ਨਤੀਜੇ (Findings)", action: "ਕੀ ਕਾਰਵਾਈ ਕੀਤੀ ਗਈ", reco: "ਸੁਝਾਅ (Recommendations)", photo: "ਫੋਟੋ / ਸਬੂਤ", attach: "ਫੋਟੋ ਜੋੜੋ", submit: "ਰਿਪੋਰਟ ਜਮ੍ਹਾਂ ਕਰੋ", adminSeen: "ਐਡਮਿਨ ਨੇ ਦੇਖ ਲਿਆ", pending: "ਅਜੇ ਪੈਂਡਿੰਗ ਹੈ", timeOcc: "ਘਟਨਾ ਦਾ ਸਮਾਂ", timeRep: "ਰਿਪੋਰਟ ਕਰਨ ਦਾ ਸਮਾਂ", copyWA: "WA ਕਾਪੀ", copyFull: "ਪੂਰੀ ਰਿਪੋਰਟ ਕਾਪੀ ਕਰੋ", noInc: "ਇਸ ਤਾਰੀਖ ਦੀ ਕੋਈ ਘਟਨਾ ਨਹੀਂ ਮਿਲੀ।", encrypting: "ਅੱਪਲੋਡ ਹੋ ਰਿਹਾ ਹੈ..." },
+    dep: { clone: "ਕੱਲ੍ਹ ਦੀ ਡਿਊਟੀ ਕਾਪੀ ਕਰੋ", date: "ਡਿਊਟੀ ਦੀ ਤਾਰੀਖ", shift: "ਸ਼ਿਫਟ", desig: "ਅਹੁਦਾ ", name: "ਪੂਰਾ ਨਾਮ", phone: "ਮੋਬਾਈਲ ਨੰਬਰ", loc: "ਲੋਕੇਸ਼ਨ", customLoc: "ਲੋਕੇਸ਼ਨ ਦਾ ਨਾਮ ਲਿਖੋ...", addAnother: "ਇੱਕ ਹੋਰ ਜੋੜੋ", submit: "ਡਿਊਟੀ ਜਮ੍ਹਾਂ ਕਰੋ", encrypting: "ਜਮ੍ਹਾਂ ਹੋ ਰਿਹਾ ਹੈ...", recorded: "ਸੇਵ ਹੋ ਗਿਆ", noLogs: "ਇਸ ਤਾਰੀਖ ਦੀ ਕੋਈ ਡਿਊਟੀ ਨਹੀਂ ਮਿਲੀ।", secData: "ਸੁਰੱਖਿਆ ਡੇਟਾ", day: "ਡੇ ਸ਼ਿਫਟ (Day)", night: "ਨਾਈਟ ਸ਼ਿਫਟ (Night)", off: "ਵੀਕਲੀ ਆਫ (Off)" },
+    inc: { title: "ਘਟਨਾ ਰਿਪੋਰਟ", subtitle: "ਕਮਾਂਡ ਸੈਂਟਰ ਨੂੰ ਸਿੱਧੀ ਰਿਪੋਰਟ।", type: "ਘਟਨਾ ਦੀ ਕਿਸਮ / ਨਾਮ", occDate: "ਘਟਨਾ ਦੀ ਤਾਰੀਖ ਅਤੇ ਸਮਾਂ", repBy: "ਰਿਪੋਰਟ ਕਰਨ ਵਾਲੇ ਦਾ ਨਾਮ", ep: "EP ਨੰਬਰ", site: "ਸਾਈਟ ਦਾ ਨਾਮ", pin: "ਪਿਨਕੋਡ", exactLoc: "ਘਟਨਾ ਦੀ ਸਹੀ ਲੋਕੇਸ਼ਨ", details: "ਘਟਨਾ ਦੀ ਪੂਰੀ ਜਾਣਕਾਰੀ", findings: "ਜਾਂਚ ਦੇ ਨਤੀਜੇ (Findings)", action: "ਕੀ ਕਾਰਵਾਈ ਕੀਤੀ ਗਈ", reco: "ਸੁਝਾਅ (Recommendations)", photo: "ਫੋਟੋ / ਸਬੂਤ", attach: "ਫੋਟੋ ਜੋੜੋ", submit: "ਰਿਪੋਰਟ ਜਮ੍ਹਾਂ ਕਰੋ", adminSeen: "ਐਡਮਿਨ ਨੇ ਦੇਖ ਲਿਆ", pending: "ਅਜੇ ਪੈਂਡਿੰਗ ਹੈ", timeOcc: "ਘਟਨਾ ਦਾ ਸਮਾਂ", timeRep: "ਰਿਪੋਰਟ ਕਰਨ ਦਾ ਸਮਾਂ", copyWA: "WA ਕਾਪੀ", copyFull: "ਪੂਰੀ ਰਿਪੋਰਟ ਕਾਪੀ ਕਰੋ", noInc: "ਇਸ ਤਾਰੀਖ ਦੀ ਕੋਈ ਘਟਨਾ ਨਹੀਂ ਮਿਲੀ।", encrypting: "ਅੱਪਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...",
+      // ✨ NEW PLACEHOLDERS!
+      phType: "ਜਿਵੇਂ: ਚੋਰੀ, ਅੱਗ, ਲੜਾਈ...", phRepBy: "ਅਫਸਰ ਦਾ ਨਾਮ", phEp: "ਆਈਡੀ ਨੰਬਰ", phPin: "ਪਿਨਕੋਡ", phLoc: "ਸਾਈਟ 'ਤੇ ਕਿਹੜੀ ਜਗ੍ਹਾ...", phDetails: "ਕੀ ਹੋਇਆ ਸੀ? ਪੂਰੀ ਜਾਣਕਾਰੀ ਦਿਓ।", phFindings: "ਜਾਂਚ ਵਿੱਚ ਕੀ ਪਤਾ ਲੱਗਾ...", phAction: "ਤੁਰੰਤ ਕੀ ਕਾਰਵਾਈ ਕੀਤੀ ਗਈ...", phReco: "ਅੱਗੇ ਤੋਂ ਰੋਕਣ ਲਈ ਸੁਝਾਅ..."
+    },
     mis: { selectDates: "MIS ਰਿਪੋਰਟ ਦੀ ਤਾਰੀਖ ਚੁਣੋ", dateFrom: "ਕਦੋਂ ਤੋਂ (From)", dateTo: "ਕਦੋਂ ਤੱਕ (To)", register: "ਅਧਿਕਾਰਤ ਰਜਿਸਟਰ", submit: "ਰਿਪੋਰਟ ਜਮ੍ਹਾਂ ਕਰੋ", syncing: "ਸਿੰਕ ਹੋ ਰਿਹਾ ਹੈ...", decrypting: "ਲੇਜਰ ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...", viewMaster: "ਮਾਸਟਰ ਦੇਖੋ", editResend: "ਐਡਿਟ / ਰੀਸੈਂਡ", noLedgers: "ਕੋਈ MIS ਲੇਜਰ ਨਹੀਂ ਮਿਲਿਆ।", delete: "ਮਿਟਾਓ", download: "CSV ਡਾਊਨਲੋਡ" }
   }
 };
-
 // 🇮🇳 ✨ THE BULLETPROOF IST TIMEZONE FIXER!
 const getISTDate = (offsetDays = 0) => {
   const d = new Date();
@@ -732,7 +746,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
         <div>
           <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">{t.hub.overview}</p>
           <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-3">{fillerName || userProfile.name}</h1>
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 dark:bg-slate-800/60 backdrop-blur-md text-indigo-700 dark:text-indigo-300 rounded-full text-sm sm:text-base font-black uppercase tracking-wider shadow-md border border-white/40 dark:border-slate-600/50">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 dark:bg-slate-800/60 backdrop-blur-md text-indigo-700 dark:text-indigo-300 rounded-full text-base sm:text-base font-black uppercase tracking-wider shadow-md border border-white/40 dark:border-slate-600/50">
             <MapPin size={16} className="text-indigo-500"/> {userProfile.site}
           </div>
         </div>
@@ -2374,7 +2388,7 @@ function IncidentMobileForm({ userProfile, fetchIncidents, setActiveTab, languag
   };
 
   const inputClass = "w-full bg-white dark:bg-[#0B1120] border-2 border-slate-300 dark:border-slate-600 rounded-2xl py-3.5 px-4 text-base font-black text-slate-900 dark:text-white outline-none focus:border-rose-500 dark:focus:border-rose-400 focus:ring-4 focus:ring-rose-500/20 hover:border-slate-400 dark:hover:border-slate-500 transition-all shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05),inset_0_2px_4px_rgba(0,0,0,0.04)] placeholder:text-slate-400 placeholder:font-medium";
-  const labelClass = "block text-xs sm:text-xs font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 ml-1";
+  const labelClass = "block text-xs sm:text-sm font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 ml-1";
 
   return (
     <form onSubmit={handleSubmit} className="p-4 space-y-6">
@@ -2387,7 +2401,7 @@ function IncidentMobileForm({ userProfile, fetchIncidents, setActiveTab, languag
       <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-6">
         <div>
           <label className={labelClass}>{t.inc.type}</label>
-          <input type="text" required placeholder="..." value={formData.incidentName} onChange={(e) => setFormData({...formData, incidentName: e.target.value})} className={`${inputClass} !border-rose-200 dark:!border-rose-500/30 focus:!border-rose-500 !bg-rose-50/50 dark:!bg-rose-500/5 text-rose-700 dark:text-rose-400 uppercase placeholder-rose-300 dark:placeholder-rose-800`} />
+          <input type="text" required placeholder={t.inc.phType} value={formData.incidentName} onChange={(e) => setFormData({...formData, incidentName: e.target.value})} className={`${inputClass} !border-rose-200 dark:!border-rose-500/30 focus:!border-rose-500 !bg-rose-50/50 dark:!bg-rose-500/5 text-rose-700 dark:text-rose-400 uppercase placeholder-rose-300 dark:placeholder-rose-800`} />
         </div>
         <div>
           <label className={labelClass}>{t.inc.occDate}</label>
@@ -2395,21 +2409,21 @@ function IncidentMobileForm({ userProfile, fetchIncidents, setActiveTab, languag
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div><label className={labelClass}>{t.inc.repBy}</label><input type="text" required value={formData.reportedBy} onChange={(e) => setFormData({...formData, reportedBy: e.target.value})} className={`${inputClass} uppercase`} /></div>
-          <div><label className={labelClass}>{t.inc.ep}</label><input type="text" required value={formData.epNumber} onChange={(e) => setFormData({...formData, epNumber: e.target.value})} className={`${inputClass} uppercase`} /></div>
+          <div><label className={labelClass}>{t.inc.repBy}</label><input type="text" required placeholder={t.inc.phRepBy} value={formData.reportedBy} onChange={(e) => setFormData({...formData, reportedBy: e.target.value})} className={`${inputClass} uppercase`} /></div>
+          <div><label className={labelClass}>{t.inc.ep}</label><input type="text" required placeholder={t.inc.phEp} value={formData.epNumber} onChange={(e) => setFormData({...formData, epNumber: e.target.value})} className={`${inputClass} uppercase`} /></div>
         </div>
 
         <div className="grid grid-cols-3 gap-4 items-end">
           <div className="col-span-2"><label className={labelClass}>{t.inc.site}</label><div className="w-full bg-slate-100 dark:bg-slate-800 border-2 border-transparent rounded-2xl py-3.5 px-4 text-base font-black text-slate-500 uppercase">{userProfile.site}</div></div>
-          <div><label className={labelClass}>{t.inc.pin}</label><input type="text" required value={formData.pincode} onChange={(e) => setFormData({...formData, pincode: e.target.value})} className={`${inputClass} uppercase`} /></div>
+          <div><label className={labelClass}>{t.inc.pin}</label><input type="text" required placeholder={t.inc.phPin} value={formData.pincode} onChange={(e) => setFormData({...formData, pincode: e.target.value})} className={`${inputClass} uppercase`} /></div>
         </div>
 
-        <div><label className={labelClass}>{t.inc.exactLoc}</label><input type="text" required value={formData.incidentLocation} onChange={(e) => setFormData({...formData, incidentLocation: e.target.value})} className={inputClass} /></div>
+        <div><label className={labelClass}>{t.inc.exactLoc}</label><input type="text" required placeholder={t.inc.phLoc} value={formData.incidentLocation} onChange={(e) => setFormData({...formData, incidentLocation: e.target.value})} className={inputClass} /></div>
 
-        <div><label className={labelClass}>{t.inc.details}</label><textarea required value={formData.details} onChange={(e) => setFormData({...formData, details: e.target.value})} className={`${inputClass} min-h-[100px] resize-y py-4`} /></div>
-        <div><label className={labelClass}>{t.inc.findings}</label><textarea required value={formData.findings} onChange={(e) => setFormData({...formData, findings: e.target.value})} className={`${inputClass} min-h-[80px] resize-y py-4`} /></div>
-        <div><label className={labelClass}>{t.inc.action}</label><textarea required value={formData.actionsTaken} onChange={(e) => setFormData({...formData, actionsTaken: e.target.value})} className={`${inputClass} min-h-[80px] resize-y py-4`} /></div>
-        <div><label className={labelClass}>{t.inc.reco}</label><textarea required value={formData.recommendations} onChange={(e) => setFormData({...formData, recommendations: e.target.value})} className={`${inputClass} min-h-[80px] resize-y py-4`} /></div>
+        <div><label className={labelClass}>{t.inc.details}</label><textarea required placeholder={t.inc.phDetails} value={formData.details} onChange={(e) => setFormData({...formData, details: e.target.value})} className={`${inputClass} min-h-[100px] resize-y py-4`} /></div>
+        <div><label className={labelClass}>{t.inc.findings}</label><textarea required placeholder={t.inc.phFindings} value={formData.findings} onChange={(e) => setFormData({...formData, findings: e.target.value})} className={`${inputClass} min-h-[80px] resize-y py-4`} /></div>
+        <div><label className={labelClass}>{t.inc.action}</label><textarea required placeholder={t.inc.phAction} value={formData.actionsTaken} onChange={(e) => setFormData({...formData, actionsTaken: e.target.value})} className={`${inputClass} min-h-[80px] resize-y py-4`} /></div>
+        <div><label className={labelClass}>{t.inc.reco}</label><textarea required placeholder={t.inc.phReco} value={formData.recommendations} onChange={(e) => setFormData({...formData, recommendations: e.target.value})} className={`${inputClass} min-h-[80px] resize-y py-4`} /></div>
 
         <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
           <label className={labelClass}>{t.inc.photo}</label>
@@ -2423,7 +2437,7 @@ function IncidentMobileForm({ userProfile, fetchIncidents, setActiveTab, languag
         </div>
       </div>
 
-      <button type="submit" disabled={isSubmitting} className="w-full py-5 rounded-[1.5rem] font-black text-base uppercase tracking-widest shadow-xl shadow-rose-600/25 transition-all flex justify-center items-center gap-2 bg-rose-600 text-white hover:bg-rose-700 active:scale-95">
+      <button type="submit" disabled={isSubmitting} className="w-full py-5 rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-rose-600/25 transition-all flex justify-center items-center gap-2 bg-rose-600 text-white hover:bg-rose-700 active:scale-95">
         {isSubmitting ? t.inc.encrypting : <><AlertTriangle size={20} /> {t.inc.submit}</>}
       </button>
     </form>
@@ -2784,7 +2798,7 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab, langu
 
   const renderInput = (valKey) => (
     <td className="border border-slate-300 dark:border-slate-700 p-0">
-      <input type="number" required value={fd[valKey]} onChange={(e) => setFd({...fd, [valKey]: e.target.value})} className="w-14 sm:w-20 bg-transparent text-center py-3 text-sm font-bold text-slate-900 dark:text-white outline-none focus:bg-emerald-50 dark:focus:bg-emerald-900/30 transition-colors" />
+      <input type="number" required value={fd[valKey]} onChange={(e) => setFd({...fd, [valKey]: e.target.value})} className="w-14 sm:w-20 bg-transparent text-center py-3 text-base font-bold text-slate-900 dark:text-white outline-none focus:bg-emerald-50 dark:focus:bg-emerald-900/30 transition-colors" />
     </td>
   );
 
@@ -2837,7 +2851,7 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab, langu
             </thead>
             <tbody>
               <tr className="bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                <td className="border border-slate-300 dark:border-slate-700 p-0"><input type="text" required value={fd.srNo} onChange={(e) => setFd({...fd, srNo: e.target.value})} className="w-16 sm:w-20 bg-transparent text-center py-3 text-sm font-bold outline-none" /></td>
+                <td className="border border-slate-300 dark:border-slate-700 p-0"><input type="text" required value={fd.srNo} onChange={(e) => setFd({...fd, srNo: e.target.value})} className="w-16 sm:w-20 bg-transparent text-center py-3 text-base font-bold outline-none" /></td>
                 <td className="border border-slate-300 dark:border-slate-700 p-3 text-xs font-black text-slate-400">{userProfile.site}</td>
                 {renderInput('dispSolid')}{renderInput('dispGas')}{renderInput('dispScrap')}
                 {renderInput('recCompany')}{renderInput('recContractor')}
@@ -3790,7 +3804,7 @@ function WeeklyEditModal({ record, onClose, onSave }) {
         
         <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-indigo-50 dark:bg-indigo-950/30 shrink-0">
           <div>
-            <h3 className="font-black text-indigo-700 dark:text-indigo-400 flex items-center gap-2 uppercase tracking-widest text-sm sm:text-base"><Edit2 size={18} /> Edit & Resend Report</h3>
+            <h3 className="font-black text-indigo-700 dark:text-indigo-400 flex items-center gap-2 uppercase tracking-widest text-base sm:text-base"><Edit2 size={18} /> Edit & Resend Report</h3>
             <p className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">{record.site} • Sr No. {record.sr_no}</p>
           </div>
           <button onClick={onClose} className="p-2 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-800 rounded-full shadow-sm"><X size={18} /></button>
