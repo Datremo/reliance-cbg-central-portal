@@ -27,7 +27,7 @@ const TRANSLATIONS = {
     hub: { title: "Security Dashboard", apps: "Secure Apps", dep: "Daily Deployment", inc: "Incident Report", mis: "MIS Report", misSub: "Submit Ledger", overview: "Overview" },
     nav: { back: "Back", newEntry: "New Entry", viewLogs: "View Logs", clear: "CLEAR", dateFilter: "Date Filter" },
     dep: { clone: "Copy Yesterday's Deployment", date: "Deployment Date", shift: "Shift", desig: "Designation", name: "Full Name", phone: "Phone No.", loc: "Location", customLoc: "Specify sector exactly...", addAnother: "Add another", submit: "SUBMIT DEPLOYMENT", encrypting: "ENCRYPTING...", recorded: "RECORDED", noLogs: "No deployment logs found for this date.", secData: "Security Data", day: "Day Shift", night: "Night Shift", off: "Weekly Off" },
-    inc: { title: "Incident Report", subtitle: "Direct uplink to Command Center.", type: "Incident Type / Name", occDate: "Occurrence Date & Time", repBy: "Reported By", ep: "EP Number", site: "Site Name", pin: "Pincode", exactLoc: "Location of Incident", details: "Details of Incident", findings: "Findings", action: "Action Taken", reco: "Follow-up & Recommendations", photo: "Photographic Evidence", attach: "Attach", submit: "SUBMIT REPORT", adminSeen: "Admin Acknowledged", pending: "Pending Review", timeOcc: "Time Occurred", timeRep: "Time Reported", copyWA: "WA COPY", copyFull: "Copy Full Report", noInc: "No incidents found for this date.", encrypting: "ENCRYPTING UPLINK...", 
+    inc: { title: "Incident Report", subtitle: "Direct uplink to Command Center.", type: "Incident Type / Name", occDate: "Occurrence Date & Time", repBy: "Reported By", ep: "EP Number", site: "Site Name", pin: "Pincode", exactLoc: "Location of Incident", details: "Details of Incident", findings: "Findings", action: "Action Taken", reco: "Follow-up & Recommendations", photo: "Photographic Evidence", attach: "Attach", submit: "SUBMIT REPORT", adminSeen: "Admin Acknowledged", pending: "Pending Review", timeOcc: "Time Occurred", timeRep: "Time Reported", copyWA: "COPY FOR WHATSAPP", copyFull: "Copy Full Report", noInc: "No incidents found for this date.", encrypting: "ENCRYPTING UPLINK...", 
       // ✨ NEW PLACEHOLDERS!
       phType: "e.g. Theft, Fire, Breach...", phRepBy: "Officer Name", phEp: "ID Number", phPin: "Code", phLoc: "Specific spot on site...", phDetails: "What exactly happened? Provide full context.", phFindings: "Investigative findings...", phAction: "Immediate response deployed...", phReco: "Suggested protocols to prevent recurrence..."
     },
@@ -1015,6 +1015,16 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
   const t = TRANSLATIONS[language] || TRANSLATIONS['en'];
   const [viewDate, setViewDate] = useState(getISTDate());
   const [isCopied, setIsCopied] = useState(false);
+  
+  // ✨ THE TIMELOCK BRAIN 🧠
+  const checkIsEditable = (createdAt) => {
+    if (!createdAt) return false;
+    const recordTime = new Date(createdAt).getTime();
+    const currentTime = new Date().getTime();
+    if (isNaN(recordTime)) return false; // Safety net!
+    const hoursPassed = (currentTime - recordTime) / (1000 * 60 * 60);
+    return hoursPassed >= 0 && hoursPassed <= 24; 
+  };
 
   if (isLoading) return <div className="p-10 text-center text-indigo-500 font-bold animate-pulse">Syncing...</div>;
   const filteredLogs = deployments.filter(d => d.date === viewDate);
@@ -1061,15 +1071,18 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
     <div className="p-4 space-y-3">
       <div className="bg-white dark:bg-slate-900 p-3 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col gap-3 mb-4">
         <div className="flex justify-between items-center">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t.nav.dateFilter}</span>
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t.nav?.dateFilter || "Filter Date"}</span>
           <input type="date" value={viewDate} onChange={e => setViewDate(e.target.value)} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-sm font-bold outline-none [color-scheme:light] dark:[color-scheme:dark]" />
         </div>
         <button onClick={handleCopyWhatsApp} className={`w-full py-2.5 rounded-lg text-xs font-bold flex justify-center items-center gap-2 transition-all ${isCopied ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800'}`}>
-          {isCopied ? <><CheckCircle size={16} /> {t.dep.recorded}</> : <><Copy size={16} /> {t.inc.copyWA}</>}
+          {isCopied ? <><CheckCircle size={16} /> {t.dep?.recorded || "Copied!"}</> : <><Copy size={16} /> {t.inc?.copyWA || "Copy for WhatsApp"}</>}
         </button>
       </div>
 
       {filteredLogs.map((row, idx) => {
+        // ✨ STEP 2: WE CALL THE BRAIN HERE FOR EACH ROW!
+        const canEdit = checkIsEditable(row.created_at);
+
         const safeShift = row.shift || "";
         const safeDesignation = row.designation || "";
         const safeName = row.name || "Unknown";
@@ -1079,8 +1092,12 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
         else if (safeShift.includes('Night')) badgeClasses = 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400';
 
         return (
-          <div key={idx} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 relative group">
-            <div className="flex justify-between items-start mb-3">
+          <div key={idx} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 relative group overflow-hidden">
+            
+            {/* ✨ Adding that cute colored ribbon on the left to show if it's locked! */}
+            <div className={`absolute top-0 left-0 w-1 h-full ${canEdit ? 'bg-indigo-400' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
+
+            <div className="flex justify-between items-start mb-3 pl-2">
               <div className="pr-4">
                 <h4 className="font-bold text-slate-900 dark:text-slate-100 uppercase text-base">{safeName}</h4>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">{safeDesignation}</p>
@@ -1088,21 +1105,32 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
               <span className={`text-[10px] font-bold px-2 py-1 rounded border uppercase ${badgeClasses}`}>{shiftType || "N/A"}</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/50 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800/50 mt-2 mb-3">
+            <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/50 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800/50 mt-2 mb-3 ml-2">
               <span className="flex items-center gap-1.5 font-medium"><Calendar size={12}/> {row.date || "N/A"}</span>
               <span className="flex items-center gap-1.5 font-medium"><MapPin size={12}/> {row.location || "N/A"}</span>
               <span className="flex items-center gap-1.5 font-mono font-bold col-span-2 text-slate-700 dark:text-slate-300">{formatPhone(row.phone)}</span>
             </div>
 
-            <div className="flex justify-end border-t border-slate-100 dark:border-slate-800/50 pt-3 mt-1 gap-2">
+            <div className="flex justify-end border-t border-slate-100 dark:border-slate-800/50 pt-3 mt-1 gap-2 ml-2">
+              {/* Eye Button always stays visible! */}
               <button onClick={() => onView(row)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-500 hover:text-emerald-600 bg-slate-50 hover:bg-emerald-50 dark:bg-slate-800 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-400 rounded-lg transition-colors"><Eye size={14} /></button>
-              <button onClick={() => onEdit(row)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-500 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 dark:bg-slate-800 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 rounded-lg transition-colors"><Edit2 size={14} /></button>
-              <button onClick={() => onDelete(row)} className="p-2 text-slate-400 hover:text-red-600 bg-slate-50 dark:bg-slate-800 dark:hover:text-red-400 rounded-lg transition-colors"><Trash2 size={16} /></button>
+              
+              {/* ✨ THE MAGIC PADLOCK LOGIC */}
+              {canEdit ? (
+                <>
+                  <button onClick={() => onEdit(row)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-500 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 dark:bg-slate-800 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 rounded-lg transition-colors"><Edit2 size={14} /></button>
+                  <button onClick={() => onDelete(row)} className="p-2 text-slate-400 hover:text-red-600 bg-slate-50 dark:bg-slate-800 dark:hover:text-red-400 rounded-lg transition-colors"><Trash2 size={16} /></button>
+                </>
+              ) : (
+                <div className="flex items-center gap-1.5 px-4 py-2 text-[10px] uppercase tracking-widest font-black text-slate-400 bg-slate-100 dark:bg-slate-800/50 rounded-lg cursor-not-allowed border border-slate-200 dark:border-slate-700/50 shadow-inner">
+                  <Lock size={12}/> Expired
+                </div>
+              )}
             </div>
           </div>
         );
       })}
-      {filteredLogs.length === 0 && <p className="text-center text-slate-500 text-base mt-10 font-medium">{t.dep.noLogs}</p>}
+      {filteredLogs.length === 0 && <p className="text-center text-slate-500 text-base mt-10 font-medium">{t.dep?.noLogs || "No logs found."}</p>}
     </div>
   );
 }
@@ -1140,11 +1168,12 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
   
   // 🧠 1. THE MASTER FILTER ENGINE
   const filteredData = deployments.filter(d => {
-    // ✨ SAFETY NET: Force old database logs to UPPERCASE!
-    const safeSiteName = (d.site || "").toUpperCase();
+    // ✨ SAFETY NET 2.0: Force uppercase AND trim sneaky invisible spaces!
+    const safeSiteName = (d.site || "").toUpperCase().trim();
 
-    const stateMatch = filterState === "All" || (SITES_BY_STATE[filterState] && SITES_BY_STATE[filterState].includes(safeSiteName));
-    const siteMatch = filterSite === "All" || safeSiteName === filterSite;
+    // Make sure our state map checks against uppercase too!
+    const stateMatch = filterState === "All" || (SITES_BY_STATE[filterState] && SITES_BY_STATE[filterState].map(s => s.toUpperCase().trim()).includes(safeSiteName));
+    const siteMatch = filterSite === "All" || safeSiteName === filterSite.toUpperCase().trim();
     const dateMatch = filterDate === "" || d.date === filterDate;
     const shiftMatch = filterShift === "All" || d.shift === filterShift;
     const designationMatch = filterDesignation === "All" || (d.designation && d.designation.startsWith(filterDesignation));
@@ -1153,8 +1182,10 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
     const safeName = d.name || ""; 
     const searchMatch = searchTerm === "" || safeName.toLowerCase().includes(searchTerm.toLowerCase());
     
-    //   VIP Tier Logic
-    const isCommissioned = COMMISSIONED_SITES.includes(d.site);
+    // ✨ THE GHOST BUSTER: Force the entire Commissioned list to uppercase before checking!
+    const safeCommissionedList = COMMISSIONED_SITES.map(s => (s || "").toUpperCase().trim());
+    const isCommissioned = safeCommissionedList.includes(safeSiteName);
+    
     const tierMatch = siteTier === "All" || (siteTier === "Commissioned" ? isCommissioned : !isCommissioned);
 
     return stateMatch && siteMatch && dateMatch && shiftMatch && designationMatch && locationMatch && searchMatch && tierMatch;
@@ -1248,8 +1279,12 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
   const leaveCount = filteredData.filter(d => (d.shift || '').includes('Off')).length;
   const rogueCount = filteredData.filter(d => d.location === 'Other').length;
   
+  // ✨ EXORCISED: Top 5 Load now perfectly merges lowercase and uppercase!
   const sitePopulation = {};
-  filteredData.forEach(d => { sitePopulation[d.site] = (sitePopulation[d.site] || 0) + 1; });
+  filteredData.forEach(d => { 
+    const safePopSite = (d.site || "").toUpperCase();
+    sitePopulation[safePopSite] = (sitePopulation[safePopSite] || 0) + 1; 
+  });
   const top5Sites = Object.entries(sitePopulation).sort((a, b) => b[1] - a[1]).slice(0, 5);
   
   //  4. THE EXCEL EXPORT MAGIC WAND
@@ -1921,7 +1956,7 @@ const inputClass = "w-full bg-white dark:bg-[#0B1120] border-2 border-slate-300 
         </form>
 
         <div className="p-6 bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-slate-800 flex gap-3 shrink-0 rounded-b-[2.5rem]">
-          <button type="button" onClick={onClose} className="w-1/3 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Abort</button>
+          <button type="button" onClick={onClose} className="w-1/3 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Cancel</button>
           
           {/* ✨ MAGIC: form="edit-deployment-form" perfectly syncs it! */}
           <button type="submit" form="edit-deployment-form" className="flex-1 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest bg-blue-600 text-white flex items-center justify-center gap-2 hover:bg-blue-700 shadow-lg shadow-blue-600/20 active:scale-95 transition-all">
@@ -2205,7 +2240,7 @@ function ContactFormModal({ record, onClose, onSave, SITES = [], SITES_BY_STATE 
 
         {/* 🕹️ Translucent Footer */}
         <div className="p-6 bg-white/40 dark:bg-black/40 backdrop-blur-xl border-t border-white/50 dark:border-slate-700/50 flex gap-3 shrink-0 rounded-b-[2.5rem] relative z-10">
-          <button type="button" onClick={onClose} className="w-1/3 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest bg-white/60 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-600 shadow-sm transition-all active:scale-95">Abort</button>
+          <button type="button" onClick={onClose} className="w-1/3 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest bg-white/60 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-600 shadow-sm transition-all active:scale-95">Cancel</button>
           
           <button type="submit" form="contact-form" className="flex-1 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest bg-indigo-600 text-white flex items-center justify-center gap-2 hover:bg-indigo-500 shadow-lg shadow-indigo-600/20 active:scale-95 transition-all overflow-hidden relative group border border-indigo-500/50">
             <div className="absolute inset-0 w-full h-full bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out"></div>
@@ -2873,114 +2908,149 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab, langu
     </form>
   );
 }
-
-function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly, language }) {
-  const t = TRANSLATIONS[language] || TRANSLATIONS['en'];
+// ==========================================
+// 📋 WEEKLY LEDGER REPORT MODULE (PREMIUM iOS VIEW + 24H LOCK 🔒)
+// ==========================================
+function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
   const [viewingRep, setViewingRep] = useState(null);
 
-  if (isLoading) return <div className="p-8 text-center text-emerald-500 font-bold animate-pulse uppercase tracking-widest text-[10px]">{t.mis.decrypting}</div>;
+  // ✨ THE TIMELOCK BRAIN: Checks if the report is older than 24 hours! 🧠
+  const checkIsEditable = (createdAt) => {
+    if (!createdAt) return false;
+    const recordTime = new Date(createdAt).getTime();
+    const currentTime = new Date().getTime();
+    const hoursPassed = (currentTime - recordTime) / (1000 * 60 * 60);
+    return hoursPassed <= 24; // If it's been less than 24 hours, they can edit!
+  };
+
+  if (isLoading) return <div className="p-8 text-center text-emerald-500 font-bold animate-pulse uppercase tracking-widest text-[10px]">Decrypting Ledgers...</div>;
   
   return (
     <div className="p-4 space-y-5 pb-24">
-      {weeklyReports.map(rep => (
-        <div key={rep.id} onClick={() => setViewingRep(rep)} className="bg-white dark:bg-[#0f172a] p-5 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-2 border-slate-100 dark:border-slate-800 relative cursor-pointer active:scale-[0.98] transition-transform group overflow-hidden">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>
-          <div className="absolute top-5 right-5 bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400 font-black text-[9px] uppercase tracking-widest px-2.5 py-1.5 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">Sr. {rep.sr_no}</div>
-          
-          <div className="pl-2">
-            <h4 className="font-black text-slate-900 dark:text-white uppercase text-lg mb-1 tracking-tight pr-16">{rep.site}</h4>
-            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold tracking-widest uppercase mb-5 flex items-center gap-1.5"><Calendar size={12}/> {rep.date_from} ➔ {rep.date_to}</p>
-            
-            <div className="grid grid-cols-3 gap-3 text-[10px] font-bold text-center border-t border-slate-100 dark:border-slate-800 pt-4 mb-5">
-              <div className="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm"><span className="text-slate-400 block mb-1 uppercase tracking-widest text-[8px]">Dispatch</span><span className="text-slate-800 dark:text-slate-200 text-sm">{(parseInt(rep.disp_solid||0) + parseInt(rep.disp_gas||0) + parseInt(rep.disp_scrap||0))}</span></div>
-              <div className="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm"><span className="text-slate-400 block mb-1 uppercase tracking-widest text-[8px]">Receipt</span><span className="text-slate-800 dark:text-slate-200 text-sm">{(parseInt(rep.rec_company||0) + parseInt(rep.rec_contractor||0))}</span></div>
-              <div className="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm"><span className="text-slate-400 block mb-1 uppercase tracking-widest text-[8px]">Visits</span><span className="text-slate-800 dark:text-slate-200 text-sm">{(parseInt(rep.foot_contractor||0) + parseInt(rep.foot_ril||0) + parseInt(rep.foot_visitor||0) + parseInt(rep.foot_gov||0))}</span></div>
-            </div>
+      {weeklyReports.map(rep => {
+        const canEdit = checkIsEditable(rep.created_at); // 🔒 Check the lock status!
 
-            <div className="grid grid-cols-2 gap-3">
-              <button onClick={(e) => { e.stopPropagation(); onEditWeekly(rep); }} className="w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 flex justify-center items-center gap-1.5 hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200 dark:border-indigo-500/30">
-                 <Edit2 size={14}/> {t.mis.editResend}
-              </button>
-              <button onClick={() => setViewingRep(rep)} className="w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-emerald-500 text-white flex justify-center items-center gap-1.5 hover:bg-emerald-600 transition-colors shadow-md shadow-emerald-500/20 border border-emerald-600">
-                 <Eye size={14}/> {t.mis.viewMaster}
-              </button>
+        return (
+          <div key={rep.id} onClick={() => setViewingRep(rep)} className="bg-white dark:bg-[#0f172a] p-5 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-2 border-slate-100 dark:border-slate-800 relative cursor-pointer active:scale-[0.98] transition-transform group overflow-hidden">
+            
+            {/* Aesthetic Side Ribbon */}
+            <div className={`absolute top-0 left-0 w-1.5 h-full ${canEdit ? 'bg-emerald-500' : 'bg-slate-400 dark:bg-slate-600'}`}></div>
+
+            <div className="absolute top-5 right-5 bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400 font-black text-[9px] uppercase tracking-widest px-2.5 py-1.5 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">Sr. {rep.sr_no}</div>
+            
+            <div className="pl-2">
+              <h4 className="font-black text-slate-900 dark:text-white uppercase text-lg mb-1 tracking-tight pr-16">{rep.site}</h4>
+              <p className={`text-[10px] font-bold tracking-widest uppercase mb-5 flex items-center gap-1.5 ${canEdit ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}>
+                <Calendar size={12}/> {rep.date_from} ➔ {rep.date_to}
+              </p>
+              
+              {/* Sleek Data Grid */}
+              <div className="grid grid-cols-3 gap-3 text-[10px] font-bold text-center border-t border-slate-100 dark:border-slate-800 pt-4 mb-5">
+                <div className="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm"><span className="text-slate-400 block mb-1 uppercase tracking-widest text-[8px]">Dispatch</span><span className="text-slate-800 dark:text-slate-200 text-sm">{(parseInt(rep.disp_solid||0) + parseInt(rep.disp_gas||0) + parseInt(rep.disp_scrap||0))}</span></div>
+                <div className="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm"><span className="text-slate-400 block mb-1 uppercase tracking-widest text-[8px]">Receipt</span><span className="text-slate-800 dark:text-slate-200 text-sm">{(parseInt(rep.rec_company||0) + parseInt(rep.rec_contractor||0))}</span></div>
+                <div className="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm"><span className="text-slate-400 block mb-1 uppercase tracking-widest text-[8px]">Footfall</span><span className="text-slate-800 dark:text-slate-200 text-sm">{(parseInt(rep.foot_contractor||0) + parseInt(rep.foot_ril||0) + parseInt(rep.foot_visitor||0) + parseInt(rep.foot_gov||0))}</span></div>
+              </div>
+
+              {/* ✨ THE TIMELOCKED BUTTONS */}
+              <div className="grid grid-cols-2 gap-3">
+                {canEdit ? (
+                  <button onClick={(e) => { e.stopPropagation(); onEditWeekly(rep); }} className="w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 flex justify-center items-center gap-1.5 hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200 dark:border-indigo-500/30">
+                     <Edit2 size={14}/> Edit / Resend
+                  </button>
+                ) : (
+                  <div className="w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-400 dark:bg-slate-800/50 dark:text-slate-500 flex justify-center items-center gap-1.5 border border-slate-200 dark:border-slate-700/50 cursor-not-allowed shadow-inner">
+                     <Lock size={14}/> Expired
+                  </div>
+                )}
+                <button onClick={() => setViewingRep(rep)} className="w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-emerald-500 text-white flex justify-center items-center gap-1.5 hover:bg-emerald-600 transition-colors shadow-md shadow-emerald-500/20 border border-emerald-600">
+                   <Eye size={14}/> View Master
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      ))}
-      {weeklyReports.length === 0 && <p className="text-center text-slate-500 text-base mt-10 font-bold italic">{t.mis.noLedgers}</p>}
+        );
+      })}
+      {weeklyReports.length === 0 && <p className="text-center text-slate-500 text-sm mt-10 font-bold italic">No weekly ledgers found.</p>}
 
+      {/* ✨ CYBER-GLASS MOBILE MODAL FOR SUPERVISORS */}
       {viewingRep && (
-        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/90 backdrop-blur-sm z-[150] flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in duration-200" onClick={() => setViewingRep(null)}>
-          <div className="bg-white dark:bg-[#0f172a] w-full sm:max-w-5xl max-h-[85vh] sm:max-h-[90vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 border-t sm:border border-slate-200 dark:border-slate-800" onClick={e => e.stopPropagation()}>
-            <div className="h-1.5 w-12 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mt-3 sm:hidden shrink-0"></div>
+        <div className="fixed inset-0 bg-slate-900/40 dark:bg-black/70 backdrop-blur-md z-[150] flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in duration-200" onClick={() => setViewingRep(null)}>
+          
+          <div className="bg-white/90 dark:bg-[#0B1120]/80 backdrop-blur-3xl border border-white/50 dark:border-emerald-500/20 w-full sm:max-w-5xl max-h-[85vh] sm:max-h-[90vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_0_80px_-15px_rgba(16,185,129,0.2)] overflow-hidden flex flex-col relative animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-500" onClick={e => e.stopPropagation()}>
             
-            <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start bg-white dark:bg-[#0f172a] shrink-0">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/20 rounded-full blur-[60px] pointer-events-none"></div>
+
+            <div className="h-1.5 w-12 bg-slate-300/50 dark:bg-slate-700/50 rounded-full mx-auto mt-3 sm:hidden shrink-0 relative z-20"></div>
+            
+            {/* Sleek Header */}
+            <div className="p-5 sm:p-6 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-start relative z-10">
                <div>
-                 <span className="text-[9px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 shadow-sm">Sr No. {viewingRep.sr_no}</span>
-                 <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-3 uppercase tracking-tight leading-none">{viewingRep.site}</h2>
-                 <p className="text-[10px] font-bold text-slate-500 mt-1.5 flex items-center gap-1.5"><Calendar size={12}/> {viewingRep.date_from} to {viewingRep.date_to}</p>
+                 <span className="text-[9px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 backdrop-blur-md shadow-sm">Sr No. {viewingRep.sr_no}</span>
+                 <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-3 uppercase tracking-tight leading-none drop-shadow-sm">{viewingRep.site}</h2>
+                 <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1.5 flex items-center gap-1.5"><Calendar size={12}/> {viewingRep.date_from} to {viewingRep.date_to}</p>
                </div>
-               <button onClick={() => setViewingRep(null)} className="p-2.5 text-slate-400 hover:text-emerald-500 bg-slate-100 dark:bg-slate-800 rounded-full shadow-sm transition-colors"><X size={18} /></button>
+               <button onClick={() => setViewingRep(null)} className="p-2.5 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 bg-white/50 dark:bg-black/40 backdrop-blur-md rounded-full shadow-sm border border-white/50 dark:border-slate-700/50 transition-colors active:scale-95"><X size={18} /></button>
             </div>
             
-            <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar bg-slate-50/50 dark:bg-[#0B1120]">
-               <div className="overflow-x-auto border-2 border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm custom-scrollbar pb-2 bg-white dark:bg-slate-900">
+            {/* 📊 THE HIGH-CONTRAST CRISP TABLE WRAPPER */}
+            <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar relative z-10">
+               <div className="overflow-x-auto border-2 border-slate-300 dark:border-slate-600 rounded-[1.5rem] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] bg-white dark:bg-[#0B1120] custom-scrollbar pb-2">
+                 
                  <table className="w-max min-w-full border-collapse text-center text-[10px] font-black uppercase tracking-widest">
                    <thead>
-                     <tr className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 min-w-[60px]">Sr. No.</th>
-                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 min-w-[100px]">SITE</th>
-                       <th colSpan="3" className="border border-slate-300 dark:border-slate-700 p-3 bg-emerald-100/50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-400">DISPATCH</th>
-                       <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 bg-indigo-100/50 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-400">RECEIPT</th>
-                       <th colSpan="3" className="border border-slate-300 dark:border-slate-700 p-3 bg-amber-100/50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400">OGP</th>
-                       <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 bg-blue-100/50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400">VEHICLE</th>
-                       <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 bg-purple-100/50 dark:bg-purple-900/20 text-purple-800 dark:text-purple-400">CON/RIL STAFF</th>
-                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 text-rose-600 dark:text-rose-400">VISITOR</th>
-                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 text-rose-600 dark:text-rose-400">GOV.<br/>OFF.</th>
-                       <th colSpan="4" className="border border-slate-300 dark:border-slate-700 p-3 bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white">DEPLOYMENT</th>
+                     <tr className="bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-white">
+                       <th rowSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3 min-w-[60px]">Sr. No.</th>
+                       <th rowSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3 min-w-[100px]">SITE</th>
+                       <th colSpan="3" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-900 dark:text-emerald-400">DISPATCH</th>
+                       <th colSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-900 dark:text-indigo-400">RECEIPT</th>
+                       <th colSpan="3" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-400">OGP</th>
+                       <th colSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-blue-100 dark:bg-blue-900/40 text-blue-900 dark:text-blue-400">VEHICLE</th>
+                       <th colSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-purple-100 dark:bg-purple-900/40 text-purple-900 dark:text-purple-400">CON/RIL STAFF</th>
+                       <th rowSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400">VISITOR</th>
+                       <th rowSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400">GOV.<br/>OFF.</th>
+                       <th colSpan="4" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-slate-300 dark:bg-slate-700/80 text-slate-900 dark:text-white">DEPLOYMENT</th>
                      </tr>
-                     <tr className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400">
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">SOLID</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">GAS</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">SCRAP</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">COMPANY</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">CONTRACTOR</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">NRGP</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">RMGP</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">RMGP IN</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2 px-1">CON.<br/>VEH</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2 px-1">CO.<br/>VEH</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2 px-1">CON.<br/>WORKER</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2 px-1">RIL<br/>EMP.</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">Day SS</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">Day SG</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">Night SS</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">Night SG</th>
+                     <tr className="bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-300">
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">SOLID</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">GAS</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">SCRAP</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">COMPANY</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">CONTRACTOR</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">NRGP</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">RMGP</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">RMGP IN</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2 px-1">CON.<br/>VEH</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2 px-1">CO.<br/>VEH</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2 px-1">CON.<br/>WORKER</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2 px-1">RIL<br/>EMP.</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">Day SS</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">Day SG</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">Night SS</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">Night SG</th>
                      </tr>
                    </thead>
                    <tbody>
-                     <tr className="text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.sr_no}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-3 text-emerald-600 dark:text-emerald-400">{viewingRep.site}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.disp_solid || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.disp_gas || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-3 text-rose-500">{viewingRep.disp_scrap || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.rec_company || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.rec_contractor || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.ogp_nrgp || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-3 text-amber-500">{viewingRep.ogp_rmgp || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-3 text-emerald-500">{viewingRep.ogp_rmgp_in || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.veh_contractor || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.veh_company || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.foot_contractor || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.foot_ril || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-3 text-purple-500">{viewingRep.foot_visitor || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-3 text-purple-500">{viewingRep.foot_gov || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.dep_day_ss || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.dep_day_sg || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.dep_night_ss || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.dep_night_sg || 0}</td>
+                     <tr className="text-slate-900 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black">{viewingRep.sr_no}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black text-emerald-700 dark:text-emerald-400">{viewingRep.site}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.disp_solid || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.disp_gas || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black text-rose-600 dark:text-rose-400">{viewingRep.disp_scrap || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.rec_company || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.rec_contractor || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.ogp_nrgp || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black text-amber-600 dark:text-amber-500">{viewingRep.ogp_rmgp || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black text-emerald-600 dark:text-emerald-500">{viewingRep.ogp_rmgp_in || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.veh_contractor || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.veh_company || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.foot_contractor || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.foot_ril || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black text-purple-600 dark:text-purple-400">{viewingRep.foot_visitor || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black text-purple-600 dark:text-purple-400">{viewingRep.foot_gov || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.dep_day_ss || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.dep_day_sg || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.dep_night_ss || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.dep_night_sg || 0}</td>
                      </tr>
                    </tbody>
                  </table>
@@ -2996,14 +3066,23 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly, language 
 // ==========================================
 // 📈 VIP OPERATIONS & THREAT MATRIX (CSO DASHBOARD)
 // ==========================================
-// ==========================================
-// 📈 VIP OPERATIONS & THREAT MATRIX (CSO DASHBOARD)
-// ==========================================
-function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SITES = [], STATE_NAMES = [], SITES_BY_STATE = {} ,onDeleteWeekly }) {
+function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SITES = [], STATE_NAMES = [], SITES_BY_STATE = {}, onDeleteWeekly }) {
   const [filterDate, setFilterDate] = useState('');
   const [filterState, setFilterState] = useState("All"); 
   const [filterSite, setFilterSite] = useState("All");
   const [viewingRep, setViewingRep] = useState(null);
+
+  // ✨ NEW: THE GPS TRACKER & BACKGROUND LOCK! 📍
+  const [scrollPos, setScrollPos] = useState(0);
+  React.useEffect(() => {
+    if (viewingRep) {
+       setScrollPos(window.scrollY); // Locks onto your exact screen position!
+       document.body.style.overflow = 'hidden'; // Freezes the background scroll!
+    } else {
+       document.body.style.overflow = 'auto'; // Unfreezes when closed
+    }
+    return () => { document.body.style.overflow = 'auto'; }; // Safety cleanup
+  }, [viewingRep]);
 
   const availableSites = filterState === "All" ? SITES : SITES_BY_STATE[filterState] || [];
 
@@ -3017,9 +3096,9 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
 
   const num = (v) => parseInt(v) || 0;
 
-  // ✨ THE MEMORY BRAINS (Declared safely!)
+  // ✨ THE MEMORY BRAINS
   let totalStrictDeficit = 0;
-  const siteDeficits = []; // 🚨 THE SNITCH LIST IS HERE!
+  const siteDeficits = []; 
   
   let tSolid = 0, tGas = 0, tScrap = 0;
   let recCo = 0, recCon = 0;
@@ -3043,7 +3122,6 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
     rmgpOut += rOut;
     rmgpIn += rIn;
     
-    // ✨ ADD TO STRICT DEFICIT ONLY IF IT'S A LOSS!
     if (rOut > rIn) {
       const deficit = rOut - rIn;
       totalStrictDeficit += deficit;
@@ -3068,15 +3146,14 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
     }
   });
 
-  // Sort the worst offenders to the top!
   siteDeficits.sort((a, b) => b.deficit - a.deficit);
 
   const assetDeficit = totalStrictDeficit;
   const isAssetAlert = assetDeficit > 0;
 
   const commissionedSites = typeof COMMISSIONED_SITES !== 'undefined' ? COMMISSIONED_SITES : SITES;
-  const submittedSitesList = [...new Set(weeklyReports.map(r => r.site))]; 
-  const pendingSitesList = commissionedSites.filter(s => !submittedSitesList.includes(s));
+  const submittedSitesList = [...new Set(weeklyReports.map(r => (r.site || "").toUpperCase()))]; 
+  const pendingSitesList = commissionedSites.filter(s => !submittedSitesList.includes((s || "").toUpperCase()));
   const complianceRate = Math.round((submittedSitesList.length / (commissionedSites.length || 1)) * 100) || 0;
 
   const exportMasterAudit = () => {
@@ -3097,10 +3174,10 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
   };
 
   const anomalies = [];
-  const allSites = [...new Set(weeklyReports.map(r => r.site))];
+  const allSites = [...new Set(weeklyReports.map(r => (r.site || "").toUpperCase()))];
 
   allSites.forEach(site => {
-    const siteReps = weeklyReports.filter(r => r.site === site).sort((a, b) => num(b.sr_no) - num(a.sr_no));
+    const siteReps = weeklyReports.filter(r => (r.site || "").toUpperCase() === site).sort((a, b) => num(b.sr_no) - num(a.sr_no));
     if (siteReps.length >= 2) {
       const curr = siteReps[0]; 
       const prev = siteReps[1]; 
@@ -3119,7 +3196,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
   anomalies.sort((a, b) => b.diff - a.diff);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
       
       {/* 🟢 COMMAND BAR */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 flex flex-wrap justify-between items-end gap-4 relative overflow-hidden">
@@ -3138,7 +3215,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
       {/* 🚨 SECURITY KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
-        {/* CHART 1: ASSET LEAKAGE WITH HOVER MENU 🚨 */}
+        {/* CHART 1: ASSET LEAKAGE */}
         <div className={`bg-white dark:bg-slate-900 p-5 rounded-2xl border-t-4 shadow-sm transition-all relative group cursor-help z-40 ${isAssetAlert ? 'border-rose-500 dark:shadow-[0_0_15px_rgba(244,63,94,0.15)]' : 'border-indigo-500 border-slate-200 dark:border-slate-800'}`}>
           <div className="flex justify-between items-start mb-2">
             <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Asset Leakage</h3>
@@ -3432,87 +3509,143 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
         })}
       </div>
 
-      {/* 📄 DEEP DIVE MODAL (TABLE STAYS EXACTLY THE SAME!) */}
+      {/* 📄 CYBER-GLASS DEEP DIVE MODAL (GPS TRACKED FOR MOBILE!) */}
       {viewingRep && (
-        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/90 backdrop-blur-sm z-[150] flex items-center justify-center p-4 animate-in fade-in" onClick={() => setViewingRep(null)}>
-          <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col relative animate-in zoom-in-[0.98] duration-300" onClick={e => e.stopPropagation()}>
+        <div 
+          className="absolute left-0 w-full z-[150] bg-slate-900/60 dark:bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in duration-300" 
+          style={{ top: `${scrollPos}px`, height: '100dvh' }}
+          onClick={() => setViewingRep(null)}
+        >
+          {/* ✨ The Premium Floating Glass Container */}
+          <div className="bg-white/90 dark:bg-[#0B1120]/80 backdrop-blur-3xl border-t sm:border border-white/50 dark:border-emerald-500/20 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_0_80px_-15px_rgba(16,185,129,0.3)] w-full max-w-5xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden flex flex-col relative animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-[0.95] duration-500" onClick={e => e.stopPropagation()}>
              
-             <div className="p-6 sm:p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start bg-white dark:bg-[#0f172a] shrink-0">
+             {/* 🔮 Ambient Background Glows */}
+             <div className="absolute -top-32 -left-32 w-72 h-72 bg-emerald-500/20 rounded-full blur-[80px] pointer-events-none"></div>
+             <div className="absolute top-1/2 -right-32 w-72 h-72 bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+
+             <div className="h-1.5 w-12 bg-slate-300/50 dark:bg-slate-700/50 rounded-full mx-auto mt-3 sm:hidden shrink-0 relative z-20"></div>
+
+             {/* Sleek Translucent Header */}
+             <div className="p-5 sm:p-8 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-start relative z-10">
                <div>
-                 <span className="text-[10px] font-black bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 shadow-sm px-3 py-1.5 rounded-lg uppercase tracking-widest">Sr No. {viewingRep.sr_no}</span>
-                 <h2 className="text-3xl font-black text-slate-900 dark:text-white mt-4 uppercase tracking-tight">{viewingRep.site}</h2>
-                 <p className="text-xs font-bold text-slate-500 mt-1.5 flex items-center gap-1.5"><Calendar size={14}/> Logged: {viewingRep.date_from} TO {viewingRep.date_to}</p>
+                 <span className="text-[10px] font-black bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 backdrop-blur-md shadow-sm px-3 py-1.5 rounded-lg uppercase tracking-widest">Sr No. {viewingRep.sr_no}</span>
+                 <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-4 uppercase tracking-tight drop-shadow-sm leading-none">{viewingRep.site}</h2>
+                 <p className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 mt-2 flex items-center gap-1.5"><Calendar size={12}/> Logged: {viewingRep.date_from} TO {viewingRep.date_to}</p>
                </div>
-               <button onClick={() => setViewingRep(null)} className="p-3 text-slate-400 hover:text-rose-500 bg-slate-100 dark:bg-slate-800 rounded-full shadow-sm transition-all hover:bg-slate-200 dark:hover:bg-slate-700"><X size={18} /></button>
+               <button onClick={() => setViewingRep(null)} className="p-3 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-white/50 dark:bg-black/40 backdrop-blur-md rounded-full shadow-sm border border-white/50 dark:border-slate-700/50 transition-all active:scale-95"><X size={18} /></button>
              </div>
              
-             <div className="p-6 sm:p-8 overflow-y-auto custom-scrollbar bg-slate-50/50 dark:bg-[#0B1120]">
-               <div className="overflow-x-auto border-2 border-slate-200 dark:border-slate-700 rounded-3xl shadow-sm bg-white dark:bg-slate-900">
-                 {/* EXACT TABLE - DO NOT TOUCH */}
+             {/* 📊 THE HIGH-CONTRAST CRISP TABLE WRAPPER */}
+             <div className="p-4 sm:p-8 overflow-y-auto custom-scrollbar relative z-10">
+               {/* Made the table background solid and gave it a juicy drop-shadow so it pops off the glass! */}
+               <div className="overflow-x-auto border-2 border-slate-300 dark:border-slate-600 rounded-[1.5rem] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] bg-white dark:bg-[#0B1120] custom-scrollbar pb-2">
+                 
+                 {/* Thick borders, stark text, solid colors! */}
                  <table className="w-max min-w-full border-collapse text-center text-[10px] font-black uppercase tracking-widest">
                    <thead>
-                     <tr className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-3">Sr. No.</th>
-                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-3">SITE</th>
-                       <th colSpan="3" className="border border-slate-300 dark:border-slate-700 p-3 bg-emerald-100/50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-400">DISPATCH</th>
-                       <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 bg-indigo-100/50 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-400">RECEIPT</th>
-                       <th colSpan="3" className="border border-slate-300 dark:border-slate-700 p-3 bg-amber-100/50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400">OGP</th>
-                       <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 bg-blue-100/50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400">VEHICLE</th>
-                       <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 bg-purple-100/50 dark:bg-purple-900/20 text-purple-800 dark:text-purple-400">CON/RIL STAFF</th>
-                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 text-rose-600 dark:text-rose-400">VISITOR</th>
-                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 text-rose-600 dark:text-rose-400">GOV.<br/>OFF.</th>
-                       <th colSpan="4" className="border border-slate-300 dark:border-slate-700 p-3 bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white">DEPLOYMENT</th>
+                     <tr className="bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-white">
+                       <th rowSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3">Sr. No.</th>
+                       <th rowSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3">SITE</th>
+                       <th colSpan="3" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-900 dark:text-emerald-400">DISPATCH</th>
+                       <th colSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-900 dark:text-indigo-400">RECEIPT</th>
+                       <th colSpan="3" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-400">OGP</th>
+                       <th colSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-blue-100 dark:bg-blue-900/40 text-blue-900 dark:text-blue-400">VEHICLE</th>
+                       <th colSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-purple-100 dark:bg-purple-900/40 text-purple-900 dark:text-purple-400">CON/RIL STAFF</th>
+                       <th rowSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400">VISITOR</th>
+                       <th rowSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400">GOV.<br/>OFF.</th>
+                       <th colSpan="4" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-slate-300 dark:bg-slate-700/80 text-slate-900 dark:text-white">DEPLOYMENT</th>
                      </tr>
-                     <tr className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400">
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">SOLID</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">GAS</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">SCRAP</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">COMPANY</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">CONTRACTOR</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">NRGP</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">RMGP</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">RMGP IN</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">CON.<br/>VEH</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">CO.<br/>VEH</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">CON.<br/>WORKER</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">RIL<br/>EMP.</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">Day SS</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">Day SG</th>
+                     <tr className="bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-300">
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">SOLID</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">GAS</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">SCRAP</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">COMPANY</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">CONTRACTOR</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">NRGP</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">RMGP</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">RMGP IN</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">CON.<br/>VEH</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">CO.<br/>VEH</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">CON.<br/>WORKER</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">RIL<br/>EMP.</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">Day SS</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">Day SG</th>
                        <th className="border border-slate-300 dark:border-slate-700 p-2">Night SS</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">Night SG</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">Night SG</th>
                      </tr>
                    </thead>
                    <tbody>
-                     <tr className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.sr_no}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.site}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.disp_solid || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.disp_gas || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-4 text-rose-500">{viewingRep.disp_scrap || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.rec_company || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.rec_contractor || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.ogp_nrgp || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-4 text-amber-500">{viewingRep.ogp_rmgp || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-4 text-emerald-500">{viewingRep.ogp_rmgp_in || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.veh_contractor || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.veh_company || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.foot_contractor || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.foot_ril || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-4 text-purple-500">{viewingRep.foot_visitor || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-4 text-purple-500">{viewingRep.foot_gov || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.dep_day_ss || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.dep_day_sg || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.dep_night_ss || 0}</td>
-                       <td className="border border-slate-300 dark:border-slate-700 p-4">{viewingRep.dep_night_sg || 0}</td>
+                     <tr className="text-slate-900 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black">{viewingRep.sr_no}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black text-emerald-700 dark:text-emerald-400">{viewingRep.site}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.disp_solid || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.disp_gas || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black text-rose-600 dark:text-rose-400">{viewingRep.disp_scrap || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.rec_company || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.rec_contractor || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.ogp_nrgp || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black text-amber-600 dark:text-amber-500">{viewingRep.ogp_rmgp || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black text-emerald-600 dark:text-emerald-500">{viewingRep.ogp_rmgp_in || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.veh_contractor || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.veh_company || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.foot_contractor || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.foot_ril || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black text-purple-600 dark:text-purple-400">{viewingRep.foot_visitor || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black text-purple-600 dark:text-purple-400">{viewingRep.foot_gov || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.dep_day_ss || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.dep_day_sg || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.dep_night_ss || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.dep_night_sg || 0}</td>
                      </tr>
                    </tbody>
                  </table>
-                 {/* END OF TABLE */}
                </div>
              </div>
 
-             <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0f172a] flex flex-wrap justify-between gap-4 shrink-0 rounded-b-[2.5rem]">
-               <button onClick={() => { onDeleteWeekly(viewingRep.id); setViewingRep(null); }} className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-xs font-black text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 transition-all shadow-sm border border-rose-200 dark:border-rose-800 uppercase tracking-widest w-full sm:w-auto active:scale-95">
+             {/* 🕹️ Translucent Footer */}
+             <div className="p-4 sm:p-6 border-t border-slate-200/50 dark:border-slate-700/50 bg-white/40 dark:bg-black/40 backdrop-blur-xl flex flex-col sm:flex-row justify-between gap-3 shrink-0 sm:rounded-b-[2.5rem] relative z-10">
+               
+               {/* 🚨 THE ULTIMATE GOD-MODE SNIPER BUTTON */}
+               <button onClick={async () => { 
+                  if(window.confirm("🚨 Are you absolutely sure you want to permanently delete this ledger?")) {
+                    try {
+                        // ✨ THE FIX: We target the exact Site and Sr_No so Supabase CANNOT miss it!
+                        const targetSrNo = viewingRep.sr_no;
+                        const targetSite = viewingRep.site;
+                        const targetId = viewingRep.id;
+
+                        // Build the sniper query!
+                        let query = supabase.from('weekly_reports').delete();
+                        
+                        if (targetId) {
+                            query = query.eq('id', targetId);
+                        } else {
+                            query = query.eq('sr_no', targetSrNo).eq('site', targetSite);
+                        }
+
+                        // We add .select() so Supabase is forced to hand us back the ashes of what it deleted!
+                        const { data, error } = await query.select();
+                        
+                        if (error) {
+                           alert("Hold up babe! Database error: " + error.message);
+                        } else if (!data || data.length === 0) {
+                           alert("🚨 Ghost Record! Supabase couldn't find this exact row to delete. Check your Row Level Security (RLS) settings in Supabase!");
+                        } else {
+                           // 2. Clear it from the local screen memory
+                           if (typeof onDeleteWeekly === 'function') {
+                              onDeleteWeekly(targetId || targetSrNo); 
+                           }
+                           setViewingRep(null);
+                           alert("✅ Ledger permanently vaporized from the vault!");
+                           
+                           // 3. Force the blink refresh!
+                           window.location.reload();
+                        }
+                    } catch (err) {
+                        alert("Oops! Something glitched: " + err.message);
+                    }
+                  }
+               }} className="flex items-center justify-center gap-2 px-6 py-3.5 sm:py-4 rounded-2xl text-[11px] sm:text-xs font-black text-rose-600 bg-white/60 dark:bg-black/50 hover:bg-rose-500 hover:text-white transition-all shadow-sm border border-rose-200/50 dark:border-rose-500/30 uppercase tracking-widest w-full sm:w-auto active:scale-95">
                  <Trash2 size={16} /> Delete Ledger
                </button>
 
@@ -3526,7 +3659,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
                   const blob = new Blob([csv], { type: 'text/csv' });
                   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
                   a.download = `Ledger_${r.site}_${r.date_from}.csv`; a.click();
-               }} className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 rounded-2xl text-xs font-black text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 transition-all shadow-sm border border-indigo-200 dark:border-indigo-800 uppercase tracking-widest active:scale-95">
+               }} className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 sm:py-4 rounded-2xl text-[11px] sm:text-xs font-black text-white bg-indigo-600 hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/30 border border-indigo-500/50 uppercase tracking-widest active:scale-95">
                  <Download size={16} /> Download .CSV
                </button>
              </div>
