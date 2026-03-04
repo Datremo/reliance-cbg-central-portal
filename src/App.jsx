@@ -1449,9 +1449,14 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
           {/* ✨ THE SLIDING MENU CONTAINER */}
           <div className="relative flex flex-col gap-2">
             
-            {/* ✨ THE MAGICAL SLIDING BACKGROUND PILL */}
+            {/* ✨ THE MAGICAL SLIDING BACKGROUND PILL (COLOR CHANGING!) */}
             <div 
-              className="absolute left-0 w-full h-12 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-900/20 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] z-0 will-change-transform"
+              className={`absolute left-0 w-full h-12 rounded-xl shadow-lg transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] z-0 will-change-transform ${
+                activeTab === 'deployments' ? 'bg-indigo-600 shadow-indigo-900/20' : 
+                activeTab === 'contacts' ? 'bg-blue-600 shadow-blue-900/20' : 
+                activeTab === 'incidents' ? 'bg-rose-600 shadow-rose-900/20' : 
+                'bg-emerald-600 shadow-emerald-900/20'
+              }`}
               style={{ 
                 transform: `translateY(${
                   activeTab === 'deployments' ? '0px' : 
@@ -1503,7 +1508,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
             </button>
             {/* ✨ SMART HEADER THAT KNOWS EVERY TAB! */}
           <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white truncate max-w-[140px] sm:max-w-none">
-            {activeTab === 'deployments' && 'Deployment Command'}
+            {activeTab === 'deployments' && 'Deployment Matrix'}
             {activeTab === 'incidents' && 'Incident Report'}
             {activeTab === 'contacts' && 'Directory'}
             {activeTab === 'weekly' && 'MIS Report'}
@@ -1569,18 +1574,37 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
           {/* ===================================== */}
           {activeTab === 'deployments' && (
             <>
-              {/* ✨ DYNAMIC VIP SWITCH */}
+              {/* ✨ DYNAMIC VIP SWITCH (FAANG SLIDING PILL EDITION!) */}
               <div className="mb-6 flex justify-center sm:justify-start">
-                <div className="inline-flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner w-full sm:w-auto">
-                  <button onClick={() => setSiteTier('All')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${siteTier === 'All' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
+                <div className="relative flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner w-full sm:w-[420px]">
+                  
+                  {/* ✨ THE SLIDING PILL */}
+                  <div 
+                    className={`absolute top-1 bottom-1 w-[calc(33.333%-2.66px)] rounded-lg shadow-md transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] z-0 ${
+                      siteTier === 'All' ? 'bg-slate-800 dark:bg-slate-700 shadow-slate-500/20' : 
+                      siteTier === 'Commissioned' ? 'bg-emerald-500 shadow-emerald-500/30' : 
+                      'bg-indigo-500 shadow-indigo-500/30'
+                    }`}
+                    style={{ 
+                      transform: `translateX(${
+                        siteTier === 'All' ? '0%' : 
+                        siteTier === 'Commissioned' ? 'calc(100% + 4px)' : 
+                        'calc(200% + 8px)'
+                      })` 
+                    }}
+                  ></div>
+
+                  {/* TRANSPARENT BUTTONS */}
+                  <button onClick={() => setSiteTier('All')} className={`flex-1 relative z-10 px-2 py-2.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-widest transition-colors duration-300 ${siteTier === 'All' ? 'text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'}`}>
                     Total {globalSites?.length || 0}
                   </button>
-                  <button onClick={() => setSiteTier('Commissioned')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${siteTier === 'Commissioned' ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' : 'text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400'}`}>
+                  <button onClick={() => setSiteTier('Commissioned')} className={`flex-1 relative z-10 px-2 py-2.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-widest transition-colors duration-300 ${siteTier === 'Commissioned' ? 'text-white' : 'text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400'}`}>
                     Operational - {COMMISSIONED_SITES?.length || 0}
                   </button>
-                  <button onClick={() => setSiteTier('Project')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${siteTier === 'Project' ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/20' : 'text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400'}`}>
+                  <button onClick={() => setSiteTier('Project')} className={`flex-1 relative z-10 px-2 py-2.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-widest transition-colors duration-300 ${siteTier === 'Project' ? 'text-white' : 'text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400'}`}>
                     Projects - {(globalSites?.length || 0) - (COMMISSIONED_SITES?.length || 0)}
                   </button>
+
                 </div>
               </div>
 
