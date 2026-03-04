@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { 
-  Plus, Trash2, Calendar, MapPin, Users, Shield, LogOut, 
+  Plus, Trash2, Calendar, MapPin, Users, Shield, LogOut, ShieldCheck, Droplet, Wind,Globe2,
   Filter, CheckCircle, Smartphone, Monitor, Activity,  Leaf, Zap,Eye, EyeOff, Clock,BarChart2, PieChart, TrendingUp, Target,
   X, Search, ChevronDown, Download, Edit2, Save, Sun, Moon, Sparkles, Lock, Mail,RefreshCw, Copy, BookOpen, Briefcase, Phone, Menu, Unlock, ArrowRight,ArrowLeft, AlertTriangle, Camera, FileText, Image as ImageIcon,Settings, User, PlusCircle
 } from 'lucide-react';
@@ -512,22 +512,22 @@ const toggleIncidentStatus = async (inc) => {
 }
 
 // ==========================================
-// 🔐 AUTHENTICATION SCREEN (CINEMATIC VAULT)
+// 🔐 AUTHENTICATION SCREEN (RESPONSIVE FAANG EDITION 📱/💻)
+// ==========================================
+// ==========================================
+// 🔐 AUTHENTICATION SCREEN (RESPONSIVE FAANG EDITION 📱/💻)
+// ==========================================
+// ==========================================
+// 🔐 AUTHENTICATION SCREEN (RESPONSIVE FAANG EDITION 📱/💻)
 // ==========================================
 function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [time, setTime] = useState(new Date());
-
-  //   The Cinematic Login States!
+  
+  // 🎬 The Cinematic Login States!
   const [loginPhase, setLoginPhase] = useState('idle'); // 'idle' -> 'loading' -> 'unlocked'
-
-  useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -539,157 +539,258 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
       setErrorMsg(error.message);
       setLoginPhase('idle');
     } else {
-      // 🎬 MOVIE MAGIC STARTS HERE!
-      setIsUnlocking(true); // Tells App.jsx to keep this screen mounted!
+      setIsUnlocking(true); 
       setLoginPhase('unlocked');
-
-      // We wait exactly 2 seconds for the lock to glow and the screen to fade to white!
       setTimeout(() => {
-        setIsUnlocking(false); // Releases the gatekeeper to the main App!
+        setIsUnlocking(false); 
       }, 2000);
     }
   };
 
   return (
-    <div className={`relative min-h-screen flex items-center justify-center overflow-hidden transition-all duration-1000 ${loginPhase === 'unlocked' ? 'bg-white dark:bg-white' : (theme === 'dark' ? 'bg-[#0B1120]' : 'bg-slate-50')}`}>
-
-      {/*   GORGEOUS BACKGROUND IMAGE WITH SHADOW & OVERLAY   */}
-      <div className={`absolute inset-0 z-0 transition-opacity duration-1000 ${loginPhase === 'unlocked' ? 'opacity-0' : 'opacity-100'}`}>
-        <img src="/background.webp" alt="Background" className="w-full h-full object-cover opacity-50 dark:opacity-30 mix-blend-luminosity" onError={(e) => e.target.style.display='none'} />
-        {/* This creates the dark/light cinematic vignette over the image */}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-50/80 via-transparent to-slate-200/90 dark:from-slate-950/90 dark:via-[#0B1120]/60 dark:to-[#0B1120]/95 backdrop-blur-[2px]"></div>
-      </div>
-
-      {/* Secret CSS Engine */}
+    <>
+      {/* 🧪 THE MASTER CSS ENGINE (Consolidated for pure performance!) */}
       <style>
         {`
-          @keyframes gradient-flow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-          .animate-gradient-flow { background-size: 200% 200%; animation: gradient-flow 4s ease infinite; }
-          @keyframes unlock-pop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1.2); } }
-          .animate-unlock-pop { animation: unlock-pop 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-          @keyframes laser-sweep { 0% { transform: translateX(-100%); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateX(200%); opacity: 0; } }
-          .animate-laser { animation: laser-sweep 3s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+          /* The giant unlock pop for the success screen! */
+          @keyframes unlock-pop { 
+            0% { transform: scale(0.5); opacity: 0; } 
+            50% { transform: scale(1.3); opacity: 1; } 
+            100% { transform: scale(1.1); opacity: 1; } 
+          }
+          .animate-unlock-pop { animation: unlock-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+          /* ✨ The glossy button shine! */
+          @keyframes button-shine {
+            0% { transform: translateX(-150%) skewX(-20deg); }
+            100% { transform: translateX(200%) skewX(-20deg); }
+          }
+          .animate-button-shine { animation: button-shine 3s infinite cubic-bezier(0.4, 0, 0.2, 1); }
         `}
       </style>
 
-      {/* 🔝 TOP NAVIGATION: Logo & Theme Toggle */}
-      <div className={`absolute top-0 left-0 w-full p-6 sm:p-8 flex justify-between items-start z-50 transition-opacity duration-500 ${loginPhase === 'unlocked' ? 'opacity-0' : 'opacity-100'}`}>
-         {/* 🖼️ BRANDING LOGO (biologo.webp) */}
-         <img src="/logo.webp" alt="Test Logo" className="h-10 sm:h-12 w-auto object-contain drop-shadow-xl transition-transform hover:scale-105" onError={(e) => e.target.style.display='none'} />
+      {/* ========================================== */}
+      {/* 📱 MOBILE VIEW (Sleek App Card Aesthetic) */}
+      {/* ========================================== */}
+      <div className={`md:hidden flex flex-col min-h-[100dvh] bg-slate-50 dark:bg-[#020806] transition-all duration-1000 relative ${loginPhase === 'unlocked' ? 'opacity-0' : 'opacity-100'}`}>
+        
+        {/* Top Vibrant Gradient Header */}
+        <div className="bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-800 h-[40vh] flex flex-col items-center justify-center relative pt-8 pb-12 shrink-0 overflow-hidden">
+           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl mix-blend-overlay"></div>
+                    <img src="/logo.webp" alt="Test Logo" className="h-10 sm:h-20 w-auto object-contain drop-shadow-xl transition-transform hover:scale-150" onError={(e) => e.target.style.display='none'} />
 
-         {/* 🌓 THEME TOGGLE */}
-         <button onClick={toggleTheme} className="p-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_15px_rgba(0,0,0,0.5)] border border-white/50 dark:border-slate-700/50 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all hover:rotate-12">
-           {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-         </button>
-      </div>
+           <div className="absolute top-0 w-full p-6 flex justify-between items-center z-10">
+              <div className="bg-white/20 backdrop-blur-md p-2 rounded-xl">
+                 <ShieldCheck size={20} className="text-white" />
+              </div>
+           </div>
 
-      {/* 💎 CENTERED: THE 3D GLASS CARD */}
-      <div className={`relative w-full max-w-md mx-4 p-4 sm:p-6 z-10 transition-all duration-1000 ${loginPhase === 'unlocked' ? 'scale-110 opacity-0' : 'scale-100 opacity-100'}`}>
-
-        {/* Soft Background Energy Clouds floating around the card */}
-        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-[10%] left-[0%] w-[80%] h-[80%] bg-emerald-500/30 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-[100px] animate-pulse"></div>
-          <div className="absolute bottom-[0%] right-[0%] w-[70%] h-[70%] bg-green-400/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-[100px] animate-pulse" style={{ animationDelay: '2s' }}></div>
+           <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-md mt-4 relative z-10">CBG COMMAND</h1>
+           <p className="text-emerald-100/80 text-[10px] font-bold mt-2 tracking-[0.2em] uppercase relative z-10">Secure Portal Access</p>
         </div>
 
-        {/* 🪟 THE PREMIUM CARD WRAPPER */}
-        <div className="relative group mt-8 lg:mt-0">
+        {/* The Overlapping White Card */}
+        <div className="flex-1 bg-white dark:bg-slate-900 -mt-10 rounded-t-[2.5rem] px-6 sm:px-10 py-8 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-10 flex flex-col relative border-t border-white/50 dark:border-slate-800">
+           <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-1.5 tracking-tight">Welcome </h2>
+           <p className="text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-widest mb-8">Enter your details below</p>
 
-          {/*   THE BREATHING AURA */}
-          <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-teal-300 to-green-500 rounded-[2.5rem] blur-xl opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-500 animate-gradient-flow z-0"></div>
+           {errorMsg && (
+              <div className="mb-6 p-3.5 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-2xl text-xs font-bold text-center border border-rose-100 dark:border-rose-500/20 animate-in shake">
+                {errorMsg}
+              </div>
+           )}
 
-          {/* 🧊 THE GLASS CARD CONTENT */}
-          <div className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl border border-white/60 dark:border-slate-700/50 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-8 sm:p-10 z-10 overflow-hidden">
+           <form onSubmit={handleLogin} className="space-y-5 flex-1 flex flex-col">
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Site ID </label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loginPhase !== 'idle'}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-4 py-4 text-slate-900 dark:text-white font-bold focus:outline-none focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-900 transition-all placeholder-slate-400"
+                  placeholder="name@company.com"
+                />
+              </div>
+              
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Password</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loginPhase !== 'idle'}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl pl-4 pr-12 py-4 text-slate-900 dark:text-white font-bold focus:outline-none focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-900 transition-all placeholder-slate-400"
+                    placeholder="••••••••"
+                  />
+                 
+                </div>
+              </div>
 
-            {/* The Laser Scanner */}
-            <div className="absolute top-0 left-0 w-1/2 h-[2px] bg-gradient-to-r from-transparent via-emerald-400 to-transparent animate-laser"></div>
+              <div className="mt-auto pt-6 pb-4">
+                {/* ✨ MOBILE GREEN SHINY BUTTON */}
+                <button
+                  type="submit"
+                  disabled={loginPhase !== 'idle'}
+                  className={`relative overflow-hidden w-full bg-emerald-500 hover:bg-emerald-400 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-[0.2em] py-4 rounded-2xl shadow-lg shadow-emerald-500/30 transition-all active:scale-[0.98] flex justify-center items-center gap-2 group ${loginPhase !== 'idle' ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  <div className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/30 dark:via-white/20 to-transparent animate-button-shine pointer-events-none"></div>
+                  <span className="relative z-10 flex items-center gap-2 drop-shadow-sm">
+                    {loginPhase === 'loading' ? <RefreshCw size={18} className="animate-spin" /> : 'Sign in'}
+                  </span>
+                </button>
 
+                {/* ✨ OFFICIAL CONTACT BADGE */}
+                <div className="mt-6 text-center flex flex-col gap-1.5">
+                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Forgot your password?</span>
+                   <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-lg inline-block w-max mx-auto border border-emerald-100 dark:border-emerald-500/20">Contact Control Room</span>
+                </div>
+              </div>
+           </form>
+        </div>
+      </div>
+
+      {/* ========================================== */}
+      {/* 💻 DESKTOP VIEW (FAANG Minimalist Enterprise) */}
+      {/* ========================================== */}
+      <div className={`hidden md:flex relative min-h-[100dvh] items-center justify-center overflow-hidden transition-colors duration-1000 ${loginPhase === 'unlocked' ? 'bg-white dark:bg-[#0B1120]' : 'bg-slate-100 dark:bg-[#0B1120]'}`}>
+
+        {/* 🌿 REFINED BACKGROUND 🌿 */}
+        <div className={`absolute inset-0 z-0 transition-opacity duration-1000 ${loginPhase === 'unlocked' ? 'opacity-0' : 'opacity-100'}`}>
+          <img src="/background.webp" alt="Background" className="w-full h-full object-cover opacity-75 dark:opacity-100 saturate-150" onError={(e) => e.target.style.display='none'} />
+        </div>
+
+        {/* 🔝 TOP NAVIGATION: Logo & Theme Toggle */}
+        <div className={`absolute top-0 left-0 w-full p-8 flex justify-between items-start z-50 transition-opacity duration-500 ${loginPhase === 'unlocked' ? 'opacity-0' : 'opacity-100'}`}>
+         <img src="/logo.webp" alt="Test Logo" className="h-10 sm:h-20 w-auto object-contain drop-shadow-xl transition-transform hover:scale-150" onError={(e) => e.target.style.display='none'} />
+        </div>
+
+        {/* 💎 CENTERED: THE CLEAN FAANG ACCESS TERMINAL */}
+        <div className={`relative w-full max-w-[450px] mx-4 z-10 transition-all duration-1000 ${loginPhase === 'unlocked' ? 'scale-105 opacity-5' : 'scale-100 opacity-100'}`}>
+          <div className="w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border border-white dark:border-slate-800 rounded-[2rem] p-10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] transition-colors duration-1000">
+            
             {/* Hidden Watermark Lock */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden rounded-[2.5rem]">
                <Lock size={280} className="text-slate-200/30 dark:text-slate-700/20 transform -rotate-12 translate-x-10 translate-y-10" />
             </div>
-
-            <div className="mb-10 flex flex-col items-center text-center relative z-10">
-
-              {/*   EMBOSSED 3D SHIELD ICON */}
-              <div className="relative mb-6">
-                <div className="absolute inset-0 bg-emerald-500/30 blur-2xl animate-pulse rounded-full"></div>
-                <div className="relative w-20 h-20 bg-gradient-to-br from-white to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-2xl flex items-center justify-center shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_10px_20px_rgba(0,0,0,0.1)] dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.1),0_10px_20px_rgba(0,0,0,0.4)] border border-slate-200/50 dark:border-slate-700/50 transform rotate-3 hover:rotate-6 transition-transform duration-500 group">
-                  <Shield size={36} className="text-emerald-600 dark:text-emerald-400 drop-shadow-md group-hover:scale-110 transition-transform duration-300" />
-                </div>
+            <div className="flex justify-center mb-8">
+              <div className="w-14 h-14 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center border border-slate-200/50 dark:border-slate-700 shadow-sm">
+                 <ShieldCheck size={45} className="text-emerald-600 dark:text-emerald-400" />
               </div>
+              
+            </div>
 
-              <div className="relative inline-block">
-                 <h1 className="text-3xl font-black tracking-tight mb-2 text-transparent bg-clip-text bg-gradient-to-b from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 drop-shadow-[0_2px_2px_rgba(0,0,0,0.1)] dark:drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
-                   Test <span className="bg-clip-text text-transparent bg-gradient-to-b from-emerald-500 to-green-600 dark:from-emerald-400 dark:to-green-500">CBG Central</span>
-                 </h1>
-              </div>
-
-              {/* SLEEK & ELEGANT SUBTITLE */}
-              <p className="text-slate-500/80 dark:text-slate-400/80 font-bold text-[10px] flex items-center gap-2 justify-center uppercase tracking-[0.25em] mt-3">
-                 <Shield size={13} className="text-emerald-500" /> Secure Deployment Access
+            <div className="text-center mb-10">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">
+                CBG COMMAND CENTER
+              </h2>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                Sign in to your enterprise dashboard
               </p>
             </div>
 
-            <form onSubmit={handleLogin} className="space-y-6 relative z-10">
-              {errorMsg && <div className="p-4 bg-red-50/80 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl text-xs text-red-600 dark:text-red-400 font-bold text-center">{errorMsg}</div>}
+            {errorMsg && (
+              <div className="mb-6 p-3 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-xl text-center animate-in shake">
+                <span className="text-xs font-semibold text-red-600 dark:text-red-400">{errorMsg}</span>
+              </div>
+            )}
 
-              <div className="space-y-1.5">
-                <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Site ID / Email</label>
-                <div className="relative group/input">
-                  <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/input:text-emerald-500 transition-colors z-10" />
-                  {/*   DEEP CARVED INPUT */}
-                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={loginPhase !== 'idle'}
-                    className="w-full pl-11 pr-4 py-3.5 bg-slate-50/80 dark:bg-[#0B1120]/80 border border-slate-200/50 dark:border-slate-800/50 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_3px_8px_rgba(0,0,0,0.6)]"
-                    placeholder="auth@test.cbg.com" />
+            <form onSubmit={handleLogin} className="space-y-5">
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 ml-1">SITE ID</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-500 transition-colors">
+                    <User size={18} />
+                  </div>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={loginPhase !== 'idle'}
+                    className="w-full pl-11 pr-12 py-3.5 bg-slate-50/80 dark:bg-[#0B1120]/80 border border-slate-200/50 dark:border-slate-800/50 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_3px_8px_rgba(0,0,0,0.6)]"
+                    placeholder="name@company.com"
+                  />
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Secure Passkey</label>
-                <div className="relative group/input">
-                  <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/input:text-emerald-500 transition-colors z-10" />
-                  {/*   DEEP CARVED INPUT */}
-                  <input type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)} disabled={loginPhase !== 'idle'}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center ml-1 pr-1">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">PASSWORD</label>
+                </div>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-500 transition-colors">
+                    <Lock size={18} />
+                  </div>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loginPhase !== 'idle'}
                     className="w-full pl-11 pr-12 py-3.5 bg-slate-50/80 dark:bg-[#0B1120]/80 border border-slate-200/50 dark:border-slate-800/50 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_3px_8px_rgba(0,0,0,0.6)]"
-                    placeholder="••••••••" />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-500 z-10">
+                    placeholder="••••••••"
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-500 transition-colors">
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
 
-              {/*   FLOWING ENERGY BUTTON */}
-              <button type="submit" disabled={loginPhase !== 'idle'} className="w-full py-4 mt-2 bg-gradient-to-r from-emerald-600 via-green-400 to-emerald-600 animate-gradient-flow text-white rounded-xl font-black tracking-widest uppercase text-xs transition-transform transform hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/30 flex justify-center items-center relative overflow-hidden">
-                <span className="flex items-center gap-2 drop-shadow-md z-10">
-                  {loginPhase === 'loading' ? <><RefreshCw size={16} className="animate-spin" /> VERIFYING ENCRYPTION...</> : 'AUTHORIZE ACCESS'}
+              <div className="pt-4">
+                {/* ✨ DESKTOP GREEN SHINY BUTTON */}
+                <button
+                  type="submit"
+                  disabled={loginPhase !== 'idle'}
+                  className={`relative overflow-hidden w-full bg-emerald-500 hover:bg-emerald-400 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold text-sm py-3.5 rounded-xl flex justify-center items-center gap-2 transition-all active:scale-[0.98] shadow-md shadow-emerald-500/20 group ${loginPhase !== 'idle' ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  <div className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/30 dark:via-white/20 to-transparent animate-button-shine pointer-events-none"></div>
+
+                  <span className="relative z-10 flex items-center gap-2 drop-shadow-sm">
+                    {loginPhase === 'loading' ? (
+                      <><RefreshCw size={16} className="animate-spin" /> Verifying...</>
+                    ) : (
+                      'Sign In'
+                    )}
+                  </span>
+                </button>
+              </div>
+
+              {/* ✨ OFFICIAL CONTACT BADGE */}
+              <div className="text-center pt-4 flex flex-col gap-1.5">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  Forgot your password?
                 </span>
-              </button>
+                <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-lg inline-block w-max mx-auto border border-emerald-100 dark:border-emerald-500/20">
+                  Contact Control Room
+                </span>
+              </div>
+
             </form>
           </div>
         </div>
       </div>
 
-      {/* 🔓 THE GLOWING UNLOCK ANIMATION (Appears on top when success!) */}
-      <div className={`absolute inset-0 z-[100] flex flex-col items-center justify-center pointer-events-none transition-all duration-700 ${loginPhase === 'unlocked' ? 'opacity-100' : 'opacity-0 scale-50'}`}>
-         <div className="w-32 h-32 bg-emerald-100 dark:bg-emerald-900/40 rounded-full flex items-center justify-center animate-unlock-pop shadow-[0_0_150px_rgba(16,185,129,0.8)] border border-emerald-400/50">
-            <Unlock size={64} className="text-emerald-600 dark:text-emerald-400" />
+      {/* ========================================== */}
+      {/* 🔓 THE GLOBAL UNLOCK ANIMATION (Applies to both views!) */}
+      {/* ========================================== */}
+      <div className={`fixed inset-0 z-[200] flex flex-col items-center justify-center pointer-events-none transition-all duration-700 ${loginPhase === 'unlocked' ? 'opacity-100' : 'opacity-0 scale-50'}`}>
+         <div className={`w-32 h-32 bg-emerald-100 dark:bg-emerald-900/60 backdrop-blur-md rounded-full flex items-center justify-center shadow-[0_0_150px_rgba(16,185,129,0.8)] border-2 border-emerald-400/50 ${loginPhase === 'unlocked' ? 'animate-unlock-pop' : ''}`}>
+            <Unlock size={56} className="text-emerald-600 dark:text-emerald-400 drop-shadow-lg" />
          </div>
-         <h2 className="mt-8 text-2xl font-black tracking-widest text-emerald-600 dark:text-emerald-400 uppercase drop-shadow-md">Vault Unlocked</h2>
+         <h2 className="mt-8 text-2xl font-black tracking-widest text-emerald-700 dark:text-emerald-400 uppercase drop-shadow-md">Access Granted</h2>
       </div>
-
-    </div>
+    </>
   );
 }
 // ==========================================
-// 📱 SUPERVISOR VIEW (SHARED KIOSK MODE)
-// ==========================================
-// ==========================================
 // 📱 SUPERVISOR iOS-STYLE COMMAND HUB + CINEMATIC INTRO
 // ==========================================
-// ==========================================
-// 📱 SUPERVISOR iOS-STYLE COMMAND HUB
-// ==========================================
+
 function SupervisorMobileView({ userProfile, deployments, incidents, weeklyReports, isLoading, fetchDeployments, fetchIncidents, fetchWeeklyReports, onEditWeekly, onLogout, onEdit, onDelete, onView, onDeleteIncident, theme, toggleTheme }) {
   const [currentApp, setCurrentApp] = useState('hub'); 
   const [appTab, setAppTab] = useState('form'); 
@@ -2479,112 +2580,163 @@ function IncidentMobileForm({ userProfile, fetchIncidents, setActiveTab, languag
   );
 }
 
-function IncidentMobileHistory({ incidents, isLoading, language }) {
+function IncidentMobileHistory({ incidents, isLoading, language, onEdit, onDelete }) {
   const t = TRANSLATIONS[language] || TRANSLATIONS['en'];
   const [viewDate, setViewDate] = useState(getISTDate());
   const [viewingInc, setViewingInc] = useState(null);
+
+  // ✨ THE GPS TRACKER 📍
+  const [scrollPos, setScrollPos] = useState(0);
+
+  // ✨ THE TIMELOCK BRAIN 🧠
+  const checkIsEditable = (createdAt) => {
+    if (!createdAt) return false;
+    const recordTime = new Date(createdAt).getTime();
+    const currentTime = new Date().getTime();
+    if (isNaN(recordTime)) return false; 
+    const hoursPassed = (currentTime - recordTime) / (1000 * 60 * 60);
+    return hoursPassed >= 0 && hoursPassed <= 24; 
+  };
+
+  // ✨ THE BACKGROUND LOCK! 🔒 (Stops the background sandwich spilling!)
+  React.useEffect(() => {
+    if (viewingInc) {
+       setScrollPos(window.scrollY); // Locks onto your exact screen position!
+       document.body.style.overflow = 'hidden'; 
+    } else {
+       document.body.style.overflow = 'auto'; 
+    }
+    return () => { document.body.style.overflow = 'auto'; }; 
+  }, [viewingInc]);
 
   const filtered = viewDate ? incidents.filter(i => (i.created_at || '').startsWith(viewDate)) : incidents;
 
   const copyToWhatsApp = (e, inc) => {
     e.stopPropagation();
     let msg = `🚨 *${(inc.incident_name || 'INCIDENT REPORT').toUpperCase()}* 🚨\n\n` +
-      `🕒 *${t.inc.occDate}:* ${inc.time_of_incident}\n` +
-      `⏱️ *${t.inc.timeRep}:* ${inc.time_of_reporting}\n` +
-      `👤 *${t.inc.repBy}:* ${inc.reported_by} (EP: ${inc.ep_number || 'N/A'})\n` +
-      `🏢 *${t.inc.site} & ${t.inc.pin}:* ${inc.site} - ${inc.pincode || 'N/A'}\n` +
-      `📍 *${t.inc.exactLoc}:* ${inc.incident_location}\n\n` +
-      `📝 *${t.inc.details}:*\n${inc.details}\n\n` +
-      `🔍 *${t.inc.findings}:*\n${inc.findings || 'N/A'}\n\n` +
-      `⚡ *${t.inc.action}:*\n${inc.actions_taken}\n\n` +
-      `💡 *${t.inc.reco}:*\n${inc.recommendations}`;
+      `🕒 *${t.inc?.occDate || 'Occurred'}:* ${inc.time_of_incident}\n` +
+      `⏱️ *${t.inc?.timeRep || 'Reported'}:* ${inc.time_of_reporting}\n` +
+      `👤 *${t.inc?.repBy || 'Reported By'}:* ${inc.reported_by} (EP: ${inc.ep_number || 'N/A'})\n` +
+      `🏢 *${t.inc?.site || 'Site'} & ${t.inc?.pin || 'Pin'}:* ${inc.site} - ${inc.pincode || 'N/A'}\n` +
+      `📍 *${t.inc?.exactLoc || 'Location'}:* ${inc.incident_location}\n\n` +
+      `📝 *${t.inc?.details || 'Details'}:*\n${inc.details}\n\n` +
+      `🔍 *${t.inc?.findings || 'Findings'}:*\n${inc.findings || 'N/A'}\n\n` +
+      `⚡ *${t.inc?.action || 'Actions'}:*\n${inc.actions_taken}\n\n` +
+      `💡 *${t.inc?.reco || 'Recommendations'}:*\n${inc.recommendations}`;
     navigator.clipboard.writeText(msg).then(() => alert("Copied! 🟢"));
   };
 
+  if (isLoading) return <div className="p-10 text-center text-rose-500 font-bold animate-pulse uppercase tracking-widest text-[10px]">Syncing...</div>;
+
   return (
-    <div className="p-4 space-y-4 pb-24">
+    <div className="p-4 space-y-4 pb-24 relative">
       <div className="bg-white dark:bg-[#0f172a] p-4 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex justify-between items-center mb-2">
-        <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{t.nav.dateFilter}</span>
+        <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{t.nav?.dateFilter || 'Date'}</span>
         <div className="flex gap-2 items-center">
-          {viewDate && <button onClick={() => setViewDate('')} className="text-[10px] font-black tracking-widest text-rose-500 bg-rose-50 dark:bg-rose-500/10 px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-500/20 transition-all active:scale-95">{t.nav.clear}</button>}
+          {viewDate && <button onClick={() => setViewDate('')} className="text-[10px] font-black tracking-widest text-rose-500 bg-rose-50 dark:bg-rose-500/10 px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-500/20 transition-all active:scale-95">{t.nav?.clear || 'Clear'}</button>}
           <input type="date" value={viewDate} onChange={e => setViewDate(e.target.value)} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-base font-bold outline-none [color-scheme:light] dark:[color-scheme:dark]" />
         </div>
       </div>
 
       <div className="space-y-4">
-        {filtered.map(inc => (
-          <div key={inc.id} onClick={() => setViewingInc(inc)} className="bg-white dark:bg-[#0f172a] p-5 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-2 border-slate-100 dark:border-slate-800 relative cursor-pointer active:scale-[0.98] transition-transform overflow-hidden group">
-            <div className="absolute top-0 left-0 w-1.5 h-full bg-rose-500"></div>
-            <div className="absolute top-4 right-4">
-               {inc.status === 'Acknowledged' && <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm"><CheckCircle size={10}/> {t.inc.adminSeen}</span>}
-            </div>
+        {filtered.map(inc => {
+          const canEdit = checkIsEditable(inc.created_at);
 
-            <div className="pl-3">
-              <h4 className="font-black text-rose-600 dark:text-rose-400 uppercase text-base mb-1.5 pr-24 leading-tight">{inc.incident_name || 'Incident'}</h4>
-              <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase mb-4 flex items-center gap-1.5"><MapPin size={12} className="text-rose-400"/> {inc.incident_location}</p>
-              <div className="text-xs text-slate-600 dark:text-slate-400 font-medium line-clamp-2 mb-5 leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl">{inc.details}</div>
-              
-              <button onClick={(e) => copyToWhatsApp(e, inc)} className="w-full py-3.5 rounded-xl text-[11px] font-black tracking-widest uppercase bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-200 dark:border-green-800/50 flex justify-center items-center gap-2 hover:bg-green-100 transition-colors shadow-sm">
-                 <Copy size={16} /> {t.inc.copyWA}
-              </button>
+          return (
+            <div key={inc.id} onClick={() => setViewingInc(inc)} className="bg-white dark:bg-[#0f172a] p-5 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-2 border-slate-100 dark:border-slate-800 relative cursor-pointer active:scale-[0.98] transition-transform overflow-hidden group">
+              <div className={`absolute top-0 left-0 w-1.5 h-full ${canEdit ? 'bg-rose-500' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
+              <div className="absolute top-4 right-4">
+                 {inc.status === 'Acknowledged' && <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm"><CheckCircle size={10}/> {t.inc?.adminSeen || 'SEEN'}</span>}
+              </div>
+
+              <div className="pl-3">
+                <h4 className={`font-black uppercase text-base mb-1.5 pr-24 leading-tight ${canEdit ? 'text-rose-600 dark:text-rose-400' : 'text-slate-700 dark:text-slate-300'}`}>{inc.incident_name || 'Incident'}</h4>
+                <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase mb-4 flex items-center gap-1.5"><MapPin size={12} className={canEdit ? 'text-rose-400' : 'text-slate-400'}/> {inc.incident_location}</p>
+                <div className="text-xs text-slate-600 dark:text-slate-400 font-medium line-clamp-2 mb-2 leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl">{inc.details}</div>
+                
+                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/50">
+                  <button onClick={(e) => copyToWhatsApp(e, inc)} className="flex-1 py-3 rounded-xl text-[10px] font-black tracking-widest uppercase bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 flex justify-center items-center gap-1.5 hover:bg-emerald-100 transition-colors shadow-sm">
+                     <Copy size={14} /> {t.inc?.copyWA || 'Copy'}
+                  </button>
+                  
+                  {canEdit ? (
+                    <>
+                      <button onClick={(e) => { e.stopPropagation(); onEdit && onEdit(inc); }} className="p-3 text-slate-500 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 dark:bg-slate-800 dark:hover:bg-indigo-500/10 rounded-xl transition-colors border border-slate-200 dark:border-slate-700 shadow-sm"><Edit2 size={14} /></button>
+                      <button onClick={(e) => { e.stopPropagation(); onDelete && onDelete(inc); }} className="p-3 text-slate-500 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 dark:bg-slate-800 dark:hover:bg-rose-500/10 rounded-xl transition-colors border border-slate-200 dark:border-slate-700 shadow-sm"><Trash2 size={14} /></button>
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-1.5 px-4 py-3 text-[9px] uppercase tracking-widest font-black text-slate-400 bg-slate-100 dark:bg-slate-800/50 rounded-xl cursor-not-allowed border border-slate-200 dark:border-slate-700/50 shadow-inner">
+                      <Lock size={12}/> Expired
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
-        {filtered.length === 0 && <p className="text-center text-slate-500 text-base mt-10 font-bold italic">{t.inc.noInc}</p>}
+          );
+        })}
+        {filtered.length === 0 && <p className="text-center text-slate-500 text-base mt-10 font-bold italic">{t.inc?.noInc || 'No Incidents'}</p>}
       </div>
 
-      {/* ✨ THE UPGRADED SUPERVISOR iOS MODAL (BULLETPROOF FLEXBOX FIX) */}
+      {/* ✨ THE UPGRADED SUPERVISOR iOS MODAL (FIXED FOR MOBILE SCROLLING) */}
       {viewingInc && (
         <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/90 backdrop-blur-sm z-[150] flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in duration-200" onClick={() => setViewingInc(null)}>
           
-          {/* THE FIX: max-h-[80dvh] handles Safari bottom bars! max-w-[100vw] prevents side-spill! */}
-          <div className="bg-white dark:bg-[#0f172a] w-full max-w-[100vw] sm:max-w-lg h-auto max-h-[80dvh] sm:max-h-[90dvh] rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 border-t sm:border border-slate-200 dark:border-slate-800" onClick={e => e.stopPropagation()}>
+          {/* THE FIX: Swapped hard h-[90vh] for a flexible max-h-[85vh] and ensured w-full doesn't break boundaries! */}
+          <div className="bg-white dark:bg-[#0f172a] w-full sm:max-w-lg max-h-[85vh] sm:max-h-[90vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 border-t sm:border border-slate-200 dark:border-slate-800" onClick={e => e.stopPropagation()}>
+            
             <div className="h-1.5 w-12 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mt-3 sm:hidden shrink-0"></div>
             
-            <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start shrink-0 bg-white dark:bg-[#0f172a] w-full">
-               <div className="pr-4 flex-1 min-w-0">
+            {/* Header */}
+            <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start shrink-0 bg-white dark:bg-[#0f172a]">
+               <div className="pr-4 flex-1">
                  <span className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest shadow-sm ${viewingInc.status === 'Acknowledged' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' : 'bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 border border-rose-200 dark:border-rose-800'}`}>
-                   {viewingInc.status === 'Acknowledged' ? `✅ ${t.inc.adminSeen}` : `🚨 ${t.inc.pending}`}
+                   {viewingInc.status === 'Acknowledged' ? '✅ Admin Acknowledged' : '🚨 Pending Review'}
                  </span>
-                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-3 uppercase tracking-tight leading-tight truncate">{viewingInc.incident_name || 'Incident Report'}</h2>
+                 {/* break-words stops long titles from stretching the screen! */}
+                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-3 uppercase tracking-tight leading-tight break-words">{viewingInc.incident_name || 'Incident Report'}</h2>
                </div>
                <button onClick={() => setViewingInc(null)} className="p-2.5 text-slate-400 hover:text-rose-500 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors shrink-0"><X size={18} /></button>
             </div>
             
-            {/* THE FIX: min-h-0 and overflow-x-hidden forces it to scroll instead of pushing the walls out! */}
-            <div className="p-5 sm:p-6 overflow-y-auto overflow-x-hidden custom-scrollbar space-y-5 flex-1 min-h-0 w-full bg-slate-50/50 dark:bg-slate-900/20">
-               <div className="grid grid-cols-2 gap-3 w-full">
+            {/* Scrollable Content */}
+            <div className="p-5 sm:p-6 overflow-y-auto custom-scrollbar space-y-5 flex-1 bg-slate-50/50 dark:bg-slate-900/20">
+               
+               {/* Time Matrix */}
+               <div className="grid grid-cols-2 gap-3">
                  <div className="bg-rose-50 dark:bg-rose-500/10 p-4 rounded-2xl border-2 border-rose-100 dark:border-rose-500/20 shadow-sm relative overflow-hidden">
                    <Clock className="absolute -right-2 -bottom-2 text-rose-200 dark:text-rose-500/20 w-12 h-12 sm:w-16 sm:h-16" />
-                   <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest block mb-1.5 relative z-10">{t.inc.timeOcc}</span>
+                   <span className="text-[9px] sm:text-[10px] font-black text-rose-500 uppercase tracking-widest block mb-1.5 relative z-10">Time Occurred</span>
                    <span className="text-xs sm:text-sm font-black text-rose-700 dark:text-rose-400 leading-tight relative z-10 break-words">{viewingInc.time_of_incident}</span>
                  </div>
                  <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
                    <Activity className="absolute -right-2 -bottom-2 text-slate-100 dark:text-slate-700 w-12 h-12 sm:w-16 sm:h-16" />
-                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5 relative z-10">{t.inc.timeRep}</span>
+                   <span className="text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5 relative z-10">Time Reported</span>
                    <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-200 leading-tight relative z-10 break-words">{viewingInc.time_of_reporting}</span>
                  </div>
                </div>
 
-               <div className="flex flex-col gap-3 bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-xs w-full">
+               {/* Meta Data Box - Fixed layout so it doesn't break out horizontally! */}
+               <div className="flex flex-col gap-3 bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-xs">
                  <div className="grid grid-cols-2 gap-3">
-                   <div className="min-w-0"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">{t.inc.repBy}</span><span className="font-bold text-slate-800 dark:text-slate-200 uppercase truncate block">{viewingInc.reported_by}</span></div>
-                   <div className="min-w-0"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">{t.inc.ep}</span><span className="font-mono font-bold text-indigo-500 truncate block">{viewingInc.ep_number}</span></div>
+                   <div className="min-w-0"><span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Reported By</span><span className="font-bold text-slate-800 dark:text-slate-200 uppercase truncate block">{viewingInc.reported_by}</span></div>
+                   <div className="min-w-0"><span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">EP Number</span><span className="font-mono font-bold text-indigo-500 truncate block">{viewingInc.ep_number}</span></div>
                  </div>
-                 <div className="border-t border-slate-100 dark:border-slate-800 pt-3 w-full"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">{t.inc.exactLoc}</span><span className="font-bold text-slate-800 dark:text-slate-200 uppercase flex items-start gap-1.5 break-words"><MapPin size={14} className="text-emerald-500 shrink-0 mt-0.5"/> <span className="break-all">{viewingInc.incident_location}</span></span></div>
+                 <div className="border-t border-slate-100 dark:border-slate-800 pt-3"><span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Location</span><span className="font-bold text-slate-800 dark:text-slate-200 uppercase flex items-start gap-1.5 break-words"><MapPin size={14} className="text-emerald-500 shrink-0 mt-0.5"/> <span>{viewingInc.incident_location}</span></span></div>
                </div>
 
-               <div className="space-y-4 w-full">
-                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm w-full"><strong className="text-[10px] font-black text-rose-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><FileText size={14}/> {t.inc.details}</strong><p className="whitespace-pre-wrap text-base text-slate-700 dark:text-slate-300 font-medium leading-relaxed break-words">{viewingInc.details}</p></div>
-                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm w-full"><strong className="text-[10px] font-black text-purple-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Search size={14}/> {t.inc.findings}</strong><p className="whitespace-pre-wrap text-base text-slate-700 dark:text-slate-300 font-medium leading-relaxed break-words">{viewingInc.findings}</p></div>
-                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm w-full"><strong className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Activity size={14}/> {t.inc.action}</strong><p className="whitespace-pre-wrap text-base text-slate-700 dark:text-slate-300 font-medium leading-relaxed break-words">{viewingInc.actions_taken}</p></div>
-                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm w-full"><strong className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Shield size={14}/> {t.inc.reco}</strong><p className="whitespace-pre-wrap text-base text-slate-700 dark:text-slate-300 font-medium leading-relaxed break-words">{viewingInc.recommendations}</p></div>
+               {/* Details Blocks with break-words to prevent spill! */}
+               <div className="space-y-4">
+                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"><strong className="text-[10px] font-black text-rose-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><FileText size={14}/> Details</strong><p className="whitespace-pre-wrap text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed break-words">{viewingInc.details}</p></div>
+                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"><strong className="text-[10px] font-black text-purple-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Search size={14}/> Findings</strong><p className="whitespace-pre-wrap text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed break-words">{viewingInc.findings}</p></div>
+                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"><strong className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Activity size={14}/> Action Taken</strong><p className="whitespace-pre-wrap text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed break-words">{viewingInc.actions_taken}</p></div>
+                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"><strong className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Shield size={14}/> Recommendations</strong><p className="whitespace-pre-wrap text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed break-words">{viewingInc.recommendations}</p></div>
                </div>
                
+               {/* Photos */}
                {(viewingInc.photos && viewingInc.photos.length > 0) && (
-                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm w-full">
+                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
                    <strong className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5 mb-3"><ImageIcon size={14}/> Evidence Attached</strong>
-                   <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar w-full">
+                   <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
                      {viewingInc.photos.map((p, i) => (
                        <img key={i} src={p} alt="evidence" className="h-24 w-24 object-cover rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm shrink-0" />
                      ))}
@@ -2593,9 +2745,10 @@ function IncidentMobileHistory({ incidents, isLoading, language }) {
                )}
             </div>
             
-            <div className="p-4 sm:p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0f172a] shrink-0 sm:rounded-b-[2.5rem] w-full">
+            {/* Footer */}
+            <div className="p-4 sm:p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0f172a] shrink-0 sm:rounded-b-[2.5rem]">
                <button onClick={(e) => { copyToWhatsApp(e, viewingInc); setViewingInc(null); }} className="w-full py-3.5 sm:py-4 rounded-2xl text-[11px] sm:text-xs font-black bg-green-500 text-white flex justify-center items-center gap-2 hover:bg-green-600 transition-all shadow-lg shadow-green-500/30 uppercase tracking-widest active:scale-95">
-                 <Copy size={18} /> {t.inc.copyFull}
+                 <Copy size={18} /> Copy Full Report
                </button>
             </div>
           </div>
