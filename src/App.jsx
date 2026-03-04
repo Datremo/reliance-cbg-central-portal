@@ -19,6 +19,47 @@ const formatPhone = (phone) => {
   return phone;
 };
 
+// ==========================================
+// 🌍 THE MULTI-LINGUAL TRANSLATION BRAIN
+// ==========================================
+const TRANSLATIONS = {
+  en: {
+    hub: { title: "Security Dashboard", apps: "Secure Apps", dep: "Daily Deployment", inc: "Incident Report", mis: "MIS Report", misSub: "Submit Ledger", overview: "Overview" },
+    nav: { back: "Back", newEntry: "New Entry", viewLogs: "View Logs", clear: "CLEAR", dateFilter: "Date Filter" },
+    dep: { clone: "Copy Yesterday's Deployment", date: "Deployment Date", shift: "Shift", desig: "Designation", name: "Full Name", phone: "Phone No.", loc: "Location", customLoc: "Specify sector exactly...", addAnother: "Add another", submit: "SUBMIT DEPLOYMENT", encrypting: "ENCRYPTING...", recorded: "RECORDED", noLogs: "No deployment logs found for this date.", secData: "Security Data", day: "Day Shift", night: "Night Shift", off: "Weekly Off" },
+    inc: { title: "Incident Report", subtitle: "Direct uplink to Command Center.", type: "Incident Type / Name", occDate: "Occurrence Date & Time", repBy: "Reported By", ep: "EP Number", site: "Site Name", pin: "Pincode", exactLoc: "Location of Incident", details: "Details of Incident", findings: "Findings", action: "Action Taken", reco: "Follow-up & Recommendations", photo: "Photographic Evidence", attach: "Attach", submit: "SUBMIT REPORT", adminSeen: "Admin Acknowledged", pending: "Pending Review", timeOcc: "Time Occurred", timeRep: "Time Reported", copyWA: "WA COPY", copyFull: "Copy Full Report", noInc: "No incidents found for this date.", encrypting: "ENCRYPTING UPLINK..." },
+    mis: { selectDates: "Select MIS Report Dates", dateFrom: "Date From", dateTo: "Date To", register: "Official Register", submit: "SUBMIT Report", syncing: "SYNCING...", decrypting: "Decrypting Ledgers...", viewMaster: "View Master", editResend: "Edit / Resend", noLedgers: "No weekly ledgers found.", delete: "Delete Ledger", download: "Download .CSV" }
+  },
+  hi: {
+    hub: { title: "सुरक्षा डैशबोर्ड", apps: "सिक्योर ऐप्स", dep: "डेली ड्यूटी (Deployment)", inc: "घटना रिपोर्ट (Incident)", mis: "MIS रिपोर्ट", misSub: "लेजर सबमिट करें", overview: "अवलोकन" },
+    nav: { back: "पीछे", newEntry: "नई एंट्री", viewLogs: "पुराने लॉग्स", clear: "साफ़ करें", dateFilter: "तारीख चुनें" },
+    dep: { clone: "कल की ड्यूटी कॉपी करें", date: "ड्यूटी की तारीख", shift: "शिफ्ट", desig: "पद ", name: "पूरा नाम", phone: "मोबाइल नंबर", loc: "लोकेशन", customLoc: "लोकेशन का नाम लिखें...", addAnother: "एक और जोड़ें", submit: "ड्यूटी सबमिट करें", encrypting: "सबमिट हो रहा है...", recorded: "सेव हो गया", noLogs: "इस तारीख की कोई ड्यूटी नहीं मिली।", secData: "सुरक्षा गार्ड डेटा", day: "डे शिफ्ट (Day)", night: "नाईट शिफ्ट (Night)", off: "वीकली ऑफ (Off)" },
+    inc: { title: "घटना रिपोर्ट", subtitle: "कमांड सेंटर को डायरेक्ट रिपोर्ट।", type: "घटना का प्रकार / नाम", occDate: "घटना की तारीख और समय", repBy: "रिपोर्ट करने वाले का नाम", ep: "EP नंबर", site: "साइट का नाम", pin: "पिनकोड", exactLoc: "घटना की सटीक लोकेशन", details: "घटना की पूरी जानकारी", findings: "जांच के नतीजे (Findings)", action: "क्या एक्शन लिया गया", reco: "सुझाव (Recommendations)", photo: "फोटो / सबूत", attach: "फोटो जोड़ें", submit: "रिपोर्ट सबमिट करें", adminSeen: "एडमिन ने देख लिया", pending: "अभी पेंडिंग है", timeOcc: "घटना का समय", timeRep: "रिपोर्ट करने का समय", copyWA: "WA कॉपी", copyFull: "पूरी रिपोर्ट कॉपी करें", noInc: "इस तारीख की कोई घटना नहीं मिली।", encrypting: "रिपोर्ट जा रही है..." },
+    mis: { selectDates: "MIS रिपोर्ट की तारीख चुनें", dateFrom: "कब से (From)", dateTo: "कब तक (To)", register: "ऑफिशियल रजिस्टर", submit: "रिपोर्ट सबमिट करें", syncing: "सिंक हो रहा है...", decrypting: "लेजर लोड हो रहा है...", viewMaster: "मास्टर देखें", editResend: "एडिट / रीसेंड", noLedgers: "कोई MIS लेजर नहीं मिला।", delete: "डिलीट करें", download: "CSV डाउनलोड करें" }
+  },
+  mr: {
+    hub: { title: "सुरक्षा डॅशबोर्ड", apps: "सिक्योर ॲप्स", dep: "डेली ड्युटी (Deployment)", inc: "घटना रिपोर्ट (Incident)", mis: "MIS रिपोर्ट", misSub: "लेजर सबमिट करा", overview: "आढावा" },
+    nav: { back: "मागे", newEntry: "नवीन एंट्री", viewLogs: "जुने लॉग्स", clear: "क्लिअर", dateFilter: "तारीख निवडा" },
+    dep: { clone: "कालची ड्युटी कॉपी करा", date: "ड्युटीची तारीख", shift: "शिफ्ट", desig: "पद ", name: "पूर्ण नाव", phone: "मोबाईल नंबर", loc: "लोकेशन", customLoc: "लोकेशनचे नाव लिहा...", addAnother: "आणखी एक जोडा", submit: "ड्युटी सबमिट करा", encrypting: "सबमिट होत आहे...", recorded: "सेव्ह झाले", noLogs: "या तारखेची कोणतीही ड्युटी आढळली नाही.", secData: "सुरक्षा रक्षक डेटा", day: "डे शिफ्ट (Day)", night: "नाईट शिफ्ट (Night)", off: "वीकली ऑफ (Off)" },
+    inc: { title: "घटना रिपोर्ट", subtitle: "कमांड सेंटरला डायरेक्ट रिपोर्ट.", type: "घटनेचा प्रकार / नाव", occDate: "घटनेची तारीख आणि वेळ", repBy: "रिपोर्ट करणाऱ्याचे नाव", ep: "EP नंबर", site: "साईटचे नाव", pin: "पिनकोड", exactLoc: "घटनेची नेमकी लोकेशन", details: "घटनेची संपूर्ण माहिती", findings: "तपासाचे निष्कर्ष (Findings)", action: "काय ॲक्शन घेतली", reco: "सूचना (Recommendations)", photo: "फोटो / पुरावा", attach: "फोटो जोडा", submit: "रिपोर्ट सबमिट करा", adminSeen: "ॲडमिनने पाहिले", pending: "अजून पेंडिंग आहे", timeOcc: "घटनेची वेळ", timeRep: "रिपोर्ट केल्याची वेळ", copyWA: "WA कॉपी", copyFull: "संपूर्ण रिपोर्ट कॉपी करा", noInc: "या तारखेची कोणतीही घटना आढळली नाही.", encrypting: "रिपोर्ट जात आहे..." },
+    mis: { selectDates: "MIS रिपोर्टची तारीख निवडा", dateFrom: "कधीपासून (From)", dateTo: "कधीपर्यंत (To)", register: "ऑफिशियल रजिस्टर", submit: "रिपोर्ट सबमिट करा", syncing: "सिंक होत आहे...", decrypting: "लेजर लोड होत आहे...", viewMaster: "मास्टर पहा", editResend: "एडिट / रीसेंड", noLedgers: "कोणतेही MIS लेजर आढळले नाही.", delete: "डिलीट करा", download: "CSV डाउनलोड करा" }
+  },
+  te: {
+    hub: { title: "సెక్యూరిటీ డాష్‌బోర్డ్", apps: "సెక్యూర్ యాప్స్", dep: "డైలీ డ్యూటీ (Deployment)", inc: "సంఘటన రిపోర్ట్ (Incident)", mis: "MIS రిపోర్ట్", misSub: "లెడ్జర్ సబ్మిట్ చేయండి", overview: "అవలోకనం" },
+    nav: { back: "వెనుకకు", newEntry: "కొత్త ఎంట్రీ", viewLogs: "పాత లాగ్స్", clear: "క్లియర్", dateFilter: "తేదీ ఎంచుకోండి" },
+    dep: { clone: "నిన్నటి డ్యూటీ కాపీ చేయండి", date: "డ్యూటీ తేదీ", shift: "షిఫ్ట్", desig: "హోదా", name: "పూర్తి పేరు", phone: "మొబైల్ నంబర్", loc: "లోకేషన్", customLoc: "లోకేషన్ పేరు రాయండి...", addAnother: "ఇంకొకటి జోడించండి", submit: "డ్యూటీ సబ్మిట్ చేయండి", encrypting: "సబ్మిట్ అవుతోంది...", recorded: "సేవ్ చేయబడింది", noLogs: "ఈ తేదీకి డ్యూటీ రికార్డ్ లేదు.", secData: "సెక్యూరిటీ గార్డ్ డేటా", day: "డే షిఫ్ట్ (Day)", night: "నైట్ షిఫ్ట్ (Night)", off: "వీక్లీ ఆఫ్ (Off)" },
+    inc: { title: "సంఘటన రిపోర్ట్", subtitle: "కమాండ్ సెంటర్‌కు డైరెక్ట్ రిపోర్ట్.", type: "సంఘటన రకం / పేరు", occDate: "సంఘటన తేదీ మరియు సమయం", repBy: "రిపోర్ట్ చేసినవారి పేరు", ep: "EP నంబర్", site: "సైట్ పేరు", pin: "పిన్‌కోడ్", exactLoc: "సంఘటన జరిగిన ప్రదేశం", details: "సంఘటన పూర్తి వివరాలు", findings: "పరిశోధనలు (Findings)", action: "తీసుకున్న చర్య", reco: "సూచనలు (Recommendations)", photo: "ఫోటో / ఆధారం", attach: "ఫోటో జోడించండి", submit: "రిపోర్ట్ సబ్మిట్ చేయండి", adminSeen: "అడ్మిన్ చూశారు", pending: "ఇంకా పెండింగ్‌లో ఉంది", timeOcc: "సంఘటన సమయం", timeRep: "రిపోర్ట్ చేసిన సమయం", copyWA: "WA కాపీ", copyFull: "పూర్తి రిపోర్ట్ కాపీ చేయండి", noInc: "ఈ తేదీకి ఎలాంటి సంఘటన లేదు.", encrypting: "అప్‌లోడ్ అవుతోంది..." },
+    mis: { selectDates: "MIS రిపోర్ట్ తేదీని ఎంచుకోండి", dateFrom: "ఎప్పటినుండి (From)", dateTo: "ఎప్పటివరకు (To)", register: "అధికారిక రిజిస్టర్", submit: "రిపోర్ట్ సబ్మిట్ చేయండి", syncing: "సింక్ అవుతోంది...", decrypting: "లెడ్జర్ లోడ్ అవుతోంది...", viewMaster: "మాస్టర్ చూడండి", editResend: "ఎడిట్ / రీసెండ్", noLedgers: "ఎలాంటి MIS లెడ్జర్ లేదు.", delete: "డిలీట్ చేయండి", download: "CSV డౌన్‌లోడ్" }
+  },
+  pa: {
+    hub: { title: "ਸੁਰੱਖਿਆ ਡੈਸ਼ਬੋਰਡ", apps: "ਸੁਰੱਖਿਅਤ ਐਪਸ", dep: "ਰੋਜ਼ਾਨਾ ਡਿਊਟੀ (Deployment)", inc: "ਘਟਨਾ ਰਿਪੋਰਟ (Incident)", mis: "MIS ਰਿਪੋਰਟ", misSub: "ਲੇਜਰ ਜਮ੍ਹਾਂ ਕਰੋ", overview: "ਸੰਖੇਪ ਜਾਣਕਾਰੀ" },
+    nav: { back: "ਪਿੱਛੇ", newEntry: "ਨਵੀਂ ਐਂਟਰੀ", viewLogs: "ਪੁਰਾਣੇ ਲੌਗ", clear: "ਸਾਫ਼ ਕਰੋ", dateFilter: "ਤਾਰੀਖ ਚੁਣੋ" },
+    dep: { clone: "ਕੱਲ੍ਹ ਦੀ ਡਿਊਟੀ ਕਾਪੀ ਕਰੋ", date: "ਡਿਊਟੀ ਦੀ ਤਾਰੀਖ", shift: "ਸ਼ਿਫਟ", desig: "ਅਹੁਦਾ", name: "ਪੂਰਾ ਨਾਮ", phone: "ਮੋਬਾਈਲ ਨੰਬਰ", loc: "ਲੋਕੇਸ਼ਨ", customLoc: "ਲੋਕੇਸ਼ਨ ਦਾ ਨਾਮ ਲਿਖੋ...", addAnother: "ਇੱਕ ਹੋਰ ਜੋੜੋ", submit: "ਡਿਊਟੀ ਜਮ੍ਹਾਂ ਕਰੋ", encrypting: "ਜਮ੍ਹਾਂ ਹੋ ਰਿਹਾ ਹੈ...", recorded: "ਸੇਵ ਹੋ ਗਿਆ", noLogs: "ਇਸ ਤਾਰੀਖ ਦੀ ਕੋਈ ਡਿਊਟੀ ਨਹੀਂ ਮਿਲੀ।", secData: "ਸੁਰੱਖਿਆ ਡੇਟਾ", day: "ਡੇ ਸ਼ਿਫਟ (Day)", night: "ਨਾਈਟ ਸ਼ਿਫਟ (Night)", off: "ਵੀਕਲੀ ਆਫ (Off)" },
+    inc: { title: "ਘਟਨਾ ਰਿਪੋਰਟ", subtitle: "ਕਮਾਂਡ ਸੈਂਟਰ ਨੂੰ ਸਿੱਧੀ ਰਿਪੋਰਟ।", type: "ਘਟਨਾ ਦੀ ਕਿਸਮ / ਨਾਮ", occDate: "ਘਟਨਾ ਦੀ ਤਾਰੀਖ ਅਤੇ ਸਮਾਂ", repBy: "ਰਿਪੋਰਟ ਕਰਨ ਵਾਲੇ ਦਾ ਨਾਮ", ep: "EP ਨੰਬਰ", site: "ਸਾਈਟ ਦਾ ਨਾਮ", pin: "ਪਿਨਕੋਡ", exactLoc: "ਘਟਨਾ ਦੀ ਸਹੀ ਲੋਕੇਸ਼ਨ", details: "ਘਟਨਾ ਦੀ ਪੂਰੀ ਜਾਣਕਾਰੀ", findings: "ਜਾਂਚ ਦੇ ਨਤੀਜੇ (Findings)", action: "ਕੀ ਕਾਰਵਾਈ ਕੀਤੀ ਗਈ", reco: "ਸੁਝਾਅ (Recommendations)", photo: "ਫੋਟੋ / ਸਬੂਤ", attach: "ਫੋਟੋ ਜੋੜੋ", submit: "ਰਿਪੋਰਟ ਜਮ੍ਹਾਂ ਕਰੋ", adminSeen: "ਐਡਮਿਨ ਨੇ ਦੇਖ ਲਿਆ", pending: "ਅਜੇ ਪੈਂਡਿੰਗ ਹੈ", timeOcc: "ਘਟਨਾ ਦਾ ਸਮਾਂ", timeRep: "ਰਿਪੋਰਟ ਕਰਨ ਦਾ ਸਮਾਂ", copyWA: "WA ਕਾਪੀ", copyFull: "ਪੂਰੀ ਰਿਪੋਰਟ ਕਾਪੀ ਕਰੋ", noInc: "ਇਸ ਤਾਰੀਖ ਦੀ ਕੋਈ ਘਟਨਾ ਨਹੀਂ ਮਿਲੀ।", encrypting: "ਅੱਪਲੋਡ ਹੋ ਰਿਹਾ ਹੈ..." },
+    mis: { selectDates: "MIS ਰਿਪੋਰਟ ਦੀ ਤਾਰੀਖ ਚੁਣੋ", dateFrom: "ਕਦੋਂ ਤੋਂ (From)", dateTo: "ਕਦੋਂ ਤੱਕ (To)", register: "ਅਧਿਕਾਰਤ ਰਜਿਸਟਰ", submit: "ਰਿਪੋਰਟ ਜਮ੍ਹਾਂ ਕਰੋ", syncing: "ਸਿੰਕ ਹੋ ਰਿਹਾ ਹੈ...", decrypting: "ਲੇਜਰ ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...", viewMaster: "ਮਾਸਟਰ ਦੇਖੋ", editResend: "ਐਡਿਟ / ਰੀਸੈਂਡ", noLedgers: "ਕੋਈ MIS ਲੇਜਰ ਨਹੀਂ ਮਿਲਿਆ।", delete: "ਮਿਟਾਓ", download: "CSV ਡਾਊਨਲੋਡ" }
+  }
+};
+
 // 🇮🇳 ✨ THE BULLETPROOF IST TIMEZONE FIXER!
 const getISTDate = (offsetDays = 0) => {
   const d = new Date();
@@ -632,49 +673,44 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
 // ==========================================
 // 📱 SUPERVISOR iOS-STYLE COMMAND HUB + CINEMATIC INTRO
 // ==========================================
+// ==========================================
+// 📱 SUPERVISOR iOS-STYLE COMMAND HUB
+// ==========================================
 function SupervisorMobileView({ userProfile, deployments, incidents, weeklyReports, isLoading, fetchDeployments, fetchIncidents, fetchWeeklyReports, onEditWeekly, onLogout, onEdit, onDelete, onView, onDeleteIncident, theme, toggleTheme }) {
-  // ✨ NEW: iOS App States
-  const [currentApp, setCurrentApp] = useState('hub'); // 'hub', 'deployment', 'incident', 'weekly'
-  const [appTab, setAppTab] = useState('form'); // 'form' or 'history'
+  const [currentApp, setCurrentApp] = useState('hub'); 
+  const [appTab, setAppTab] = useState('form'); 
 
-  // 🎬 RESTORED: THE CINEMATIC INTRO STATES
   const [introStage, setIntroStage] = useState(1);
   const [customName, setCustomName] = useState('');
   const [fillerName, setFillerName] = useState('');
   const allowedSupervisors = userProfile.name ? userProfile.name.split(',').map(n => n.trim()) : [];
 
-  // 🛡️ ✨ NEW: THE INVISIBLE BACK-BUTTON TRAP!
+  // ✨ THE MULTI-LINGUAL STATE BRAIN!
+  const [language, setLanguage] = useState(localStorage.getItem('cbg_lang') || 'en');
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const t = TRANSLATIONS[language] || TRANSLATIONS['en'];
+
+  const handleLangChange = (lang) => {
+    setLanguage(lang);
+    localStorage.setItem('cbg_lang', lang);
+    setShowLangMenu(false);
+  };
+
   useEffect(() => {
-    // 1. Push a fake state into their browser history immediately
     window.history.pushState({ noBackExits: true }, '');
-
-    // 2. Listen for them trying to swipe or hit the back button
     const handlePopState = (e) => {
-      // Push it AGAIN so they are trapped inside the app!
       window.history.pushState({ noBackExits: true }, '');
-      
-      // If they are deep in an app, just take them back to the hub!
-      if (currentApp !== 'hub') {
-        setCurrentApp('hub');
-      } else {
-        // If they are ALREADY on the hub and trying to leave, maybe show a tiny cute alert?
-        // (Optional: You can remove this alert if it's annoying!)
-        console.log("Trapped the back button! They must use the logout button to exit.");
-      }
+      if (currentApp !== 'hub') setCurrentApp('hub');
     };
-
     window.addEventListener('popstate', handlePopState);
-
-    // Clean up if the component unmounts
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [currentApp]); // Re-runs anytime they change apps so the trap resets!
+  }, [currentApp]);
 
   const handleCustomSubmit = (e) => {
     e.preventDefault();
     if(customName.trim().length > 0) selectName(customName.trim());
   };
 
-  // Auto-advance the boot screen
   useEffect(() => {
     if (introStage === 1) {
       const timer = setTimeout(() => setIntroStage(2), 2500);
@@ -684,213 +720,159 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
 
   const selectName = (name) => {
     setFillerName(name.toUpperCase());
-    setIntroStage(3); // Go to white welcome screen
-    setTimeout(() => setIntroStage(0), 2000); // Dissolve into the iOS Hub!
+    setIntroStage(3); 
+    setTimeout(() => setIntroStage(0), 2000); 
   };
 
-
-  // 📱 THE PREMIUM APPLE-STYLE COMMAND HUB
   const renderHub = () => (
-    // ✨ Notice the exact iOS System Gray (#F2F2F7) background!
     <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#F2F2F7] dark:bg-black p-5 sm:p-8 space-y-8 animate-in fade-in duration-300 relative">
-      
-      {/* Subtle Apple-style background glow */}
       <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-indigo-500/10 to-transparent pointer-events-none"></div>
 
-      <div className="flex justify-between items-start pt-2 relative z-10">
+      <div className="flex justify-between items-start pt-2 relative z-[999]">
         <div>
-          <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">Security Dashboard</p>
+          <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">{t.hub.overview}</p>
           <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-3">{fillerName || userProfile.name}</h1>
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 dark:bg-slate-800/60 backdrop-blur-md text-indigo-700 dark:text-indigo-300 rounded-full text-sm sm:text-base font-black uppercase tracking-wider shadow-md border border-white/40 dark:border-slate-600/50">
             <MapPin size={16} className="text-indigo-500"/> {userProfile.site}
           </div>
         </div>
-        <div className="flex gap-2">
-          <button onClick={toggleTheme} className="p-3.5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl text-slate-600 dark:text-slate-300 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.05)] border border-white/50 dark:border-slate-700/50 hover:scale-105 transition-all active:scale-95">
+        
+        {/* ✨ THE NEW GLOBE TOGGLE MENU! */}
+        <div className="flex gap-2 relative">
+          <div className="relative">
+            <button onClick={() => setShowLangMenu(!showLangMenu)} className="w-12 h-12 flex items-center justify-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl text-slate-600 dark:text-slate-300 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.05)] border border-white/50 dark:border-slate-700/50 hover:scale-105 transition-all active:scale-95 text-xl">
+              🌍
+            </button>
+            {showLangMenu && (
+              <div className="absolute top-full right-0 mt-2 bg-white/90 dark:bg-slate-800/90 backdrop-blur-2xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden w-36 z-50 animate-in fade-in zoom-in-95 duration-200">
+                <button onClick={() => handleLangChange('en')} className={`px-4 py-3.5 text-sm font-bold text-left hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${language === 'en' ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-700 dark:text-slate-300'}`}>🇺🇸 English</button>
+                <button onClick={() => handleLangChange('hi')} className={`px-4 py-3.5 text-sm font-bold text-left hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${language === 'hi' ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-700 dark:text-slate-300'}`}>🇮🇳 हिन्दी</button>
+                <button onClick={() => handleLangChange('mr')} className={`px-4 py-3.5 text-sm font-bold text-left hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${language === 'mr' ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-700 dark:text-slate-300'}`}>🚩 मराठी</button>
+                <button onClick={() => handleLangChange('te')} className={`px-4 py-3.5 text-sm font-bold text-left hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${language === 'te' ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-700 dark:text-slate-300'}`}>🌺 తెలుగు</button>
+                <button onClick={() => handleLangChange('pa')} className={`px-4 py-3.5 text-sm font-bold text-left hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${language === 'pa' ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-700 dark:text-slate-300'}`}>🌾 ਪੰਜਾਬੀ</button>
+              </div>
+            )}
+          </div>
+          
+          <button onClick={toggleTheme} className="w-12 h-12 flex items-center justify-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl text-slate-600 dark:text-slate-300 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.05)] border border-white/50 dark:border-slate-700/50 hover:scale-105 transition-all active:scale-95">
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-          <button onClick={onLogout} className="p-3.5 bg-rose-50/80 dark:bg-rose-500/10 backdrop-blur-xl text-rose-600 dark:text-rose-400 rounded-full shadow-[0_4px_15px_rgba(244,63,94,0.1)] border border-rose-100/50 dark:border-rose-500/20 hover:scale-105 transition-all active:scale-95">
+          <button onClick={onLogout} className="w-12 h-12 flex items-center justify-center bg-rose-50/80 dark:bg-rose-500/10 backdrop-blur-xl text-rose-600 dark:text-rose-400 rounded-full shadow-[0_4px_15px_rgba(244,63,94,0.1)] border border-rose-100/50 dark:border-rose-500/20 hover:scale-105 transition-all active:scale-95">
             <LogOut size={18}/>
           </button>
         </div>
       </div>
 
       <div className="relative z-10">
-        <h2 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 ml-1">Secure Apps</h2>
+        <h2 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 ml-1">{t.hub.apps}</h2>
         <div className="grid grid-cols-2 gap-4">
-          
-          {/* ✨ iOS Style Squircle Buttons ✨ */}
           <button onClick={() => { setCurrentApp('deployment'); setAppTab('form'); }} className="aspect-square bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] border border-white/60 dark:border-slate-700/50 flex flex-col items-center justify-center gap-4 transition-all active:scale-[0.96] hover:shadow-lg group">
             <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform duration-300"><Users size={28} className="stroke-[1.5]"/></div>
-            <span className="block font-bold text-slate-700 dark:text-white text-base tracking-wide leading-tight">Daily Deployment</span>
+            <span className="block font-bold text-slate-700 dark:text-white text-base sm:text-base tracking-wide leading-tight px-2 text-center">{t.hub.dep}</span>
           </button>
 
           <button onClick={() => { setCurrentApp('incident'); setAppTab('form'); }} className="aspect-square bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] border border-white/60 dark:border-slate-700/50 flex flex-col items-center justify-center gap-4 transition-all active:scale-[0.96] hover:shadow-lg group">
             <div className="w-14 h-14 bg-gradient-to-br from-rose-400 to-red-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-rose-500/30 group-hover:scale-110 transition-transform duration-300"><AlertTriangle size={28} className="stroke-[1.5]"/></div>
-            <span className="block font-bold text-slate-700 dark:text-white text-base tracking-wide leading-tight">Incident Report</span>
+            <span className="block font-bold text-slate-700 dark:text-white text-base sm:text-base tracking-wide leading-tight px-2 text-center">{t.hub.inc}</span>
           </button>
 
           <button onClick={() => { setCurrentApp('weekly'); setAppTab('form'); }} className="col-span-2 py-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] border border-white/60 dark:border-slate-700/50 flex flex-row items-center justify-center gap-5 transition-all active:scale-[0.96] hover:shadow-lg group">
             <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 to-teal-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:scale-110 transition-transform duration-300"><BookOpen size={28} className="stroke-[1.5]"/></div>
             <div className="text-left">
-              <span className="block font-bold text-slate-900 dark:text-white text-base tracking-wide leading-tight">MIS Report</span>
-              <span className="block text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">Submit Ledger</span>
+              <span className="block font-bold text-slate-900 dark:text-white text-base tracking-wide leading-tight">{t.hub.mis}</span>
+              <span className="block text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">{t.hub.misSub}</span>
             </div>
           </button>
-
         </div>
       </div>
     </div>
   );
-    
 
- // 🛠️ THE OPEN MODULE SCREEN (APPLE STYLE)
   const renderModule = () => (
     <div className="flex flex-col h-full bg-[#F2F2F7] dark:bg-black relative">
-      
-      {/* ✨ APPLE-STYLE FROSTED GLASS HEADER */}
       <div className="sticky top-0 z-50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl border-b border-slate-200/50 dark:border-slate-800/50 px-4 py-4 flex items-center gap-4">
         <button onClick={() => setCurrentApp('hub')} className="w-10 h-10 bg-black/5 dark:bg-white/10 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-black/10 dark:hover:bg-white/20 transition-colors active:scale-90 shrink-0">
           <ArrowLeft size={20}/>
         </button>
         <div className="flex-1">
           <h2 className="font-black text-slate-900 dark:text-white tracking-tight text-lg leading-tight">
-            {currentApp === 'deployment' ? 'Live Deployment' : currentApp === 'incident' ? 'Incident Report' : 'MIS Report'}
+            {currentApp === 'deployment' ? t.hub.dep : currentApp === 'incident' ? t.hub.inc : t.hub.mis}
           </h2>
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">{userProfile.site}</p>
+          <p className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5 flex items-center gap-1">
+            <MapPin size={12} /> {userProfile.site}
+          </p>
         </div>
       </div>
 
-      {/* ✨ APPLE-STYLE SEGMENTED CONTROL */}
       <div className="px-4 pt-5 pb-2 shrink-0 z-40 bg-[#F2F2F7] dark:bg-black">
         <div className="bg-slate-200/60 dark:bg-slate-800/60 backdrop-blur-md p-1 rounded-[14px] flex relative shadow-inner border border-black/5 dark:border-white/5">
-          
-          {/* THE MAGIC SLIDING WHITE PILL */}
           <div 
             className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-slate-600 rounded-[10px] shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
             style={{ transform: appTab === 'form' ? 'translateX(0)' : 'translateX(100%)' }}
           ></div>
-
-          <button onClick={() => setAppTab('form')} className={`flex-1 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-colors duration-300 relative z-10 ${appTab === 'form' ? 'text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>New Entry</button>
-          <button onClick={() => setAppTab('history')} className={`flex-1 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-colors duration-300 relative z-10 ${appTab === 'history' ? 'text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>View Logs</button>
+          <button onClick={() => setAppTab('form')} className={`flex-1 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-colors duration-300 relative z-10 ${appTab === 'form' ? 'text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>{t.nav.newEntry}</button>
+          <button onClick={() => setAppTab('history')} className={`flex-1 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-colors duration-300 relative z-10 ${appTab === 'history' ? 'text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>{t.nav.viewLogs}</button>
         </div>
       </div>
 
-      {/* ✨ THE HIGH-SPEED ANDROID ANIMATION WRAPPER ✨ */}
-      <div key={currentApp + appTab} className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar pb-10 animate-android-swipe">
+      <div key={currentApp + appTab + language} className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar pb-10 animate-android-swipe">
+        {currentApp === 'deployment' && appTab === 'form' && <DeploymentMobileForm userProfile={userProfile} fetchDeployments={fetchDeployments} setActiveTab={setAppTab} fillerName={fillerName} deployments={deployments} language={language}/>}
+        {currentApp === 'deployment' && appTab === 'history' && <SupervisorMobileHistory deployments={deployments} isLoading={isLoading} onEdit={onEdit} onDelete={onDelete} onView={onView} language={language}/>}
         
-        {currentApp === 'deployment' && appTab === 'form' && <DeploymentMobileForm userProfile={userProfile} fetchDeployments={fetchDeployments} setActiveTab={setAppTab} fillerName={fillerName} deployments={deployments}/>}
-        {currentApp === 'deployment' && appTab === 'history' && <SupervisorMobileHistory deployments={deployments} isLoading={isLoading} onEdit={onEdit} onDelete={onDelete} onView={onView}/>}
-        
-        {currentApp === 'incident' && appTab === 'form' && <IncidentMobileForm userProfile={userProfile} fetchIncidents={fetchIncidents} setActiveTab={setAppTab} />}
-        {currentApp === 'incident' && appTab === 'history' && <IncidentMobileHistory incidents={incidents} isLoading={isLoading} onDeleteIncident={onDeleteIncident} />}
+        {currentApp === 'incident' && appTab === 'form' && <IncidentMobileForm userProfile={userProfile} fetchIncidents={fetchIncidents} setActiveTab={setAppTab} language={language}/>}
+        {currentApp === 'incident' && appTab === 'history' && <IncidentMobileHistory incidents={incidents} isLoading={isLoading} language={language}/>}
 
-        {currentApp === 'weekly' && appTab === 'form' && <WeeklyMobileForm userProfile={userProfile} fetchWeeklyReports={fetchWeeklyReports} setActiveTab={setAppTab} />}
-        {currentApp === 'weekly' && appTab === 'history' && <WeeklyMobileHistory weeklyReports={weeklyReports} isLoading={isLoading} onEditWeekly={onEditWeekly} />}
+        {currentApp === 'weekly' && appTab === 'form' && <WeeklyMobileForm userProfile={userProfile} fetchWeeklyReports={fetchWeeklyReports} setActiveTab={setAppTab} language={language}/>}
+        {currentApp === 'weekly' && appTab === 'history' && <WeeklyMobileHistory weeklyReports={weeklyReports} isLoading={isLoading} onEditWeekly={onEditWeekly} language={language}/>}
       </div>
     </div>
   );
 
-  // 🎬 MASTER WRAPPER (Handles Movie -> Hub -> Module)
   return (
     <div className="w-full flex-1 min-h-screen bg-slate-50 dark:bg-slate-950 sm:bg-slate-200 sm:dark:bg-slate-900 sm:py-10 flex justify-center items-center">
       <div className="w-full sm:max-w-md bg-white dark:bg-slate-950 sm:rounded-[2.5rem] sm:border-[8px] border-slate-800 dark:border-slate-800 sm:shadow-2xl overflow-hidden relative flex flex-col h-screen sm:h-[850px] sm:max-h-[90vh]">
-        
-        {/* CSS for the Hollywood fade-zoom */}
-        <style>{`
-          @keyframes fade-zoom { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
-          .animate-fade-zoom { animation: fade-zoom 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        `}</style>
-
-        {/* 🎬 THE MOVIE SEQUENCE OVERLAY */}
+        <style>{`@keyframes fade-zoom { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } } .animate-fade-zoom { animation: fade-zoom 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }`}</style>
         {introStage > 0 ? (
-          // ✨ Notice 'absolute inset-0' so it stays INSIDE the phone!
           <div className={`absolute inset-0 z-[100] flex items-center justify-center p-6 transition-colors duration-1000 ${introStage === 3 ? 'bg-white dark:bg-slate-950' : 'bg-slate-950'}`}>
-            
-            {/* STAGE 1: Premium Boot Splash */}
             {introStage === 1 && (
               <div className="text-center animate-fade-zoom relative">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl animate-pulse z-0"></div>
-                
                 <div className="relative mb-8 z-10">
-                   <img src="/logo.webp" alt="Test Logo" className="w-28 h-28 mx-auto object-contain drop-shadow-[0_10px_20px_rgba(16,185,129,0.3)] transition-all hover:scale-105" 
-                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-                   <div className="hidden w-24 h-24 mx-auto bg-gradient-to-br from-emerald-400 to-green-600 rounded-3xl flex-col items-center justify-center shadow-[0_10px_30px_rgba(16,185,129,0.4)] border border-white/20">
-                      <Shield size={48} className="text-white drop-shadow-md" />
-                   </div>
+                   <img src="/logo.webp" alt="Test Logo" className="w-28 h-28 mx-auto object-contain drop-shadow-[0_10px_20px_rgba(16,185,129,0.3)] transition-all hover:scale-105" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+                   <div className="hidden w-24 h-24 mx-auto bg-gradient-to-br from-emerald-400 to-green-600 rounded-3xl flex-col items-center justify-center shadow-[0_10px_30px_rgba(16,185,129,0.4)] border border-white/20"><Shield size={48} className="text-white drop-shadow-md" /></div>
                 </div>
-
-                <h1 className="text-4xl font-black text-white tracking-widest uppercase mb-2 drop-shadow-lg relative z-10">
-                  Test <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-300">CBG</span>
-                </h1>
+                <h1 className="text-4xl font-black text-white tracking-widest uppercase mb-2 drop-shadow-lg relative z-10">Test <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-300">CBG</span></h1>
                 <h2 className="text-[11px] font-bold text-slate-400 tracking-[0.4em] uppercase mb-12 relative z-10">Secure Deployment Network</h2>
-                
-                <div className="flex justify-center items-center gap-3 relative z-10">
-                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div>
-                   <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Establishing Secure Uplink...</span>
-                </div>
+                <div className="flex justify-center items-center gap-3 relative z-10"><div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div><span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Establishing Secure Uplink...</span></div>
               </div>
             )}
-
-            {/* STAGE 2: Identity Scan */}
             {introStage === 2 && (
               <div className="w-full max-w-sm animate-fade-zoom">
-                <div className="text-center mb-8">
-                   <div className="w-16 h-16 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4 mx-auto border border-indigo-500/30 shadow-[0_0_30px_rgba(99,102,241,0.2)]"><Users size={32} /></div>
-                   <h2 className="text-2xl font-black text-white tracking-wide mb-1">IDENTITY SCAN</h2>
-                   <p className="text-xs text-indigo-300 uppercase tracking-widest font-semibold">Select Authorized Officer</p>
-                </div>
-
-                {/* ✨ DYNAMIC SUPERVISOR BUTTONS (Powered by your comma-separated logic!) */}
-        <div className="w-full max-w-sm flex flex-col gap-4 relative z-10 mt-6">
-          {allowedSupervisors.map((supName, index) => (
-            <button 
-              key={index}
-              onClick={() => selectName(supName)} 
-              className="w-full bg-slate-900/80 backdrop-blur-md border border-slate-800 hover:bg-slate-700 text-white font-black uppercase tracking-widest py-4 rounded-2xl transition-all shadow-lg shadow-black/20 active:scale-95"
-            >
-              {supName}
-            </button>
-          ))}
-        </div>
-                
-                <div className="mt-6 pt-5 border-t border-indigo-500/20">
-                  <p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest text-center mb-3">Not on the list?</p>
-                  <form onSubmit={handleCustomSubmit} className="flex gap-2">
-                    <input type="text" placeholder="Enter Full Name..." value={customName} onChange={(e) => setCustomName(e.target.value)} className="flex-1 bg-black/20 border border-indigo-500/30 rounded-xl py-3 px-4 text-xs font-bold text-white outline-none focus:border-indigo-400 uppercase placeholder:text-indigo-300/50 shadow-inner" />
-                    <button type="submit" className="bg-indigo-500 text-white px-5 rounded-xl font-black text-xs hover:bg-indigo-400 transition-colors shadow-lg shadow-indigo-500/25">GO</button>
-                  </form>
-                </div>
+                <div className="text-center mb-8"><div className="w-16 h-16 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4 mx-auto border border-indigo-500/30 shadow-[0_0_30px_rgba(99,102,241,0.2)]"><Users size={32} /></div><h2 className="text-2xl font-black text-white tracking-wide mb-1">IDENTITY SCAN</h2><p className="text-xs text-indigo-300 uppercase tracking-widest font-semibold">Select Authorized Officer</p></div>
+                <div className="w-full max-w-sm flex flex-col gap-4 relative z-10 mt-6">{allowedSupervisors.map((supName, index) => (<button key={index} onClick={() => selectName(supName)} className="w-full bg-slate-900/80 backdrop-blur-md border border-slate-800 hover:bg-slate-700 text-white font-black uppercase tracking-widest py-4 rounded-2xl transition-all shadow-lg shadow-black/20 active:scale-95">{supName}</button>))}</div>
+                <div className="mt-6 pt-5 border-t border-indigo-500/20"><p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest text-center mb-3">Not on the list?</p><form onSubmit={handleCustomSubmit} className="flex gap-2"><input type="text" placeholder="Enter Full Name..." value={customName} onChange={(e) => setCustomName(e.target.value)} className="flex-1 bg-black/20 border border-indigo-500/30 rounded-xl py-3 px-4 text-xs font-bold text-white outline-none focus:border-indigo-400 uppercase placeholder:text-indigo-300/50 shadow-inner" /><button type="submit" className="bg-indigo-500 text-white px-5 rounded-xl font-black text-xs hover:bg-indigo-400 transition-colors shadow-lg shadow-indigo-500/25">GO</button></form></div>
               </div>
             )}
-
-            {/* STAGE 3: Personal Welcome */}
             {introStage === 3 && (
               <div className="text-center animate-fade-zoom">
-                <div className="w-24 h-24 mx-auto bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mb-6 shadow-xl border border-emerald-200 dark:border-emerald-800">
-                   <CheckCircle size={48} className="text-emerald-500" />
-                </div>
+                <div className="w-24 h-24 mx-auto bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mb-6 shadow-xl border border-emerald-200 dark:border-emerald-800"><CheckCircle size={48} className="text-emerald-500" /></div>
                 <h1 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Welcome,</h1>
                 <h2 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">{fillerName}</h2>
                 <p className="mt-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest animate-pulse">Accessing Secure Dashboard...</p>
               </div>
             )}
           </div>
-        ) : (
-          /* ✨ THE ACTUAL APP VIEWS! */
-          currentApp === 'hub' ? renderHub() : renderModule()
-        )}
-
+        ) : ( currentApp === 'hub' ? renderHub() : renderModule() )}
       </div>
     </div>
   );
 }
-function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fillerName, deployments}) {
+function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fillerName, deployments, language}) {
+  const t = TRANSLATIONS[language] || TRANSLATIONS['en'];
   const today = getISTDate();
   const [date, setDate] = useState(today);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState(false);
-  
   const [personnel, setPersonnel] = useState([{ id: Date.now(), shift: "Day Shift", designation: "SS - Security Supervisor", name: "", phone: "", location: "Main Gate", customLocation: "" }]);
 
   const addPerson = () => setPersonnel([...personnel, { id: Date.now(), shift: "Day Shift", designation: "SG - Security Guard", name: "", phone: "", location: "Main Gate", customLocation: "" }]);
@@ -899,23 +881,10 @@ function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fil
   const handleAutoFill = () => {
     const yesterdayStr = getISTDate(-1);
     const yesterdayLogs = (deployments || []).filter(d => d.date === yesterdayStr);
-
-    if (yesterdayLogs.length === 0) {
-      alert("No previous deployments found to clone, captain! 🕵️‍♀️");
-      return;
-    }
-
+    if (yesterdayLogs.length === 0) { alert("No previous deployments found to clone, captain! 🕵️‍♀️"); return; }
     const copiedPersonnel = yesterdayLogs.map((log, index) => {
       const isStandardLocation = LOCATIONS.includes(log.location);
-      return {
-        id: Date.now() + index,
-        shift: log.shift || "Day Shift",
-        designation: log.designation || "SG - Security Guard",
-        name: log.name || "",
-        phone: log.phone || "",
-        location: isStandardLocation ? log.location : "Other",
-        customLocation: isStandardLocation ? "" : log.location
-      };
+      return { id: Date.now() + index, shift: log.shift || "Day Shift", designation: log.designation || "SG - Security Guard", name: log.name || "", phone: log.phone || "", location: isStandardLocation ? log.location : "Other", customLocation: isStandardLocation ? "" : log.location };
     });
     setPersonnel(copiedPersonnel);
   };
@@ -925,42 +894,28 @@ function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fil
     setIsSubmitting(true);
     const newRecords = personnel.map(p => ({
       date, site: userProfile.site, shift: p.shift, designation: p.designation,
-      name: p.name.toUpperCase(), phone: p.phone, location: p.location === 'Other' ? p.customLocation : p.location,
-      submittedBy: fillerName || userProfile.name
+      name: p.name.toUpperCase(), phone: p.phone, location: p.location === 'Other' ? p.customLocation : p.location, submittedBy: fillerName || userProfile.name
     }));
-
     const { error } = await supabase.from('deployments').insert(newRecords);
     setIsSubmitting(false);
-
-    if (error) {
-      alert(`Vault Error: ${error.message} (Code: ${error.code})`);
-    } else {
-      setSuccessMsg(true);
-      fetchDeployments();
-      setTimeout(() => {
-        setSuccessMsg(false);
-        setPersonnel([{ id: Date.now(), shift: "Day Shift", designation: "SS - Security Supervisor", name: "", phone: "", location: "Main Gate", customLocation: "" }]);
-        setActiveTab('history');
-      }, 1200);
+    if (error) { alert(`Vault Error: ${error.message} (Code: ${error.code})`); } 
+    else {
+      setSuccessMsg(true); fetchDeployments();
+      setTimeout(() => { setSuccessMsg(false); setPersonnel([{ id: Date.now(), shift: "Day Shift", designation: "SS - Security Supervisor", name: "", phone: "", location: "Main Gate", customLocation: "" }]); setActiveTab('history'); }, 1200);
     }
   };
 
-  // 🦋 META-STYLE DESIGN TOKENS
-  // Crisp white background, thick visible borders, slight inner shadow, and a bright blue focus glow!
-  const inputClass = "w-full bg-white dark:bg-[#0f172a] border-2 border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 px-4 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20 hover:border-slate-300 dark:hover:border-slate-600 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] placeholder:text-slate-400 placeholder:font-medium";
-  const labelClass = "block text-[11px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 ml-1";
+  const inputClass = "w-full bg-white dark:bg-[#0B1120] border-2 border-slate-300 dark:border-slate-600 rounded-2xl py-3.5 px-4 text-base font-black text-slate-900 dark:text-white outline-none focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/20 hover:border-slate-400 dark:hover:border-slate-500 transition-all shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05),inset_0_2px_4px_rgba(0,0,0,0.04)] placeholder:text-slate-400 placeholder:font-medium";
+  const labelClass = "block text-xs sm:text-base font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 ml-1";
 
   return (
     <form onSubmit={handleSubmit} className="p-4 space-y-6 bg-slate-50/50 dark:bg-slate-950/20 rounded-3xl">
-      
-      {/* 🪄 FAANG AI-Style Magic Wand */}
       <button type="button" onClick={handleAutoFill} className="w-full py-4 bg-white dark:bg-slate-900 border-2 border-transparent bg-clip-padding relative rounded-2xl text-[11px] font-black uppercase tracking-widest flex justify-center items-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95 group before:absolute before:inset-0 before:-z-10 before:m-[-2px] before:rounded-[18px] before:bg-gradient-to-r before:from-blue-500 before:to-purple-500 text-slate-800 dark:text-white">
-        <Sparkles size={16} className="group-hover:scale-110 transition-transform text-blue-500" /> 
-        Copy Yesterday's Deployment
+        <Sparkles size={16} className="group-hover:scale-110 transition-transform text-blue-500" /> {t.dep.clone}
       </button>
 
       <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-        <label className={labelClass}>Deployment Date</label>
+        <label className={labelClass}>{t.dep.date}</label>
         <div className="relative">
           <Calendar size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500" />
           <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className={`${inputClass} pl-12 cursor-pointer [color-scheme:light] dark:[color-scheme:dark]`} />
@@ -970,11 +925,10 @@ function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fil
       <div className="space-y-6">
         {personnel.map((person, index) => (
           <div key={person.id} className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden transition-all relative">
-            
             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/80 dark:bg-slate-800/30">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 flex items-center justify-center font-black">{index + 1}</div>
-                <span className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">Security Data</span>
+                <span className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">{t.dep.secData}</span>
               </div>
               {personnel.length > 1 && <button type="button" onClick={() => setPersonnel(personnel.filter(p => p.id !== person.id))} className="text-slate-400 hover:text-white hover:bg-rose-500 p-2 rounded-full transition-colors"><X size={16} /></button>}
             </div>
@@ -982,15 +936,16 @@ function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fil
             <div className="p-6 space-y-5">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>Shift</label>
+                  <label className={labelClass}>{t.dep.shift}</label>
+                  {/* Database needs English values to stay clean! */}
                   <select value={person.shift} onChange={(e) => updatePerson(person.id, 'shift', e.target.value)} className={`${inputClass} cursor-pointer`}>
-                    <option value="Day Shift">☀️ Day Shift</option>
-                    <option value="Night Shift">🌙 Night Shift</option>
-                    <option value="Weekly Off">🏖️ Weekly Off</option>
+                    <option value="Day Shift">☀️ {t.dep.day}</option>
+                    <option value="Night Shift">🌙 {t.dep.night}</option>
+                    <option value="Weekly Off">🏖️ {t.dep.off}</option>
                   </select>
                 </div>
                 <div>
-                  <label className={labelClass}>Designation</label>
+                  <label className={labelClass}>{t.dep.desig}</label>
                   <select value={person.designation} onChange={(e) => updatePerson(person.id, 'designation', e.target.value)} className={`${inputClass} cursor-pointer`}>
                     {DESIGNATIONS.map(d => <option key={d} value={d}>{d.split(' - ')[0]}</option>)}
                   </select>
@@ -998,7 +953,7 @@ function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fil
               </div>
 
               <div>
-                <label className={labelClass}>Name</label>
+                <label className={labelClass}>{t.dep.name}</label>
                 <div className="relative">
                   <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input type="text" required placeholder="Full Name..." value={person.name} onChange={(e) => updatePerson(person.id, 'name', e.target.value)} className={`${inputClass} pl-12 uppercase`} />
@@ -1007,14 +962,14 @@ function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fil
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>Phone No.</label>
+                  <label className={labelClass}>{t.dep.phone}</label>
                   <div className="relative">
                     <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input type="tel" required pattern="[0-9]{10}" placeholder="10 Digits" maxLength="10" value={person.phone} onChange={(e) => updatePerson(person.id, 'phone', e.target.value.replace(/\D/g, ''))} className={`${inputClass} pl-11 font-mono`} />
                   </div>
                 </div>
                 <div>
-                  <label className={labelClass}>Location</label>
+                  <label className={labelClass}>{t.dep.loc}</label>
                   <select value={person.location} onChange={(e) => updatePerson(person.id, 'location', e.target.value)} className={`${inputClass} cursor-pointer`}>
                     {LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
                   </select>
@@ -1023,7 +978,7 @@ function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fil
 
               {person.location === 'Other' && (
                 <div className="animate-in fade-in slide-in-from-top-2">
-                  <input type="text" required placeholder="Specify sector exactly..." value={person.customLocation} onChange={(e) => updatePerson(person.id, 'customLocation', e.target.value)} className={inputClass} />
+                  <input type="text" required placeholder={t.dep.customLoc} value={person.customLocation} onChange={(e) => updatePerson(person.id, 'customLocation', e.target.value)} className={inputClass} />
                 </div>
               )}
             </div>
@@ -1031,29 +986,27 @@ function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fil
         ))}
 
         <button type="button" onClick={addPerson} className="w-full py-5 rounded-[2rem] border-2 border-dashed border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all text-xs font-black uppercase tracking-widest flex justify-center items-center gap-2">
-          <Plus size={18} /> Add another
+          <Plus size={18} /> {t.dep.addAnother}
         </button>
       </div>
 
-      <button type="submit" disabled={isSubmitting} className={`w-full py-4 rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-xl transition-all flex justify-center items-center gap-2 ${successMsg ? 'bg-emerald-500 text-white shadow-emerald-500/25' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/25 active:scale-95'}`}>
-        {isSubmitting ? 'ENCRYPTING...' : successMsg ? <><CheckCircle size={20} /> RECORDED</> : 'SUBMIT DEPLOYMENT'}
+      <button type="submit" disabled={isSubmitting} className={`w-full py-4 rounded-[1.5rem] font-black text-base uppercase tracking-widest shadow-xl transition-all flex justify-center items-center gap-2 ${successMsg ? 'bg-emerald-500 text-white shadow-emerald-500/25' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/25 active:scale-95'}`}>
+        {isSubmitting ? t.dep.encrypting : successMsg ? <><CheckCircle size={20} /> {t.dep.recorded}</> : t.dep.submit}
       </button>
     </form>
   );
 }
 
-function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onView }) {
+function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onView, language }) {
+  const t = TRANSLATIONS[language] || TRANSLATIONS['en'];
   const [viewDate, setViewDate] = useState(getISTDate());
   const [isCopied, setIsCopied] = useState(false);
 
-  if (isLoading) return <div className="p-10 text-center text-indigo-500 font-bold animate-pulse">Syncing with cloud vault...</div>;
-
+  if (isLoading) return <div className="p-10 text-center text-indigo-500 font-bold animate-pulse">Syncing...</div>;
   const filteredLogs = deployments.filter(d => d.date === viewDate);
 
-  //   THE PRO WHATSAPP EXPORT (With SS Sorting!)
   const handleCopyWhatsApp = () => {
-    if (filteredLogs.length === 0) return alert("No logs to copy for this date!");
-
+    if (filteredLogs.length === 0) return alert("No logs to copy!");
     const totalSS = filteredLogs.filter(l => (l.designation || "").includes('SS')).length;
     const totalSG = filteredLogs.filter(l => (l.designation || "").includes('SG')).length;
     const dayLogs = filteredLogs.filter(l => (l.shift || "").includes('Day'));
@@ -1061,14 +1014,11 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
     const offLogs = filteredLogs.filter(l => (l.shift || "").includes('Off'));
 
     let msg = `*Deployment Report - ${filteredLogs[0].site || "Site"}*\n📅 *Date:* ${viewDate}\n📊 *Grand Total:* ${filteredLogs.length} (SS: ${totalSS}, SG: ${totalSG})\n\n`;
-
     const appendSection = (logs, title, icon) => {
       if (logs.length > 0) {
         const ssCount = logs.filter(l => (l.designation || "").includes('SS')).length;
         const sgCount = logs.filter(l => (l.designation || "").includes('SG')).length;
         msg += `*${icon} ${title} - Total: ${logs.length} (SS: ${ssCount}, SG: ${sgCount})*\n`;
-
-        // 🪄 THE MAGIC SORT: Pushes 'SS' to the top!
         const sortedLogs = [...logs].sort((a, b) => {
           const aIsSS = (a.designation || "").includes('SS');
           const bIsSS = (b.designation || "").includes('SS');
@@ -1076,7 +1026,6 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
           if (!aIsSS && bIsSS) return 1;
           return 0;
         });
-
         sortedLogs.forEach((log, i) => {
           const role = (log.designation || "").split(' - ')[0] || "Staff";
           msg += `  ${i + 1}. ${log.name || "Unknown"} (${role})\n  📍 ${log.location || "N/A"} | 📞 ${formatPhone(log.phone)}\n`;
@@ -1090,31 +1039,27 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
     appendSection(offLogs, "WEEKLY OFF", "🏖️");
 
     navigator.clipboard.writeText(msg.trim()).then(() => {
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
+      setIsCopied(true); setTimeout(() => setIsCopied(false), 2000);
     });
   };
 
   return (
     <div className="p-4 space-y-3">
-      {/*   DATE PICKER & WHATSAPP BUTTON */}
       <div className="bg-white dark:bg-slate-900 p-3 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col gap-3 mb-4">
         <div className="flex justify-between items-center">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Log Date</span>
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t.nav.dateFilter}</span>
           <input type="date" value={viewDate} onChange={e => setViewDate(e.target.value)} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-sm font-bold outline-none [color-scheme:light] dark:[color-scheme:dark]" />
         </div>
         <button onClick={handleCopyWhatsApp} className={`w-full py-2.5 rounded-lg text-xs font-bold flex justify-center items-center gap-2 transition-all ${isCopied ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800'}`}>
-          {isCopied ? <><CheckCircle size={16} /> COPIED TO CLIPBOARD</> : <><Copy size={16} /> EXPORT FOR WHATSAPP</>}
+          {isCopied ? <><CheckCircle size={16} /> {t.dep.recorded}</> : <><Copy size={16} /> {t.inc.copyWA}</>}
         </button>
       </div>
 
       {filteredLogs.map((row, idx) => {
-        //   SAFETY FIRST: Fallbacks so React never panics!
         const safeShift = row.shift || "";
         const safeDesignation = row.designation || "";
         const safeName = row.name || "Unknown";
         const shiftType = safeShift.includes('Off') ? 'OFF' : safeShift.split(' ')[0];
-        
         let badgeClasses = 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400';
         if (safeShift.includes(' WEEKLY Off')) badgeClasses = 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400';
         else if (safeShift.includes('Night')) badgeClasses = 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400';
@@ -1123,12 +1068,10 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
           <div key={idx} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 relative group">
             <div className="flex justify-between items-start mb-3">
               <div className="pr-4">
-                <h4 className="font-bold text-slate-900 dark:text-slate-100 uppercase text-sm">{safeName}</h4>
+                <h4 className="font-bold text-slate-900 dark:text-slate-100 uppercase text-base">{safeName}</h4>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">{safeDesignation}</p>
               </div>
-              <span className={`text-[10px] font-bold px-2 py-1 rounded border uppercase ${badgeClasses}`}>
-                {shiftType || "N/A"}
-              </span>
+              <span className={`text-[10px] font-bold px-2 py-1 rounded border uppercase ${badgeClasses}`}>{shiftType || "N/A"}</span>
             </div>
 
             <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/50 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800/50 mt-2 mb-3">
@@ -1138,21 +1081,14 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
             </div>
 
             <div className="flex justify-end border-t border-slate-100 dark:border-slate-800/50 pt-3 mt-1 gap-2">
-              {/* ✨ NEW: THE VIEW BUTTON! */}
-              <button onClick={() => onView(row)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-500 hover:text-emerald-600 bg-slate-50 hover:bg-emerald-50 dark:bg-slate-800 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-400 rounded-lg transition-colors">
-                <Eye size={14} /> View 
-              </button>
-              <button onClick={() => onEdit(row)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-500 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 dark:bg-slate-800 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 rounded-lg transition-colors">
-                <Edit2 size={14} /> Edit 
-              </button>
-              <button onClick={() => onDelete(row)} className="p-2 text-slate-400 hover:text-red-600 bg-slate-50 dark:bg-slate-800 dark:hover:text-red-400 rounded-lg transition-colors">
-                <Trash2 size={16} />
-              </button>
+              <button onClick={() => onView(row)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-500 hover:text-emerald-600 bg-slate-50 hover:bg-emerald-50 dark:bg-slate-800 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-400 rounded-lg transition-colors"><Eye size={14} /></button>
+              <button onClick={() => onEdit(row)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-500 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 dark:bg-slate-800 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 rounded-lg transition-colors"><Edit2 size={14} /></button>
+              <button onClick={() => onDelete(row)} className="p-2 text-slate-400 hover:text-red-600 bg-slate-50 dark:bg-slate-800 dark:hover:text-red-400 rounded-lg transition-colors"><Trash2 size={16} /></button>
             </div>
           </div>
         );
       })}
-      {filteredLogs.length === 0 && <p className="text-center text-slate-500 text-sm mt-10 font-medium">No deployment logs found for this date.</p>}
+      {filteredLogs.length === 0 && <p className="text-center text-slate-500 text-base mt-10 font-medium">{t.dep.noLogs}</p>}
     </div>
   );
 }
@@ -1890,8 +1826,8 @@ function EditModal({ record, onClose, onSave }) {
   };
 
   // 🦋 META-STYLE DESIGN TOKENS
-  const inputClass = "w-full bg-white dark:bg-[#0f172a] border-2 border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 px-4 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20 hover:border-slate-300 dark:hover:border-slate-600 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] placeholder:text-slate-400 placeholder:font-medium";
-  const labelClass = "block text-[11px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 ml-1";
+const inputClass = "w-full bg-white dark:bg-[#0B1120] border-2 border-slate-300 dark:border-slate-600 rounded-2xl py-3.5 px-4 text-base font-black text-slate-900 dark:text-white outline-none focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/20 hover:border-slate-400 dark:hover:border-slate-500 transition-all shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05),inset_0_2px_4px_rgba(0,0,0,0.04)] placeholder:text-slate-400 placeholder:font-medium";
+  const labelClass = "block text-xs sm:text-base font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 ml-1";
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/90 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
@@ -2054,7 +1990,7 @@ function ViewModal({ record, onClose }) {
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0"><Phone size={18}/></div>
                 <div>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Commlink</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Phone No.</span>
                   <span className="text-sm font-mono font-bold text-slate-800 dark:text-slate-200">{formatPhone(record.phone)}</span>
                 </div>
               </div>
@@ -2322,12 +2258,12 @@ function ContactViewModal({ record, onClose }) {
           
           {/* ✨ Quick Actions (Cyber Style) */}
           <div className="flex gap-3 mb-2">
-            <button onClick={() => { navigator.clipboard.writeText(record.phone); alert('Secure Commlink Copied!'); }} className="flex-1 py-3 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-2xl border border-white/50 dark:border-slate-700/50 flex flex-col items-center justify-center gap-1 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:border-emerald-200 dark:hover:border-emerald-500/30 transition-all group active:scale-95 shadow-sm">
+            <button onClick={() => { navigator.clipboard.writeText(record.phone); alert(' Phone No. Copied!'); }} className="flex-1 py-3 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-2xl border border-white/50 dark:border-slate-700/50 flex flex-col items-center justify-center gap-1 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:border-emerald-200 dark:hover:border-emerald-500/30 transition-all group active:scale-95 shadow-sm">
               <Phone size={18} className="text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform" />
               <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest group-hover:text-emerald-600 dark:group-hover:text-emerald-400 mt-1">Copy Number</span>
             </button>
             {record.email && (
-              <button onClick={() => { navigator.clipboard.writeText(record.email); alert('Encrypted Email Copied!'); }} className="flex-1 py-3 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-2xl border border-white/50 dark:border-slate-700/50 flex flex-col items-center justify-center gap-1 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:border-blue-200 dark:hover:border-blue-500/30 transition-all group active:scale-95 shadow-sm">
+              <button onClick={() => { navigator.clipboard.writeText(record.email); alert('Email Copied!'); }} className="flex-1 py-3 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-2xl border border-white/50 dark:border-slate-700/50 flex flex-col items-center justify-center gap-1 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:border-blue-200 dark:hover:border-blue-500/30 transition-all group active:scale-95 shadow-sm">
                 <Mail size={18} className="text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform" />
                 <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest group-hover:text-blue-600 dark:group-hover:text-blue-400 mt-1">Copy Mail</span>
               </button>
@@ -2403,7 +2339,8 @@ function ContactViewModal({ record, onClose }) {
 // 🚨 INCIDENT REPORTING MODULE (PREMIUM iOS STYLE)
 // ==========================================
 
-function IncidentMobileForm({ userProfile, fetchIncidents, setActiveTab }) {
+function IncidentMobileForm({ userProfile, fetchIncidents, setActiveTab, language }) {
+  const t = TRANSLATIONS[language] || TRANSLATIONS['en'];
   const [formData, setFormData] = useState({
     incidentName: '', timeOfIncident: '', reportedBy: '', epNumber: '', pincode: '', incidentLocation: '', details: '', findings: '', actionsTaken: '', recommendations: '', photos: []
   });
@@ -2425,106 +2362,76 @@ function IncidentMobileForm({ userProfile, fetchIncidents, setActiveTab }) {
     e.preventDefault();
     setIsSubmitting(true);
     const newIncident = {
-      site: userProfile.site,
-      incident_name: formData.incidentName,
-      time_of_incident: formData.timeOfIncident.replace('T', ' '),
-      time_of_reporting: new Date().toLocaleString('en-IN'),
-      reported_by: formData.reportedBy,
-      ep_number: formData.epNumber,
-      pincode: formData.pincode,
-      incident_location: formData.incidentLocation,
-      details: formData.details,
-      findings: formData.findings,
-      actions_taken: formData.actionsTaken,
-      recommendations: formData.recommendations,
-      photos: formData.photos,
-      status: 'Pending'
+      site: userProfile.site, incident_name: formData.incidentName, time_of_incident: formData.timeOfIncident.replace('T', ' '),
+      time_of_reporting: new Date().toLocaleString('en-IN'), reported_by: formData.reportedBy, ep_number: formData.epNumber,
+      pincode: formData.pincode, incident_location: formData.incidentLocation, details: formData.details, findings: formData.findings,
+      actions_taken: formData.actionsTaken, recommendations: formData.recommendations, photos: formData.photos, status: 'Pending'
     };
-
     const { error } = await supabase.from('incidents').insert([newIncident]);
     setIsSubmitting(false);
     if (error) alert(`Error: ${error.message}`);
-    else {
-      alert("🚨 Official Incident Logged to Command Center!");
-      fetchIncidents();
-      setActiveTab('history'); // Switched to match your Apple segmented control!
-    }
+    else { fetchIncidents(); setActiveTab('history'); }
   };
 
-  // 🌹 SOS-THEMED PREMIUM DESIGN TOKENS
-  const inputClass = "w-full bg-white dark:bg-[#0f172a] border-2 border-slate-200 dark:border-slate-700 rounded-2xl py-3.5 px-4 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-rose-500 dark:focus:border-rose-400 focus:ring-4 focus:ring-rose-500/20 hover:border-slate-300 dark:hover:border-slate-600 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] placeholder:text-slate-400 placeholder:font-medium";
-  const labelClass = "block text-[11px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 ml-1";
+  const inputClass = "w-full bg-white dark:bg-[#0B1120] border-2 border-slate-300 dark:border-slate-600 rounded-2xl py-3.5 px-4 text-base font-black text-slate-900 dark:text-white outline-none focus:border-rose-500 dark:focus:border-rose-400 focus:ring-4 focus:ring-rose-500/20 hover:border-slate-400 dark:hover:border-slate-500 transition-all shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05),inset_0_2px_4px_rgba(0,0,0,0.04)] placeholder:text-slate-400 placeholder:font-medium";
+  const labelClass = "block text-xs sm:text-xs font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2 ml-1";
 
   return (
     <form onSubmit={handleSubmit} className="p-4 space-y-6">
-      
-      {/* ✨ Gorgeous Gradient Header Card */}
       <div className="bg-gradient-to-br from-rose-500 to-red-600 p-6 rounded-3xl shadow-lg shadow-rose-500/30 text-white relative overflow-hidden group">
         <div className="absolute -right-6 -top-6 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
-        <h2 className="font-black uppercase tracking-widest text-lg flex items-center gap-2 relative z-10"><AlertTriangle size={22}/> Incident Report</h2>
-        <p className="text-xs font-bold text-rose-100 mt-1 relative z-10">Direct uplink to Command Center.</p>
+        <h2 className="font-black uppercase tracking-widest text-lg flex items-center gap-2 relative z-10"><AlertTriangle size={22}/> {t.inc.title}</h2>
+        <p className="text-xs font-bold text-rose-100 mt-1 relative z-10">{t.inc.subtitle}</p>
       </div>
 
       <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-6">
-        
-        {/* ✨ Highlighted Crisis Field */}
         <div>
-          <label className={labelClass}>Incident Type / Name</label>
-          <input type="text" required placeholder="e.g. Theft, Fire, Breach..." value={formData.incidentName} onChange={(e) => setFormData({...formData, incidentName: e.target.value})} className={`${inputClass} !border-rose-200 dark:!border-rose-500/30 focus:!border-rose-500 !bg-rose-50/50 dark:!bg-rose-500/5 text-rose-700 dark:text-rose-400 uppercase placeholder-rose-300 dark:placeholder-rose-800`} />
+          <label className={labelClass}>{t.inc.type}</label>
+          <input type="text" required placeholder="..." value={formData.incidentName} onChange={(e) => setFormData({...formData, incidentName: e.target.value})} className={`${inputClass} !border-rose-200 dark:!border-rose-500/30 focus:!border-rose-500 !bg-rose-50/50 dark:!bg-rose-500/5 text-rose-700 dark:text-rose-400 uppercase placeholder-rose-300 dark:placeholder-rose-800`} />
         </div>
-
         <div>
-          <label className={labelClass}>Occurrence Date & Time</label>
+          <label className={labelClass}>{t.inc.occDate}</label>
           <input type="datetime-local" required value={formData.timeOfIncident} onChange={(e) => setFormData({...formData, timeOfIncident: e.target.value})} className={`${inputClass} [color-scheme:light] dark:[color-scheme:dark]`} />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div><label className={labelClass}>Reported By</label><input type="text" required placeholder="Officer Name" value={formData.reportedBy} onChange={(e) => setFormData({...formData, reportedBy: e.target.value})} className={`${inputClass} uppercase`} /></div>
-          <div><label className={labelClass}>EP Number</label><input type="text" required placeholder="ID Number" value={formData.epNumber} onChange={(e) => setFormData({...formData, epNumber: e.target.value})} className={`${inputClass} uppercase`} /></div>
+          <div><label className={labelClass}>{t.inc.repBy}</label><input type="text" required value={formData.reportedBy} onChange={(e) => setFormData({...formData, reportedBy: e.target.value})} className={`${inputClass} uppercase`} /></div>
+          <div><label className={labelClass}>{t.inc.ep}</label><input type="text" required value={formData.epNumber} onChange={(e) => setFormData({...formData, epNumber: e.target.value})} className={`${inputClass} uppercase`} /></div>
         </div>
 
         <div className="grid grid-cols-3 gap-4 items-end">
-          <div className="col-span-2">
-            <label className={labelClass}>Site Name</label>
-            <div className="w-full bg-slate-100 dark:bg-slate-800 border-2 border-transparent rounded-2xl py-3.5 px-4 text-sm font-black text-slate-500 uppercase">{userProfile.site}</div>
-          </div>
-          <div><label className={labelClass}>Pincode</label><input type="text" required placeholder="Code" value={formData.pincode} onChange={(e) => setFormData({...formData, pincode: e.target.value})} className={`${inputClass} uppercase`} /></div>
+          <div className="col-span-2"><label className={labelClass}>{t.inc.site}</label><div className="w-full bg-slate-100 dark:bg-slate-800 border-2 border-transparent rounded-2xl py-3.5 px-4 text-base font-black text-slate-500 uppercase">{userProfile.site}</div></div>
+          <div><label className={labelClass}>{t.inc.pin}</label><input type="text" required value={formData.pincode} onChange={(e) => setFormData({...formData, pincode: e.target.value})} className={`${inputClass} uppercase`} /></div>
         </div>
 
-        <div><label className={labelClass}>Location of Incident</label><input type="text" required placeholder="Specific spot on site..." value={formData.incidentLocation} onChange={(e) => setFormData({...formData, incidentLocation: e.target.value})} className={inputClass} /></div>
+        <div><label className={labelClass}>{t.inc.exactLoc}</label><input type="text" required value={formData.incidentLocation} onChange={(e) => setFormData({...formData, incidentLocation: e.target.value})} className={inputClass} /></div>
 
-        {/* ✨ Bouncy, Deep Textareas */}
-        <div><label className={labelClass}>Details of Incident</label><textarea required placeholder="What exactly happened? Provide full context." value={formData.details} onChange={(e) => setFormData({...formData, details: e.target.value})} className={`${inputClass} min-h-[100px] resize-y py-4`} /></div>
-        
-        <div><label className={labelClass}>Findings</label><textarea required placeholder="Investigative findings..." value={formData.findings} onChange={(e) => setFormData({...formData, findings: e.target.value})} className={`${inputClass} min-h-[80px] resize-y py-4`} /></div>
-        
-        <div><label className={labelClass}>Action Taken</label><textarea required placeholder="Immediate response deployed..." value={formData.actionsTaken} onChange={(e) => setFormData({...formData, actionsTaken: e.target.value})} className={`${inputClass} min-h-[80px] resize-y py-4`} /></div>
-        
-        <div><label className={labelClass}>Follow-up & Recommendations</label><textarea required placeholder="Suggested protocols to prevent recurrence..." value={formData.recommendations} onChange={(e) => setFormData({...formData, recommendations: e.target.value})} className={`${inputClass} min-h-[80px] resize-y py-4`} /></div>
+        <div><label className={labelClass}>{t.inc.details}</label><textarea required value={formData.details} onChange={(e) => setFormData({...formData, details: e.target.value})} className={`${inputClass} min-h-[100px] resize-y py-4`} /></div>
+        <div><label className={labelClass}>{t.inc.findings}</label><textarea required value={formData.findings} onChange={(e) => setFormData({...formData, findings: e.target.value})} className={`${inputClass} min-h-[80px] resize-y py-4`} /></div>
+        <div><label className={labelClass}>{t.inc.action}</label><textarea required value={formData.actionsTaken} onChange={(e) => setFormData({...formData, actionsTaken: e.target.value})} className={`${inputClass} min-h-[80px] resize-y py-4`} /></div>
+        <div><label className={labelClass}>{t.inc.reco}</label><textarea required value={formData.recommendations} onChange={(e) => setFormData({...formData, recommendations: e.target.value})} className={`${inputClass} min-h-[80px] resize-y py-4`} /></div>
 
-        {/* ✨ Modern Apple-Style Photo Upload */}
         <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-          <label className={labelClass}>Photographic Evidence</label>
+          <label className={labelClass}>{t.inc.photo}</label>
           <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
             {formData.photos.map((p, i) => <img key={i} src={p} className="h-20 w-20 object-cover rounded-2xl border-2 border-slate-200 dark:border-slate-700 shadow-sm shrink-0" alt="Incident" />)}
             <label className="h-20 w-20 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 flex flex-col items-center justify-center text-slate-400 cursor-pointer hover:border-rose-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all shrink-0 active:scale-95">
-              <Camera size={24} className="mb-1" /> <span className="text-[9px] font-black uppercase tracking-widest">Attach</span>
+              <Camera size={24} className="mb-1" /> <span className="text-[9px] font-black uppercase tracking-widest">{t.inc.attach}</span>
               <input type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" />
             </label>
           </div>
         </div>
-
       </div>
 
-      {/* ✨ The Satisfying Submit Button */}
-      <button type="submit" disabled={isSubmitting} className="w-full py-5 rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-rose-600/25 transition-all flex justify-center items-center gap-2 bg-rose-600 text-white hover:bg-rose-700 active:scale-95">
-        {isSubmitting ? 'ENCRYPTING UPLINK...' : <><AlertTriangle size={20} /> SUBMIT REPORT</>}
+      <button type="submit" disabled={isSubmitting} className="w-full py-5 rounded-[1.5rem] font-black text-base uppercase tracking-widest shadow-xl shadow-rose-600/25 transition-all flex justify-center items-center gap-2 bg-rose-600 text-white hover:bg-rose-700 active:scale-95">
+        {isSubmitting ? t.inc.encrypting : <><AlertTriangle size={20} /> {t.inc.submit}</>}
       </button>
     </form>
   );
 }
 
-function IncidentMobileHistory({ incidents, isLoading }) {
+function IncidentMobileHistory({ incidents, isLoading, language }) {
+  const t = TRANSLATIONS[language] || TRANSLATIONS['en'];
   const [viewDate, setViewDate] = useState(getISTDate());
   const [viewingInc, setViewingInc] = useState(null);
 
@@ -2533,40 +2440,34 @@ function IncidentMobileHistory({ incidents, isLoading }) {
   const copyToWhatsApp = (e, inc) => {
     e.stopPropagation();
     let msg = `🚨 *${(inc.incident_name || 'INCIDENT REPORT').toUpperCase()}* 🚨\n\n` +
-      `🕒 *Occurrence Date & Time:* ${inc.time_of_incident}\n` +
-      `⏱️ *Reporting Date & Time:* ${inc.time_of_reporting}\n` +
-      `👤 *Reported by:* ${inc.reported_by} (EP: ${inc.ep_number || 'N/A'})\n` +
-      `🏢 *Site Name & Pincode:* ${inc.site} - ${inc.pincode || 'N/A'}\n` +
-      `📍 *Location of incident:* ${inc.incident_location}\n\n` +
-      `📝 *Details of incident:*\n${inc.details}\n\n` +
-      `🔍 *Findings:*\n${inc.findings || 'N/A'}\n\n` +
-      `⚡ *Action Taken:*\n${inc.actions_taken}\n\n` +
-      `💡 *Follow-up Actions & Recommendations:*\n${inc.recommendations}`;
-    
-    navigator.clipboard.writeText(msg).then(() => alert("Copied format for WhatsApp! 🟢"));
+      `🕒 *${t.inc.occDate}:* ${inc.time_of_incident}\n` +
+      `⏱️ *${t.inc.timeRep}:* ${inc.time_of_reporting}\n` +
+      `👤 *${t.inc.repBy}:* ${inc.reported_by} (EP: ${inc.ep_number || 'N/A'})\n` +
+      `🏢 *${t.inc.site} & ${t.inc.pin}:* ${inc.site} - ${inc.pincode || 'N/A'}\n` +
+      `📍 *${t.inc.exactLoc}:* ${inc.incident_location}\n\n` +
+      `📝 *${t.inc.details}:*\n${inc.details}\n\n` +
+      `🔍 *${t.inc.findings}:*\n${inc.findings || 'N/A'}\n\n` +
+      `⚡ *${t.inc.action}:*\n${inc.actions_taken}\n\n` +
+      `💡 *${t.inc.reco}:*\n${inc.recommendations}`;
+    navigator.clipboard.writeText(msg).then(() => alert("Copied! 🟢"));
   };
 
   return (
     <div className="p-4 space-y-4 pb-24">
-      
-      {/* Search Header */}
       <div className="bg-white dark:bg-[#0f172a] p-4 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex justify-between items-center mb-2">
-        <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Date Filter</span>
+        <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{t.nav.dateFilter}</span>
         <div className="flex gap-2 items-center">
-          {viewDate && <button onClick={() => setViewDate('')} className="text-[10px] font-black tracking-widest text-rose-500 bg-rose-50 dark:bg-rose-500/10 px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-500/20 transition-all active:scale-95">CLEAR</button>}
-          <input type="date" value={viewDate} onChange={e => setViewDate(e.target.value)} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-bold outline-none [color-scheme:light] dark:[color-scheme:dark]" />
+          {viewDate && <button onClick={() => setViewDate('')} className="text-[10px] font-black tracking-widest text-rose-500 bg-rose-50 dark:bg-rose-500/10 px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-500/20 transition-all active:scale-95">{t.nav.clear}</button>}
+          <input type="date" value={viewDate} onChange={e => setViewDate(e.target.value)} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-base font-bold outline-none [color-scheme:light] dark:[color-scheme:dark]" />
         </div>
       </div>
 
-      {/* Incident List */}
       <div className="space-y-4">
         {filtered.map(inc => (
           <div key={inc.id} onClick={() => setViewingInc(inc)} className="bg-white dark:bg-[#0f172a] p-5 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-2 border-slate-100 dark:border-slate-800 relative cursor-pointer active:scale-[0.98] transition-transform overflow-hidden group">
-            
             <div className="absolute top-0 left-0 w-1.5 h-full bg-rose-500"></div>
-            
             <div className="absolute top-4 right-4">
-               {inc.status === 'Acknowledged' && <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm"><CheckCircle size={10}/> Admin Seen</span>}
+               {inc.status === 'Acknowledged' && <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm"><CheckCircle size={10}/> {t.inc.adminSeen}</span>}
             </div>
 
             <div className="pl-3">
@@ -2575,74 +2476,66 @@ function IncidentMobileHistory({ incidents, isLoading }) {
               <div className="text-xs text-slate-600 dark:text-slate-400 font-medium line-clamp-2 mb-5 leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl">{inc.details}</div>
               
               <button onClick={(e) => copyToWhatsApp(e, inc)} className="w-full py-3.5 rounded-xl text-[11px] font-black tracking-widest uppercase bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-200 dark:border-green-800/50 flex justify-center items-center gap-2 hover:bg-green-100 transition-colors shadow-sm">
-                 <Copy size={16} /> WA COPY
+                 <Copy size={16} /> {t.inc.copyWA}
               </button>
             </div>
           </div>
         ))}
-        {filtered.length === 0 && <p className="text-center text-slate-500 text-sm mt-10 font-bold italic">No incidents found for this date.</p>}
+        {filtered.length === 0 && <p className="text-center text-slate-500 text-base mt-10 font-bold italic">{t.inc.noInc}</p>}
       </div>
 
-      {/* ✨ THE UPGRADED SUPERVISOR iOS MODAL (FIXED FOR MOBILE SCROLLING) */}
+      {/* ✨ THE UPGRADED SUPERVISOR iOS MODAL (BULLETPROOF FLEXBOX FIX) */}
       {viewingInc && (
         <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/90 backdrop-blur-sm z-[150] flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in duration-200" onClick={() => setViewingInc(null)}>
           
-          {/* THE FIX: Swapped hard h-[90vh] for a flexible max-h-[85vh] and ensured w-full doesn't break boundaries! */}
-          <div className="bg-white dark:bg-[#0f172a] w-full sm:max-w-lg max-h-[85vh] sm:max-h-[90vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 border-t sm:border border-slate-200 dark:border-slate-800" onClick={e => e.stopPropagation()}>
-            
+          {/* THE FIX: max-h-[80dvh] handles Safari bottom bars! max-w-[100vw] prevents side-spill! */}
+          <div className="bg-white dark:bg-[#0f172a] w-full max-w-[100vw] sm:max-w-lg h-auto max-h-[80dvh] sm:max-h-[90dvh] rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 border-t sm:border border-slate-200 dark:border-slate-800" onClick={e => e.stopPropagation()}>
             <div className="h-1.5 w-12 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mt-3 sm:hidden shrink-0"></div>
             
-            {/* Header */}
-            <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start shrink-0 bg-white dark:bg-[#0f172a]">
-               <div className="pr-4 flex-1">
+            <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start shrink-0 bg-white dark:bg-[#0f172a] w-full">
+               <div className="pr-4 flex-1 min-w-0">
                  <span className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest shadow-sm ${viewingInc.status === 'Acknowledged' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' : 'bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 border border-rose-200 dark:border-rose-800'}`}>
-                   {viewingInc.status === 'Acknowledged' ? '✅ Admin Acknowledged' : '🚨 Pending Review'}
+                   {viewingInc.status === 'Acknowledged' ? `✅ ${t.inc.adminSeen}` : `🚨 ${t.inc.pending}`}
                  </span>
-                 {/* break-words stops long titles from stretching the screen! */}
-                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-3 uppercase tracking-tight leading-tight break-words">{viewingInc.incident_name || 'Incident Report'}</h2>
+                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-3 uppercase tracking-tight leading-tight truncate">{viewingInc.incident_name || 'Incident Report'}</h2>
                </div>
                <button onClick={() => setViewingInc(null)} className="p-2.5 text-slate-400 hover:text-rose-500 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors shrink-0"><X size={18} /></button>
             </div>
             
-            {/* Scrollable Content */}
-            <div className="p-5 sm:p-6 overflow-y-auto custom-scrollbar space-y-5 flex-1 bg-slate-50/50 dark:bg-slate-900/20">
-               
-               {/* Time Matrix */}
-               <div className="grid grid-cols-2 gap-3">
+            {/* THE FIX: min-h-0 and overflow-x-hidden forces it to scroll instead of pushing the walls out! */}
+            <div className="p-5 sm:p-6 overflow-y-auto overflow-x-hidden custom-scrollbar space-y-5 flex-1 min-h-0 w-full bg-slate-50/50 dark:bg-slate-900/20">
+               <div className="grid grid-cols-2 gap-3 w-full">
                  <div className="bg-rose-50 dark:bg-rose-500/10 p-4 rounded-2xl border-2 border-rose-100 dark:border-rose-500/20 shadow-sm relative overflow-hidden">
                    <Clock className="absolute -right-2 -bottom-2 text-rose-200 dark:text-rose-500/20 w-12 h-12 sm:w-16 sm:h-16" />
-                   <span className="text-[9px] sm:text-[10px] font-black text-rose-500 uppercase tracking-widest block mb-1.5 relative z-10">Time Occurred</span>
+                   <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest block mb-1.5 relative z-10">{t.inc.timeOcc}</span>
                    <span className="text-xs sm:text-sm font-black text-rose-700 dark:text-rose-400 leading-tight relative z-10 break-words">{viewingInc.time_of_incident}</span>
                  </div>
                  <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
                    <Activity className="absolute -right-2 -bottom-2 text-slate-100 dark:text-slate-700 w-12 h-12 sm:w-16 sm:h-16" />
-                   <span className="text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5 relative z-10">Time Reported</span>
+                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5 relative z-10">{t.inc.timeRep}</span>
                    <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-200 leading-tight relative z-10 break-words">{viewingInc.time_of_reporting}</span>
                  </div>
                </div>
 
-               {/* Meta Data Box - Fixed layout so it doesn't break out horizontally! */}
-               <div className="flex flex-col gap-3 bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-xs">
+               <div className="flex flex-col gap-3 bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-xs w-full">
                  <div className="grid grid-cols-2 gap-3">
-                   <div className="min-w-0"><span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Reported By</span><span className="font-bold text-slate-800 dark:text-slate-200 uppercase truncate block">{viewingInc.reported_by}</span></div>
-                   <div className="min-w-0"><span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">EP Number</span><span className="font-mono font-bold text-indigo-500 truncate block">{viewingInc.ep_number}</span></div>
+                   <div className="min-w-0"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">{t.inc.repBy}</span><span className="font-bold text-slate-800 dark:text-slate-200 uppercase truncate block">{viewingInc.reported_by}</span></div>
+                   <div className="min-w-0"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">{t.inc.ep}</span><span className="font-mono font-bold text-indigo-500 truncate block">{viewingInc.ep_number}</span></div>
                  </div>
-                 <div className="border-t border-slate-100 dark:border-slate-800 pt-3"><span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Location</span><span className="font-bold text-slate-800 dark:text-slate-200 uppercase flex items-start gap-1.5 break-words"><MapPin size={14} className="text-emerald-500 shrink-0 mt-0.5"/> <span>{viewingInc.incident_location}</span></span></div>
+                 <div className="border-t border-slate-100 dark:border-slate-800 pt-3 w-full"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">{t.inc.exactLoc}</span><span className="font-bold text-slate-800 dark:text-slate-200 uppercase flex items-start gap-1.5 break-words"><MapPin size={14} className="text-emerald-500 shrink-0 mt-0.5"/> <span className="break-all">{viewingInc.incident_location}</span></span></div>
                </div>
 
-               {/* Details Blocks with break-words to prevent spill! */}
-               <div className="space-y-4">
-                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"><strong className="text-[10px] font-black text-rose-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><FileText size={14}/> Details</strong><p className="whitespace-pre-wrap text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed break-words">{viewingInc.details}</p></div>
-                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"><strong className="text-[10px] font-black text-purple-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Search size={14}/> Findings</strong><p className="whitespace-pre-wrap text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed break-words">{viewingInc.findings}</p></div>
-                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"><strong className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Activity size={14}/> Action Taken</strong><p className="whitespace-pre-wrap text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed break-words">{viewingInc.actions_taken}</p></div>
-                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"><strong className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Shield size={14}/> Recommendations</strong><p className="whitespace-pre-wrap text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed break-words">{viewingInc.recommendations}</p></div>
+               <div className="space-y-4 w-full">
+                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm w-full"><strong className="text-[10px] font-black text-rose-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><FileText size={14}/> {t.inc.details}</strong><p className="whitespace-pre-wrap text-base text-slate-700 dark:text-slate-300 font-medium leading-relaxed break-words">{viewingInc.details}</p></div>
+                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm w-full"><strong className="text-[10px] font-black text-purple-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Search size={14}/> {t.inc.findings}</strong><p className="whitespace-pre-wrap text-base text-slate-700 dark:text-slate-300 font-medium leading-relaxed break-words">{viewingInc.findings}</p></div>
+                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm w-full"><strong className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Activity size={14}/> {t.inc.action}</strong><p className="whitespace-pre-wrap text-base text-slate-700 dark:text-slate-300 font-medium leading-relaxed break-words">{viewingInc.actions_taken}</p></div>
+                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm w-full"><strong className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Shield size={14}/> {t.inc.reco}</strong><p className="whitespace-pre-wrap text-base text-slate-700 dark:text-slate-300 font-medium leading-relaxed break-words">{viewingInc.recommendations}</p></div>
                </div>
                
-               {/* Photos */}
                {(viewingInc.photos && viewingInc.photos.length > 0) && (
-                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm w-full">
                    <strong className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5 mb-3"><ImageIcon size={14}/> Evidence Attached</strong>
-                   <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
+                   <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar w-full">
                      {viewingInc.photos.map((p, i) => (
                        <img key={i} src={p} alt="evidence" className="h-24 w-24 object-cover rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm shrink-0" />
                      ))}
@@ -2651,10 +2544,9 @@ function IncidentMobileHistory({ incidents, isLoading }) {
                )}
             </div>
             
-            {/* Footer */}
-            <div className="p-4 sm:p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0f172a] shrink-0 sm:rounded-b-[2.5rem]">
+            <div className="p-4 sm:p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0f172a] shrink-0 sm:rounded-b-[2.5rem] w-full">
                <button onClick={(e) => { copyToWhatsApp(e, viewingInc); setViewingInc(null); }} className="w-full py-3.5 sm:py-4 rounded-2xl text-[11px] sm:text-xs font-black bg-green-500 text-white flex justify-center items-center gap-2 hover:bg-green-600 transition-all shadow-lg shadow-green-500/30 uppercase tracking-widest active:scale-95">
-                 <Copy size={18} /> Copy Full Report
+                 <Copy size={18} /> {t.inc.copyFull}
                </button>
             </div>
           </div>
@@ -2663,7 +2555,6 @@ function IncidentMobileHistory({ incidents, isLoading }) {
     </div>
   );
 }
-
 function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete, SITES = [], STATE_NAMES = [], SITES_BY_STATE = {} }) {
   const [filterDate, setFilterDate] = useState(getISTDate());
   const [filterState, setFilterState] = useState("All");
@@ -2868,43 +2759,29 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete, SITE
 // 📋 WEEKLY LEDGER REPORT MODULE (EXACT PAPER COPY)
 // ==========================================
 
-function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab }) {
+function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab, language }) {
+  const t = TRANSLATIONS[language] || TRANSLATIONS['en'];
   const [fd, setFd] = useState({
-    dateFrom: '', dateTo: '', srNo: '',
-    dispSolid: '', dispGas: '', dispScrap: '',
-    recCompany: '', recContractor: '',
-    ogpNRGP: '', ogpRmgp: '', ogpRmgpIn: '',
-    vehContractor: '', vehCompany: '',
-    footContractor: '', footRil: '', footVisitor: '', footGov: '',
+    dateFrom: '', dateTo: '', srNo: '', dispSolid: '', dispGas: '', dispScrap: '', recCompany: '', recContractor: '',
+    ogpNRGP: '', ogpRmgp: '', ogpRmgpIn: '', vehContractor: '', vehCompany: '', footContractor: '', footRil: '', footVisitor: '', footGov: '',
     depDaySS: '', depDaySG: '', depNightSS: '', depNightSG: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+    e.preventDefault(); setIsSubmitting(true);
     const newReport = {
-      site: userProfile.site,
-      date_from: fd.dateFrom, date_to: fd.dateTo, sr_no: fd.srNo,
-      disp_solid: fd.dispSolid, disp_gas: fd.dispGas, disp_scrap: fd.dispScrap,
-      rec_company: fd.recCompany, rec_contractor: fd.recContractor,
-      ogp_nrgp: fd.ogpNRGP, ogp_rmgp: fd.ogpRmgp, ogp_rmgp_in: fd.ogpRmgpIn,
-      veh_contractor: fd.vehContractor, veh_company: fd.vehCompany,
-      foot_contractor: fd.footContractor, foot_ril: fd.footRil, foot_visitor: fd.footVisitor, foot_gov: fd.footGov,
+      site: userProfile.site, date_from: fd.dateFrom, date_to: fd.dateTo, sr_no: fd.srNo, disp_solid: fd.dispSolid, disp_gas: fd.dispGas, disp_scrap: fd.dispScrap,
+      rec_company: fd.recCompany, rec_contractor: fd.recContractor, ogp_nrgp: fd.ogpNRGP, ogp_rmgp: fd.ogpRmgp, ogp_rmgp_in: fd.ogpRmgpIn,
+      veh_contractor: fd.vehContractor, veh_company: fd.vehCompany, foot_contractor: fd.footContractor, foot_ril: fd.footRil, foot_visitor: fd.footVisitor, foot_gov: fd.footGov,
       dep_day_ss: fd.depDaySS, dep_day_sg: fd.depDaySG, dep_night_ss: fd.depNightSS, dep_night_sg: fd.depNightSG
     };
-
     const { error } = await supabase.from('weekly_reports').insert([newReport]);
     setIsSubmitting(false);
     if (error) alert(`Error: ${error.message}`);
-    else {
-      alert("✅ Official MIS Report synced to Command Center!");
-      fetchWeeklyReports();
-      setActiveTab('history');
-    }
+    else { fetchWeeklyReports(); setActiveTab('history'); }
   };
 
-  // ✨ THE FIX: Changing this to a regular helper function so React stops unmounting it!
   const renderInput = (valKey) => (
     <td className="border border-slate-300 dark:border-slate-700 p-0">
       <input type="number" required value={fd[valKey]} onChange={(e) => setFd({...fd, [valKey]: e.target.value})} className="w-14 sm:w-20 bg-transparent text-center py-3 text-sm font-bold text-slate-900 dark:text-white outline-none focus:bg-emerald-50 dark:focus:bg-emerald-900/30 transition-colors" />
@@ -2914,17 +2791,17 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab }) {
   return (
     <form onSubmit={handleSubmit} className="p-4 space-y-6">
       <div className="bg-emerald-50 dark:bg-emerald-500/10 p-5 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 shadow-sm">
-        <h3 className="font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest text-xs mb-3 flex items-center gap-2"><Calendar size={16}/> Select MIS Report Dates</h3>
+        <h3 className="font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest text-xs mb-3 flex items-center gap-2"><Calendar size={16}/> {t.mis.selectDates}</h3>
         <div className="grid grid-cols-2 gap-3">
-          <div><label className="block text-[9px] font-black text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-widest mb-1">Date From</label><input type="date" required value={fd.dateFrom} onChange={(e) => setFd({...fd, dateFrom: e.target.value})} className="w-full bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-500/30 rounded-lg py-2.5 px-3 text-sm font-bold outline-none text-emerald-800 dark:text-emerald-200 [color-scheme:light] dark:[color-scheme:dark]" /></div>
-          <div><label className="block text-[9px] font-black text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-widest mb-1">Date To</label><input type="date" required value={fd.dateTo} onChange={(e) => setFd({...fd, dateTo: e.target.value})} className="w-full bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-500/30 rounded-lg py-2.5 px-3 text-sm font-bold outline-none text-emerald-800 dark:text-emerald-200 [color-scheme:light] dark:[color-scheme:dark]" /></div>
+          <div><label className="block text-[9px] font-black text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-widest mb-1">{t.mis.dateFrom}</label><input type="date" required value={fd.dateFrom} onChange={(e) => setFd({...fd, dateFrom: e.target.value})} className="w-full bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-500/30 rounded-lg py-2.5 px-3 text-sm font-bold outline-none text-emerald-800 dark:text-emerald-200 [color-scheme:light] dark:[color-scheme:dark]" /></div>
+          <div><label className="block text-[9px] font-black text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-widest mb-1">{t.mis.dateTo}</label><input type="date" required value={fd.dateTo} onChange={(e) => setFd({...fd, dateTo: e.target.value})} className="w-full bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-500/30 rounded-lg py-2.5 px-3 text-sm font-bold outline-none text-emerald-800 dark:text-emerald-200 [color-scheme:light] dark:[color-scheme:dark]" /></div>
         </div>
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-        <div className="p-4 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700"><h4 className="font-black text-slate-700 dark:text-slate-300 text-xs uppercase tracking-widest flex items-center gap-2"><FileText size={16}/> Official Register</h4></div>
-        
+        <div className="p-4 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700"><h4 className="font-black text-slate-700 dark:text-slate-300 text-xs uppercase tracking-widest flex items-center gap-2"><FileText size={16}/> {t.mis.register}</h4></div>
         <div className="overflow-x-auto custom-scrollbar p-2">
+          {/* Note: Table headers are kept in English as they are standardized global tags/acronyms (RMGP, NRGP, etc) */}
           <table className="w-max border-collapse border border-slate-300 dark:border-slate-700 text-center text-[10px] font-black uppercase tracking-widest">
             <thead>
               <tr className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
@@ -2934,7 +2811,7 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab }) {
                 <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 bg-indigo-100/50 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-400">RECEIPT</th>
                 <th colSpan="3" className="border border-slate-300 dark:border-slate-700 p-2 bg-amber-100/50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400">OGP</th>
                 <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 bg-blue-100/50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400">VEHICLE</th>
-                <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 bg-purple-100/50 dark:bg-purple-900/20 text-purple-800 dark:text-purple-400">CONTRACTOR/ RIL STAFF</th>
+                <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 bg-purple-100/50 dark:bg-purple-900/20 text-purple-800 dark:text-purple-400">CON/RIL STAFF</th>
                 <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 text-rose-600 dark:text-rose-400">VISITOR</th>
                 <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 text-rose-600 dark:text-rose-400">GOV.<br/>OFFICIAL</th>
                 <th colSpan="4" className="border border-slate-300 dark:border-slate-700 p-2 bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white">DEPLOYMENT</th>
@@ -2962,7 +2839,6 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab }) {
               <tr className="bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
                 <td className="border border-slate-300 dark:border-slate-700 p-0"><input type="text" required value={fd.srNo} onChange={(e) => setFd({...fd, srNo: e.target.value})} className="w-16 sm:w-20 bg-transparent text-center py-3 text-sm font-bold outline-none" /></td>
                 <td className="border border-slate-300 dark:border-slate-700 p-3 text-xs font-black text-slate-400">{userProfile.site}</td>
-                {/* ✨ AND HERE IS THE FIX IMPLEMENTED! */}
                 {renderInput('dispSolid')}{renderInput('dispGas')}{renderInput('dispScrap')}
                 {renderInput('recCompany')}{renderInput('recContractor')}
                 {renderInput('ogpNRGP')}{renderInput('ogpRmgp')}{renderInput('ogpRmgpIn')}
@@ -2977,61 +2853,54 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab }) {
         </div>
       </div>
 
-      <button type="submit" disabled={isSubmitting} className="w-full py-4 rounded-xl font-black text-sm bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-900/20 flex justify-center items-center gap-2 uppercase tracking-widest mt-6">
-        {isSubmitting ? 'SYNCING...' : <><BookOpen size={18} /> SUBMIT Report</>}
+      <button type="submit" disabled={isSubmitting} className="w-full py-4 rounded-xl font-black text-base bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-900/20 flex justify-center items-center gap-2 uppercase tracking-widest mt-6">
+        {isSubmitting ? t.mis.syncing : <><BookOpen size={18} /> {t.mis.submit}</>}
       </button>
     </form>
   );
 }
-// ==========================================
-// 📋 WEEKLY LEDGER REPORT MODULE (PREMIUM iOS VIEW)
-// ==========================================
-function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
+
+function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly, language }) {
+  const t = TRANSLATIONS[language] || TRANSLATIONS['en'];
   const [viewingRep, setViewingRep] = useState(null);
 
-  if (isLoading) return <div className="p-8 text-center text-emerald-500 font-bold animate-pulse uppercase tracking-widest text-[10px]">Decrypting Ledgers...</div>;
+  if (isLoading) return <div className="p-8 text-center text-emerald-500 font-bold animate-pulse uppercase tracking-widest text-[10px]">{t.mis.decrypting}</div>;
   
   return (
     <div className="p-4 space-y-5 pb-24">
       {weeklyReports.map(rep => (
         <div key={rep.id} onClick={() => setViewingRep(rep)} className="bg-white dark:bg-[#0f172a] p-5 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-2 border-slate-100 dark:border-slate-800 relative cursor-pointer active:scale-[0.98] transition-transform group overflow-hidden">
-          
-          {/* Aesthetic Side Ribbon */}
           <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>
-
           <div className="absolute top-5 right-5 bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400 font-black text-[9px] uppercase tracking-widest px-2.5 py-1.5 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">Sr. {rep.sr_no}</div>
           
           <div className="pl-2">
             <h4 className="font-black text-slate-900 dark:text-white uppercase text-lg mb-1 tracking-tight pr-16">{rep.site}</h4>
             <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold tracking-widest uppercase mb-5 flex items-center gap-1.5"><Calendar size={12}/> {rep.date_from} ➔ {rep.date_to}</p>
             
-            {/* Sleek Data Grid */}
             <div className="grid grid-cols-3 gap-3 text-[10px] font-bold text-center border-t border-slate-100 dark:border-slate-800 pt-4 mb-5">
               <div className="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm"><span className="text-slate-400 block mb-1 uppercase tracking-widest text-[8px]">Dispatch</span><span className="text-slate-800 dark:text-slate-200 text-sm">{(parseInt(rep.disp_solid||0) + parseInt(rep.disp_gas||0) + parseInt(rep.disp_scrap||0))}</span></div>
               <div className="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm"><span className="text-slate-400 block mb-1 uppercase tracking-widest text-[8px]">Receipt</span><span className="text-slate-800 dark:text-slate-200 text-sm">{(parseInt(rep.rec_company||0) + parseInt(rep.rec_contractor||0))}</span></div>
-              <div className="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm"><span className="text-slate-400 block mb-1 uppercase tracking-widest text-[8px]">Footfall</span><span className="text-slate-800 dark:text-slate-200 text-sm">{(parseInt(rep.foot_contractor||0) + parseInt(rep.foot_ril||0) + parseInt(rep.foot_visitor||0) + parseInt(rep.foot_gov||0))}</span></div>
+              <div className="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm"><span className="text-slate-400 block mb-1 uppercase tracking-widest text-[8px]">Visits</span><span className="text-slate-800 dark:text-slate-200 text-sm">{(parseInt(rep.foot_contractor||0) + parseInt(rep.foot_ril||0) + parseInt(rep.foot_visitor||0) + parseInt(rep.foot_gov||0))}</span></div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <button onClick={(e) => { e.stopPropagation(); onEditWeekly(rep); }} className="w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 flex justify-center items-center gap-1.5 hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200 dark:border-indigo-500/30">
-                 <Edit2 size={14}/> Edit / Resend
+                 <Edit2 size={14}/> {t.mis.editResend}
               </button>
               <button onClick={() => setViewingRep(rep)} className="w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-emerald-500 text-white flex justify-center items-center gap-1.5 hover:bg-emerald-600 transition-colors shadow-md shadow-emerald-500/20 border border-emerald-600">
-                 <Eye size={14}/> View Master
+                 <Eye size={14}/> {t.mis.viewMaster}
               </button>
             </div>
           </div>
         </div>
       ))}
-      {weeklyReports.length === 0 && <p className="text-center text-slate-500 text-sm mt-10 font-bold italic">No weekly ledgers found.</p>}
+      {weeklyReports.length === 0 && <p className="text-center text-slate-500 text-base mt-10 font-bold italic">{t.mis.noLedgers}</p>}
 
-      {/* ✨ THE MAGICAL MOBILE MODAL (TABLE STAYS EXACTLY THE SAME!) */}
       {viewingRep && (
         <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/90 backdrop-blur-sm z-[150] flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in duration-200" onClick={() => setViewingRep(null)}>
           <div className="bg-white dark:bg-[#0f172a] w-full sm:max-w-5xl max-h-[85vh] sm:max-h-[90vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 border-t sm:border border-slate-200 dark:border-slate-800" onClick={e => e.stopPropagation()}>
             <div className="h-1.5 w-12 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mt-3 sm:hidden shrink-0"></div>
             
-            {/* Sleek Header */}
             <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start bg-white dark:bg-[#0f172a] shrink-0">
                <div>
                  <span className="text-[9px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 shadow-sm">Sr No. {viewingRep.sr_no}</span>
@@ -3041,10 +2910,8 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
                <button onClick={() => setViewingRep(null)} className="p-2.5 text-slate-400 hover:text-emerald-500 bg-slate-100 dark:bg-slate-800 rounded-full shadow-sm transition-colors"><X size={18} /></button>
             </div>
             
-            {/* 📋 THE GLORIOUS HORIZONTAL SCROLL TABLE (100% UNTOUCHED!) */}
             <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar bg-slate-50/50 dark:bg-[#0B1120]">
                <div className="overflow-x-auto border-2 border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm custom-scrollbar pb-2 bg-white dark:bg-slate-900">
-                 {/* YOUR EXACT TABLE CODE STARTS HERE */}
                  <table className="w-max min-w-full border-collapse text-center text-[10px] font-black uppercase tracking-widest">
                    <thead>
                      <tr className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
@@ -3079,7 +2946,7 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
                      </tr>
                    </thead>
                    <tbody>
-                     <tr className="text-slate-900 dark:text-white bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                     <tr className="text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                        <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.sr_no}</td>
                        <td className="border border-slate-300 dark:border-slate-700 p-3 text-emerald-600 dark:text-emerald-400">{viewingRep.site}</td>
                        <td className="border border-slate-300 dark:border-slate-700 p-3">{viewingRep.disp_solid || 0}</td>
@@ -3103,7 +2970,6 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
                      </tr>
                    </tbody>
                  </table>
-                 {/* YOUR EXACT TABLE CODE ENDS HERE */}
                </div>
             </div>
             
@@ -3914,7 +3780,7 @@ function WeeklyEditModal({ record, onClose, onSave }) {
 
   const renderInput = (valKey) => (
     <td className="border border-slate-300 dark:border-slate-700 p-0">
-      <input type="number" required value={fd[valKey] || ''} onChange={(e) => setFd({...fd, [valKey]: e.target.value})} className="w-14 sm:w-20 bg-transparent text-center py-3 text-sm font-bold text-slate-900 dark:text-white outline-none focus:bg-indigo-50 dark:focus:bg-indigo-900/30 transition-colors" />
+      <input type="number" required value={fd[valKey] || ''} onChange={(e) => setFd({...fd, [valKey]: e.target.value})} className="w-14 sm:w-20 bg-transparent text-center py-3 text-base font-bold text-slate-900 dark:text-white outline-none focus:bg-indigo-50 dark:focus:bg-indigo-900/30 transition-colors" />
     </td>
   );
 
@@ -3966,7 +3832,7 @@ function WeeklyEditModal({ record, onClose, onSave }) {
               </thead>
               <tbody>
                 <tr className="bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                  <td className="border border-slate-300 dark:border-slate-700 p-0"><input type="text" required value={fd.sr_no || ''} onChange={(e) => setFd({...fd, sr_no: e.target.value})} className="w-16 sm:w-20 bg-transparent text-center py-3 text-sm font-bold outline-none focus:bg-indigo-50 dark:focus:bg-indigo-900/30" /></td>
+                  <td className="border border-slate-300 dark:border-slate-700 p-0"><input type="text" required value={fd.sr_no || ''} onChange={(e) => setFd({...fd, sr_no: e.target.value})} className="w-16 sm:w-20 bg-transparent text-center py-3 text-base font-bold outline-none focus:bg-indigo-50 dark:focus:bg-indigo-900/30" /></td>
                   {renderInput('disp_solid')}{renderInput('disp_gas')}{renderInput('disp_scrap')}
                   {renderInput('rec_company')}{renderInput('rec_contractor')}
                   {renderInput('ogp_nrgp')}{renderInput('ogp_rmgp')}{renderInput('ogp_rmgp_in')}
