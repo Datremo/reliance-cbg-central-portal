@@ -1213,20 +1213,22 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
 // 🫀 2. THE LIVE HEARTBEAT STATS
   const totalBoots = filteredData.length;
   
-  //   NEW: Phantom Roster (AWOL) Engine
-  const activeSiteNames = new Set(filteredData.map(d => d.site));
+  // ✨ FIXED: Phantom Roster (AWOL) Engine is now CASE-INSENSITIVE!
+  const activeSiteNames = new Set(filteredData.map(d => (d.site || "").toUpperCase()));
   const expectedSites = availableSites.filter(s => {
     if (siteTier === 'Commissioned') return COMMISSIONED_SITES.includes(s);
     if (siteTier === 'Project') return !COMMISSIONED_SITES.includes(s);
     return true;
   });
-  const awolSites = expectedSites.filter(s => !activeSiteNames.has(s));
+  // Check against the uppercase safety net!
+  const awolSites = expectedSites.filter(s => !activeSiteNames.has((s || "").toUpperCase()));
 
-  //   NEW: MTCC Active Node Tracker (With specific counts per site!)
+  // ✨ FIXED: MTCC Active Node Tracker (Also Case-Insensitive!)
   const mtccDeployments = filteredData.filter(d => d.location === 'MTCC');
   const mtccSiteMap = {};
   mtccDeployments.forEach(d => {
-    mtccSiteMap[d.site] = (mtccSiteMap[d.site] || 0) + 1;
+    const safeSite = (d.site || "").toUpperCase();
+    mtccSiteMap[safeSite] = (mtccSiteMap[safeSite] || 0) + 1;
   });
   const mtccActiveSitesCount = Object.keys(mtccSiteMap).length;
   const mtccHoverDetails = Object.entries(mtccSiteMap)
@@ -2581,70 +2583,77 @@ function IncidentMobileHistory({ incidents, isLoading }) {
         {filtered.length === 0 && <p className="text-center text-slate-500 text-sm mt-10 font-bold italic">No incidents found for this date.</p>}
       </div>
 
-      {/* ✨ THE UPGRADED SUPERVISOR iOS MODAL */}
+      {/* ✨ THE UPGRADED SUPERVISOR iOS MODAL (FIXED FOR MOBILE SCROLLING) */}
       {viewingInc && (
         <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/90 backdrop-blur-sm z-[150] flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in duration-200" onClick={() => setViewingInc(null)}>
-          <div className="bg-white dark:bg-[#0f172a] w-full sm:max-w-lg h-[90vh] sm:h-auto sm:max-h-[90vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 border border-slate-200 dark:border-slate-800" onClick={e => e.stopPropagation()}>
+          
+          {/* THE FIX: Swapped hard h-[90vh] for a flexible max-h-[85vh] and ensured w-full doesn't break boundaries! */}
+          <div className="bg-white dark:bg-[#0f172a] w-full sm:max-w-lg max-h-[85vh] sm:max-h-[90vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 border-t sm:border border-slate-200 dark:border-slate-800" onClick={e => e.stopPropagation()}>
             
             <div className="h-1.5 w-12 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mt-3 sm:hidden shrink-0"></div>
             
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start shrink-0 bg-white dark:bg-[#0f172a]">
-               <div className="pr-4">
+            {/* Header */}
+            <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start shrink-0 bg-white dark:bg-[#0f172a]">
+               <div className="pr-4 flex-1">
                  <span className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest shadow-sm ${viewingInc.status === 'Acknowledged' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' : 'bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 border border-rose-200 dark:border-rose-800'}`}>
                    {viewingInc.status === 'Acknowledged' ? '✅ Admin Acknowledged' : '🚨 Pending Review'}
                  </span>
-                 <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-4 uppercase tracking-tight leading-none">{viewingInc.incident_name || 'Incident Report'}</h2>
+                 {/* break-words stops long titles from stretching the screen! */}
+                 <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-3 uppercase tracking-tight leading-tight break-words">{viewingInc.incident_name || 'Incident Report'}</h2>
                </div>
-               <button onClick={() => setViewingInc(null)} className="p-2.5 text-slate-400 hover:text-rose-500 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors"><X size={18} /></button>
+               <button onClick={() => setViewingInc(null)} className="p-2.5 text-slate-400 hover:text-rose-500 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors shrink-0"><X size={18} /></button>
             </div>
             
-            <div className="p-6 overflow-y-auto custom-scrollbar space-y-6 flex-1 bg-slate-50/50 dark:bg-slate-900/20">
+            {/* Scrollable Content */}
+            <div className="p-5 sm:p-6 overflow-y-auto custom-scrollbar space-y-5 flex-1 bg-slate-50/50 dark:bg-slate-900/20">
                
-               {/* 🚨 THE NEW TIME MATRIX */}
+               {/* Time Matrix */}
                <div className="grid grid-cols-2 gap-3">
                  <div className="bg-rose-50 dark:bg-rose-500/10 p-4 rounded-2xl border-2 border-rose-100 dark:border-rose-500/20 shadow-sm relative overflow-hidden">
-                   <Clock className="absolute -right-2 -bottom-2 text-rose-200 dark:text-rose-500/20 w-16 h-16" />
-                   <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest block mb-1.5 relative z-10">Time Occurred</span>
-                   <span className="text-sm font-black text-rose-700 dark:text-rose-400 leading-tight relative z-10">{viewingInc.time_of_incident}</span>
+                   <Clock className="absolute -right-2 -bottom-2 text-rose-200 dark:text-rose-500/20 w-12 h-12 sm:w-16 sm:h-16" />
+                   <span className="text-[9px] sm:text-[10px] font-black text-rose-500 uppercase tracking-widest block mb-1.5 relative z-10">Time Occurred</span>
+                   <span className="text-xs sm:text-sm font-black text-rose-700 dark:text-rose-400 leading-tight relative z-10 break-words">{viewingInc.time_of_incident}</span>
                  </div>
                  <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
-                   <Activity className="absolute -right-2 -bottom-2 text-slate-100 dark:text-slate-700 w-16 h-16" />
-                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5 relative z-10">Time Reported</span>
-                   <span className="text-sm font-black text-slate-800 dark:text-slate-200 leading-tight relative z-10">{viewingInc.time_of_reporting}</span>
+                   <Activity className="absolute -right-2 -bottom-2 text-slate-100 dark:text-slate-700 w-12 h-12 sm:w-16 sm:h-16" />
+                   <span className="text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1.5 relative z-10">Time Reported</span>
+                   <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-200 leading-tight relative z-10 break-words">{viewingInc.time_of_reporting}</span>
                  </div>
                </div>
 
-               {/* Meta Data Box */}
-               <div className="grid grid-cols-2 gap-4 bg-white dark:bg-[#0f172a] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-xs">
-                 <div><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Reported By</span><span className="font-bold text-slate-800 dark:text-slate-200 uppercase">{viewingInc.reported_by}</span></div>
-                 <div><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">EP Number</span><span className="font-mono font-bold text-indigo-500">{viewingInc.ep_number}</span></div>
-                 <div className="col-span-2 border-t border-slate-100 dark:border-slate-800 pt-3 mt-1"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Location</span><span className="font-bold text-slate-800 dark:text-slate-200 uppercase flex items-center gap-1.5"><MapPin size={14} className="text-emerald-500"/> {viewingInc.incident_location}</span></div>
+               {/* Meta Data Box - Fixed layout so it doesn't break out horizontally! */}
+               <div className="flex flex-col gap-3 bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-xs">
+                 <div className="grid grid-cols-2 gap-3">
+                   <div className="min-w-0"><span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Reported By</span><span className="font-bold text-slate-800 dark:text-slate-200 uppercase truncate block">{viewingInc.reported_by}</span></div>
+                   <div className="min-w-0"><span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">EP Number</span><span className="font-mono font-bold text-indigo-500 truncate block">{viewingInc.ep_number}</span></div>
+                 </div>
+                 <div className="border-t border-slate-100 dark:border-slate-800 pt-3"><span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Location</span><span className="font-bold text-slate-800 dark:text-slate-200 uppercase flex items-start gap-1.5 break-words"><MapPin size={14} className="text-emerald-500 shrink-0 mt-0.5"/> <span>{viewingInc.incident_location}</span></span></div>
                </div>
 
-               {/* The Long Text Boxes */}
+               {/* Details Blocks with break-words to prevent spill! */}
                <div className="space-y-4">
-                 <div className="bg-white dark:bg-[#0f172a] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"><strong className="text-[10px] font-black text-rose-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><FileText size={14}/> Details</strong><p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{viewingInc.details}</p></div>
-                 <div className="bg-white dark:bg-[#0f172a] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"><strong className="text-[10px] font-black text-purple-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Search size={14}/> Findings</strong><p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{viewingInc.findings}</p></div>
-                 <div className="bg-white dark:bg-[#0f172a] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"><strong className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Activity size={14}/> Action Taken</strong><p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{viewingInc.actions_taken}</p></div>
-                 <div className="bg-white dark:bg-[#0f172a] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"><strong className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Shield size={14}/> Recommendations</strong><p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{viewingInc.recommendations}</p></div>
+                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"><strong className="text-[10px] font-black text-rose-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><FileText size={14}/> Details</strong><p className="whitespace-pre-wrap text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed break-words">{viewingInc.details}</p></div>
+                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"><strong className="text-[10px] font-black text-purple-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Search size={14}/> Findings</strong><p className="whitespace-pre-wrap text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed break-words">{viewingInc.findings}</p></div>
+                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"><strong className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Activity size={14}/> Action Taken</strong><p className="whitespace-pre-wrap text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed break-words">{viewingInc.actions_taken}</p></div>
+                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"><strong className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Shield size={14}/> Recommendations</strong><p className="whitespace-pre-wrap text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed break-words">{viewingInc.recommendations}</p></div>
                </div>
                
                {/* Photos */}
                {(viewingInc.photos && viewingInc.photos.length > 0) && (
-                 <div className="bg-white dark:bg-[#0f172a] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                 <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
                    <strong className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5 mb-3"><ImageIcon size={14}/> Evidence Attached</strong>
                    <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
                      {viewingInc.photos.map((p, i) => (
-                       <img key={i} src={p} alt="evidence" className="h-28 w-28 object-cover rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm shrink-0" />
+                       <img key={i} src={p} alt="evidence" className="h-24 w-24 object-cover rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm shrink-0" />
                      ))}
                    </div>
                  </div>
                )}
             </div>
             
-            {/* Modal Footer */}
-            <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0f172a] shrink-0 rounded-b-[2.5rem]">
-               <button onClick={(e) => { copyToWhatsApp(e, viewingInc); setViewingInc(null); }} className="w-full py-4 rounded-2xl text-xs font-black bg-green-500 text-white flex justify-center items-center gap-2 hover:bg-green-600 transition-all shadow-lg shadow-green-500/30 uppercase tracking-widest active:scale-95">
+            {/* Footer */}
+            <div className="p-4 sm:p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0f172a] shrink-0 sm:rounded-b-[2.5rem]">
+               <button onClick={(e) => { copyToWhatsApp(e, viewingInc); setViewingInc(null); }} className="w-full py-3.5 sm:py-4 rounded-2xl text-[11px] sm:text-xs font-black bg-green-500 text-white flex justify-center items-center gap-2 hover:bg-green-600 transition-all shadow-lg shadow-green-500/30 uppercase tracking-widest active:scale-95">
                  <Copy size={18} /> Copy Full Report
                </button>
             </div>
@@ -2974,57 +2983,68 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab }) {
     </form>
   );
 }
+// ==========================================
+// 📋 WEEKLY LEDGER REPORT MODULE (PREMIUM iOS VIEW)
+// ==========================================
 function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
-  const [viewingRep, setViewingRep] = useState(null); // ✨ NEW: The Modal Brain!
+  const [viewingRep, setViewingRep] = useState(null);
 
-  if (isLoading) return <div className="p-8 text-center text-slate-500 font-bold animate-pulse">Loading ledgers...</div>;
+  if (isLoading) return <div className="p-8 text-center text-emerald-500 font-bold animate-pulse uppercase tracking-widest text-[10px]">Decrypting Ledgers...</div>;
   
   return (
-    <div className="p-4 space-y-4 pb-24">
+    <div className="p-4 space-y-5 pb-24">
       {weeklyReports.map(rep => (
-        <div key={rep.id} onClick={() => setViewingRep(rep)} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border-l-4 border-emerald-500 border-y border-r border-y-slate-200 border-r-slate-200 dark:border-y-slate-800 dark:border-r-slate-800 relative cursor-pointer active:scale-95 transition-transform group">
-          <div className="absolute top-4 right-4 bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 font-black text-[10px] uppercase tracking-widest px-2 py-1 rounded">Sr. {rep.sr_no}</div>
-          <h4 className="font-black text-slate-900 dark:text-white uppercase text-sm mb-1">{rep.site}</h4>
-          <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase mb-4"><Calendar size={10} className="inline mr-1"/>{rep.date_from} TO {rep.date_to}</p>
+        <div key={rep.id} onClick={() => setViewingRep(rep)} className="bg-white dark:bg-[#0f172a] p-5 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-2 border-slate-100 dark:border-slate-800 relative cursor-pointer active:scale-[0.98] transition-transform group overflow-hidden">
           
-          <div className="grid grid-cols-3 gap-2 text-[10px] font-bold text-center border-t border-slate-100 dark:border-slate-800 pt-3 mb-3">
-            <div className="bg-slate-50 dark:bg-slate-950 p-2 rounded"><span className="text-slate-400 block mb-1">Dispatch</span><span className="text-slate-700 dark:text-slate-300">{(parseInt(rep.disp_solid||0) + parseInt(rep.disp_gas||0) + parseInt(rep.disp_scrap||0))} Total</span></div>
-            <div className="bg-slate-50 dark:bg-slate-950 p-2 rounded"><span className="text-slate-400 block mb-1">Receipt</span><span className="text-slate-700 dark:text-slate-300">{(parseInt(rep.rec_company||0) + parseInt(rep.rec_contractor||0))} Total</span></div>
-            <div className="bg-slate-50 dark:bg-slate-950 p-2 rounded"><span className="text-slate-400 block mb-1">Footfall</span><span className="text-slate-700 dark:text-slate-300">{(parseInt(rep.foot_contractor||0) + parseInt(rep.foot_ril||0) + parseInt(rep.foot_visitor||0) + parseInt(rep.foot_gov||0))} Total</span></div>
-          </div>
+          {/* Aesthetic Side Ribbon */}
+          <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>
 
-          <div className="grid grid-cols-2 gap-2 mt-2">
-            {/* ✨ THE NEW EDIT BUTTON */}
-            <button onClick={(e) => { e.stopPropagation(); onEditWeekly(rep); }} className="w-full py-2.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400 flex justify-center items-center gap-1.5 hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-100 dark:border-indigo-800/50">
-               <Edit2 size={14}/> Edit / Resend
-            </button>
-            <button onClick={() => setViewingRep(rep)} className="w-full py-2.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 flex justify-center items-center gap-1.5 hover:bg-emerald-100 transition-colors shadow-sm border border-emerald-100 dark:border-emerald-800/50">
-               <Eye size={14}/> View Report
-            </button>
+          <div className="absolute top-5 right-5 bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400 font-black text-[9px] uppercase tracking-widest px-2.5 py-1.5 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">Sr. {rep.sr_no}</div>
+          
+          <div className="pl-2">
+            <h4 className="font-black text-slate-900 dark:text-white uppercase text-lg mb-1 tracking-tight pr-16">{rep.site}</h4>
+            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold tracking-widest uppercase mb-5 flex items-center gap-1.5"><Calendar size={12}/> {rep.date_from} ➔ {rep.date_to}</p>
+            
+            {/* Sleek Data Grid */}
+            <div className="grid grid-cols-3 gap-3 text-[10px] font-bold text-center border-t border-slate-100 dark:border-slate-800 pt-4 mb-5">
+              <div className="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm"><span className="text-slate-400 block mb-1 uppercase tracking-widest text-[8px]">Dispatch</span><span className="text-slate-800 dark:text-slate-200 text-sm">{(parseInt(rep.disp_solid||0) + parseInt(rep.disp_gas||0) + parseInt(rep.disp_scrap||0))}</span></div>
+              <div className="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm"><span className="text-slate-400 block mb-1 uppercase tracking-widest text-[8px]">Receipt</span><span className="text-slate-800 dark:text-slate-200 text-sm">{(parseInt(rep.rec_company||0) + parseInt(rep.rec_contractor||0))}</span></div>
+              <div className="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm"><span className="text-slate-400 block mb-1 uppercase tracking-widest text-[8px]">Footfall</span><span className="text-slate-800 dark:text-slate-200 text-sm">{(parseInt(rep.foot_contractor||0) + parseInt(rep.foot_ril||0) + parseInt(rep.foot_visitor||0) + parseInt(rep.foot_gov||0))}</span></div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={(e) => { e.stopPropagation(); onEditWeekly(rep); }} className="w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 flex justify-center items-center gap-1.5 hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200 dark:border-indigo-500/30">
+                 <Edit2 size={14}/> Edit / Resend
+              </button>
+              <button onClick={() => setViewingRep(rep)} className="w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-emerald-500 text-white flex justify-center items-center gap-1.5 hover:bg-emerald-600 transition-colors shadow-md shadow-emerald-500/20 border border-emerald-600">
+                 <Eye size={14}/> View Master
+              </button>
+            </div>
           </div>
         </div>
       ))}
-      {weeklyReports.length === 0 && <p className="text-center text-slate-500 text-sm mt-10 font-medium">No weekly ledgers found.</p>}
+      {weeklyReports.length === 0 && <p className="text-center text-slate-500 text-sm mt-10 font-bold italic">No weekly ledgers found.</p>}
 
-      {/* ✨ THE MAGICAL MOBILE MODAL FOR SUPERVISORS */}
+      {/* ✨ THE MAGICAL MOBILE MODAL (TABLE STAYS EXACTLY THE SAME!) */}
       {viewingRep && (
-        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[100] flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in duration-200" onClick={() => setViewingRep(null)}>
-          {/* ✨ Notice: Made it max-w-5xl so the table has room to breathe on tablets! */}
-          <div className="bg-white dark:bg-slate-900 w-full sm:max-w-5xl h-[85vh] sm:h-auto sm:max-h-[85vh] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/90 backdrop-blur-sm z-[150] flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in duration-200" onClick={() => setViewingRep(null)}>
+          <div className="bg-white dark:bg-[#0f172a] w-full sm:max-w-5xl max-h-[85vh] sm:max-h-[90vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 border-t sm:border border-slate-200 dark:border-slate-800" onClick={e => e.stopPropagation()}>
             <div className="h-1.5 w-12 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mt-3 sm:hidden shrink-0"></div>
             
-            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start bg-slate-50 dark:bg-slate-950/50 shrink-0">
+            {/* Sleek Header */}
+            <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start bg-white dark:bg-[#0f172a] shrink-0">
                <div>
-                 <span className="text-[10px] font-black px-2 py-1 rounded uppercase tracking-widest bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">Sr No. {viewingRep.sr_no}</span>
-                 <h2 className="text-lg font-black text-slate-900 dark:text-white mt-3 uppercase leading-tight">{viewingRep.site}</h2>
-                 <p className="text-[10px] font-bold text-slate-500 mt-1">Logged: {viewingRep.date_from} to {viewingRep.date_to}</p>
+                 <span className="text-[9px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 shadow-sm">Sr No. {viewingRep.sr_no}</span>
+                 <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-3 uppercase tracking-tight leading-none">{viewingRep.site}</h2>
+                 <p className="text-[10px] font-bold text-slate-500 mt-1.5 flex items-center gap-1.5"><Calendar size={12}/> {viewingRep.date_from} to {viewingRep.date_to}</p>
                </div>
-               <button onClick={() => setViewingRep(null)} className="p-2 text-slate-400 hover:text-emerald-500 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full shadow-sm"><X size={16} /></button>
+               <button onClick={() => setViewingRep(null)} className="p-2.5 text-slate-400 hover:text-emerald-500 bg-slate-100 dark:bg-slate-800 rounded-full shadow-sm transition-colors"><X size={18} /></button>
             </div>
             
-            {/* 📋 THE GLORIOUS HORIZONTAL SCROLL TABLE! */}
-            <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar bg-white dark:bg-slate-900">
-               <div className="overflow-x-auto border border-slate-300 dark:border-slate-700 rounded-xl shadow-sm custom-scrollbar pb-2">
+            {/* 📋 THE GLORIOUS HORIZONTAL SCROLL TABLE (100% UNTOUCHED!) */}
+            <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar bg-slate-50/50 dark:bg-[#0B1120]">
+               <div className="overflow-x-auto border-2 border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm custom-scrollbar pb-2 bg-white dark:bg-slate-900">
+                 {/* YOUR EXACT TABLE CODE STARTS HERE */}
                  <table className="w-max min-w-full border-collapse text-center text-[10px] font-black uppercase tracking-widest">
                    <thead>
                      <tr className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
@@ -3083,6 +3103,7 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
                      </tr>
                    </tbody>
                  </table>
+                 {/* YOUR EXACT TABLE CODE ENDS HERE */}
                </div>
             </div>
             
@@ -3092,71 +3113,50 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
     </div>
   );
 }
-
 // ==========================================
 // 📈 VIP OPERATIONS & THREAT MATRIX (CSO DASHBOARD)
 // ==========================================
-
 // ==========================================
 // 📈 VIP OPERATIONS & THREAT MATRIX (CSO DASHBOARD)
 // ==========================================
-
 function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SITES = [], STATE_NAMES = [], SITES_BY_STATE = {} ,onDeleteWeekly }) {
   const [filterDate, setFilterDate] = useState('');
-  const [filterState, setFilterState] = useState("All"); // ✨ NEW: State Filter!
+  const [filterState, setFilterState] = useState("All"); 
   const [filterSite, setFilterSite] = useState("All");
   const [viewingRep, setViewingRep] = useState(null);
 
-  // ✨ FIXED: Cascading Site List so it never shows garbage states again!
   const availableSites = filterState === "All" ? SITES : SITES_BY_STATE[filterState] || [];
 
-  // 1. FILTER ENGINE (STRICT POSTING DATE & NEW STATE LOGIC)
   const filtered = weeklyReports.filter(r => {
     const dMatch = filterDate === '' || (r.created_at && r.created_at.startsWith(filterDate));
-    
-    // ✨ SAFETY NET: Force old database logs to UPPERCASE!
     const safeSiteName = (r.site || "").toUpperCase();
-
     const stMatch = filterState === "All" || (SITES_BY_STATE[filterState] && SITES_BY_STATE[filterState].includes(safeSiteName));
     const sMatch = filterSite === "All" || safeSiteName === filterSite;
     return dMatch && stMatch && sMatch;
   });
 
-  // 2. MATH HELPERS
   const num = (v) => parseInt(v) || 0;
 
-  // ✨ THE FIX: We added "1" to Math.max so it never divides by zero and breaks the CSS!
-  const maxOgp = Math.max(1, ...filtered.map(r => Math.max(num(r.ogp_rmgp), num(r.ogp_rmgp_in))));
-  const maxTraffic = Math.max(1, ...filtered.map(r => Math.max(num(r.foot_contractor), num(r.veh_contractor))));
-  const maxDispatch = Math.max(1, ...filtered.map(r => num(r.disp_solid) + num(r.disp_gas) + num(r.disp_scrap)));
-
-  let totalDispatch = 0;
-
-  // 🧠 3. CSO METRIC CALCULATORS (The Ultimate 5-in-4 Matrix!)
+  // ✨ THE MEMORY BRAINS (Declared safely!)
+  let totalStrictDeficit = 0;
+  const siteDeficits = []; // 🚨 THE SNITCH LIST IS HERE!
+  
   let tSolid = 0, tGas = 0, tScrap = 0;
   let recCo = 0, recCon = 0;
   let nrgp = 0, rmgpOut = 0, rmgpIn = 0;
   let vehCon = 0, vehCo = 0;
   let footCon = 0, footRil = 0;
-  
   let tGov = 0;
   const govVisitsList = [];
-  
-  // ✨ NEW: Strict Deficit Tracker! (No hiding behind other sites!)
-  let totalStrictDeficit = 0;
 
-  // This uses "filtered", so it perfectly obeys your site dropdown!
   filtered.forEach(r => {
-    // 1. DISPATCH
     tSolid += num(r.disp_solid);
     tGas += num(r.disp_gas);
     tScrap += num(r.disp_scrap);
 
-    // 2. RECEIPT
     recCo += num(r.rec_company);
     recCon += num(r.rec_contractor);
 
-    // 3. OGP
     nrgp += num(r.ogp_nrgp);
     const rOut = num(r.ogp_rmgp);
     const rIn = num(r.ogp_rmgp_in);
@@ -3165,18 +3165,20 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
     
     // ✨ ADD TO STRICT DEFICIT ONLY IF IT'S A LOSS!
     if (rOut > rIn) {
-      totalStrictDeficit += (rOut - rIn);
+      const deficit = rOut - rIn;
+      totalStrictDeficit += deficit;
+      
+      const existing = siteDeficits.find(x => x.site === r.site);
+      if (existing) existing.deficit += deficit;
+      else siteDeficits.push({ site: r.site, deficit });
     }
 
-    // 4. VEHICLES
     vehCon += num(r.veh_contractor);
     vehCo += num(r.veh_company);
 
-    // 5. STAFF / WORKERS
     footCon += num(r.foot_contractor);
     footRil += num(r.foot_ril);
 
-    // GOV VISITS
     const govCount = num(r.foot_gov);
     tGov += govCount;
     if (govCount > 0) {
@@ -3186,22 +3188,20 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
     }
   });
 
-  // Use the STRICT deficit so the alarm triggers perfectly!
+  // Sort the worst offenders to the top!
+  siteDeficits.sort((a, b) => b.deficit - a.deficit);
+
   const assetDeficit = totalStrictDeficit;
-  const grandTotalDispatch = tSolid + tGas + tScrap;
   const isAssetAlert = assetDeficit > 0;
 
-  // 📋 COMPLIANCE LOGIC (Stays Global, ignores the filter!)
-  const commissionedSites = typeof COMMISSIONED_SITES !== 'undefined' ? COMMISSIONED_SITES : uniqueSites;
-  const submittedSitesList = [...new Set(weeklyReports.map(r => r.site))]; // Uses ALL reports
+  const commissionedSites = typeof COMMISSIONED_SITES !== 'undefined' ? COMMISSIONED_SITES : SITES;
+  const submittedSitesList = [...new Set(weeklyReports.map(r => r.site))]; 
   const pendingSitesList = commissionedSites.filter(s => !submittedSitesList.includes(s));
-  const complianceRate = Math.round((submittedSitesList.length / commissionedSites.length) * 100) || 0;
+  const complianceRate = Math.round((submittedSitesList.length / (commissionedSites.length || 1)) * 100) || 0;
 
-  // 4. THE MASTER EXCEL EXPORTER! 🟢
   const exportMasterAudit = () => {
     const row1 = ["Sr_No", "SITE", "Date_From", "Date_To", "DISPATCH", "", "", "RECEIPT", "", "OGP", "", "", "VEHICLE", "", "CONTRACTOR/ RIL STAFF", "", "VISITOR", "GOV. OFFICIAL", "DEPLOYMENT", "", "", ""];
     const row2 = ["", "", "", "", "SOLID", "GAS", "SCRAP", "COMPANY", "CONTRACTOR", "NRGP", "RMGP", "RMGP IN", "CONTRACTOR VEHICLE", "COMPANY/ EMP. VEHICLE", "CONTRACTOR WORKER", "RIL EMPLOYE", "", "", "Day SS", "Day SG", "Night SS", "Night SG"];
-    
     const csvRows = [row1.join(','), row2.join(',')];
     
     filtered.forEach(r => {
@@ -3215,43 +3215,37 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
     a.download = `CSO_Master_Audit_${getISTDate()}.csv`;
     a.click();
   };
-// ✨ NEW: THE ANOMALY DETECTOR (Week-over-Week Spikes!)
+
   const anomalies = [];
-  // We use all reports (unfiltered) to find anomalies across the whole network
   const allSites = [...new Set(weeklyReports.map(r => r.site))];
 
   allSites.forEach(site => {
-    // Sort reports for this site by newest first
     const siteReps = weeklyReports.filter(r => r.site === site).sort((a, b) => num(b.sr_no) - num(a.sr_no));
-    
     if (siteReps.length >= 2) {
-      const curr = siteReps[0]; // This Week
-      const prev = siteReps[1]; // Last Week
+      const curr = siteReps[0]; 
+      const prev = siteReps[1]; 
 
       const checkSpike = (key, label) => {
         const diff = num(curr[key]) - num(prev[key]);
         if (diff >= 50) anomalies.push({ site, label, prev: num(prev[key]), curr: num(curr[key]), diff });
       };
 
-      // Check for drastic jumps!
       checkSpike('disp_scrap', 'Scrap');
       checkSpike('disp_gas', 'Gas/Slurry');
       checkSpike('rec_company', 'Receipts (Co)');
       checkSpike('rec_contractor', 'Receipts (Con)');
     }
   });
-  // Sort biggest spikes to the top
   anomalies.sort((a, b) => b.diff - a.diff);
 
   return (
     <div className="space-y-6">
       
-      {/* 🟢 ZONE 1: COMMAND BAR */}
+      {/* 🟢 COMMAND BAR */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 flex flex-wrap justify-between items-end gap-4 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-3xl rounded-full pointer-events-none"></div>
         <div className="flex flex-wrap gap-3 relative z-10">
           <FilterSelect label="Filter Date" value={filterDate} onChange={setFilterDate} type="date" />
-          {/* ✨ FIXED: Proper State and Site cascading dropdowns! */}
           <FilterSelect label="State" value={filterState} onChange={e => {setFilterState(e); setFilterSite("All");}} options={STATE_NAMES} />
           <FilterSelect label="VIP Site" value={filterSite} onChange={setFilterSite} options={[...availableSites].sort()} />
           <button onClick={() => { setFilterDate(''); setFilterState('All'); setFilterSite('All'); }} className="text-[10px] font-black tracking-widest text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors h-max mb-0.5">CLEAR</button>
@@ -3261,19 +3255,35 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
         </button>
       </div>
 
-      {/* 🚨 ZONE 2: SECURITY KPIs */}
+      {/* 🚨 SECURITY KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className={`bg-white dark:bg-slate-900 p-5 rounded-2xl border-t-4 shadow-sm transition-all ${isAssetAlert ? 'border-rose-500 dark:shadow-[0_0_15px_rgba(244,63,94,0.15)]' : 'border-indigo-500 border-slate-200 dark:border-slate-800'}`}>
+        
+        {/* CHART 1: ASSET LEAKAGE WITH HOVER MENU 🚨 */}
+        <div className={`bg-white dark:bg-slate-900 p-5 rounded-2xl border-t-4 shadow-sm transition-all relative group cursor-help z-40 ${isAssetAlert ? 'border-rose-500 dark:shadow-[0_0_15px_rgba(244,63,94,0.15)]' : 'border-indigo-500 border-slate-200 dark:border-slate-800'}`}>
           <div className="flex justify-between items-start mb-2">
             <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Asset Leakage</h3>
-            <Shield size={16} className={isAssetAlert ? 'text-rose-500' : 'text-indigo-500'}/>
+            <Shield size={16} className={isAssetAlert ? 'text-rose-500 animate-pulse' : 'text-indigo-500'}/>
           </div>
           <div className={`text-2xl font-black ${isAssetAlert ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'}`}>{assetDeficit > 0 ? `-${assetDeficit}` : 'SECURE'}</div>
           <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">RMGP Deficit</p>
+
+          {siteDeficits.length > 0 && (
+            <div className="absolute top-[80%] left-0 mt-2 w-full bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 text-[10px] font-black p-4 rounded-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 z-50 shadow-2xl border border-slate-700 flex flex-col gap-2 transform translate-y-2 group-hover:translate-y-0">
+              <span className="text-rose-400 dark:text-rose-600 border-b border-slate-600 dark:border-slate-300 pb-1.5 mb-1 uppercase tracking-widest">Leaking Nodes</span>
+              <div className="max-h-32 overflow-y-auto custom-scrollbar pr-1 space-y-2">
+                {siteDeficits.map((sd, i) => (
+                  <div key={i} className="flex justify-between items-center">
+                    <span className="uppercase truncate pr-2">{sd.site}</span>
+                    <span className="bg-rose-500/20 text-rose-300 dark:bg-rose-500/10 dark:text-rose-600 px-2 py-0.5 rounded shadow-sm shrink-0">-{sd.deficit}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* CHART 2: GOVT OFFICIALS VISIT 🏛️ */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between relative group">
+        {/* CHART 2: GOVT OFFICIALS VISIT */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between relative group z-30">
            <div className="flex justify-between items-start mb-4">
              <div>
                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Govt Officials Visit</h3>
@@ -3291,7 +3301,6 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
              </div>
            </div>
 
-           {/* ✨ MAGICAL HOVER TOOLTIP FOR GOVT VISITS */}
            {govVisitsList.length > 0 && (
              <div className="absolute top-[80%] left-0 mt-2 w-full bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 text-[10px] font-black p-4 rounded-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 z-50 shadow-2xl border border-slate-700 flex flex-col gap-2 transform translate-y-2 group-hover:translate-y-0">
                <span className="text-amber-400 dark:text-amber-600 border-b border-slate-600 dark:border-slate-300 pb-1.5 mb-1 uppercase tracking-widest">Visit Logs</span>
@@ -3305,8 +3314,8 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
            )}
         </div>
 
-        {/* CHART 3: COMPLIANCE ROLLCALL 📋 */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between relative group">
+        {/* CHART 3: COMPLIANCE ROLLCALL */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between relative group z-20">
            <div className="flex justify-between items-start mb-4">
              <div>
                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Compliance Status</h3>
@@ -3327,26 +3336,24 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
              </div>
            </div>
 
-           {/* ✨ MASSIVE HOVER TOOLTIP FOR COMPLIANCE */}
            <div className="absolute top-[80%] right-0 mt-2 w-72 bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 p-4 rounded-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 z-50 shadow-2xl border border-slate-700 flex flex-col gap-4 transform translate-y-2 group-hover:translate-y-0">
-             
              <div className="flex flex-col gap-1.5">
                <span className="text-[10px] font-black text-emerald-400 dark:text-emerald-600 border-b border-slate-600 dark:border-slate-300 pb-1.5 uppercase tracking-widest">Submitted ({submittedSitesList.length})</span>
                <div className="flex flex-wrap gap-1 mt-1">
                  {submittedSitesList.length === 0 ? <span className="text-[9px] text-slate-400">None</span> : submittedSitesList.map(s => <span key={s} className="text-[8.5px] font-bold uppercase tracking-wider bg-slate-700 dark:bg-slate-200 px-2 py-1 rounded">{s}</span>)}
                </div>
              </div>
-
              <div className="flex flex-col gap-1.5">
                <span className="text-[10px] font-black text-rose-400 dark:text-rose-600 border-b border-slate-600 dark:border-slate-300 pb-1.5 uppercase tracking-widest">Pending ({pendingSitesList.length})</span>
                <div className="flex flex-wrap gap-1 mt-1">
                  {pendingSitesList.length === 0 ? <span className="text-[9px] text-slate-400">All Clear!</span> : pendingSitesList.map(s => <span key={s} className="text-[8.5px] font-bold uppercase tracking-wider bg-slate-700 dark:bg-slate-200 px-2 py-1 rounded">{s}</span>)}
                </div>
              </div>
-            </div>
-            </div>
-          {/* KPI 4: SURGE ANOMALIES (Fills the empty space!) 🚨 */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between relative group cursor-help">
+           </div>
+        </div>
+
+        {/* CHART 4: SURGE ANOMALIES */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between relative group cursor-help z-10">
            <div className="flex justify-between items-start mb-4">
              <div>
                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Surge Anomalies</h3>
@@ -3362,7 +3369,6 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
              </div>
            </div>
 
-           {/* ✨ MASSIVE HOVER TOOLTIP FOR ANOMALIES */}
            {anomalies.length > 0 && (
              <div className="absolute top-[80%] right-0 mt-2 w-max min-w-[200px] bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 p-4 rounded-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 z-50 shadow-2xl border border-slate-700 flex flex-col gap-2 transform translate-y-2 group-hover:translate-y-0">
                <span className="text-[10px] font-black text-rose-400 dark:text-rose-600 border-b border-slate-600 dark:border-slate-300 pb-1.5 mb-1 uppercase tracking-widest">Drastic Changes Detected</span>
@@ -3381,13 +3387,10 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
 
       </div>
 
-      {/* 📊 ZONE 3: THE TRIPLE-THREAT VISUAL MATRIX */}
-      <div >
-        
-        {/* 🚨 THE SYMMETRICAL 4-CHART EXECUTIVE ROW */}
+      {/* 📊 THE TRIPLE-THREAT VISUAL MATRIX */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
         
-        {/* CHART 1: MATERIAL FLOW (DISPATCH) */}
+        {/* CHART 1: DISPATCH */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group">
            <div className="flex justify-between items-start mb-6 shrink-0">
              <div>
@@ -3398,7 +3401,6 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
            </div>
            <div className="flex-1 relative flex items-end justify-around gap-4 px-2 pb-2 border-b border-slate-100 dark:border-slate-800/50 mb-2">
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-2 pb-2 opacity-[0.05] dark:opacity-[0.1]">{[...Array(5)].map((_, i) => <div key={i} className="w-full border-t border-slate-900 dark:border-slate-100"></div>)}</div>
-              {/* Bars */}
               <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
                 <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-slate-800 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">{tSolid}</div>
                 <div style={{ height: `${(tSolid / (Math.max(tSolid, tGas, tScrap, 1))) * 100}%`, minHeight: tSolid > 0 ? '4px' : '0' }} className="w-full max-w-[28px] bg-slate-400 dark:bg-slate-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
@@ -3417,7 +3419,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
            </div>
         </div>
 
-        {/* CHART 2: INBOUND RECEIPTS */}
+        {/* CHART 2: RECEIPTS */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group">
            <div className="flex justify-between items-start mb-6 shrink-0">
              <div>
@@ -3428,7 +3430,6 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
            </div>
            <div className="flex-1 relative flex items-end justify-around gap-6 px-4 pb-2 border-b border-slate-100 dark:border-slate-800/50 mb-2">
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-4 pb-2 opacity-[0.05] dark:opacity-[0.1]">{[...Array(5)].map((_, i) => <div key={i} className="w-full border-t border-slate-900 dark:border-slate-100"></div>)}</div>
-              {/* Bars */}
               <div className="flex flex-col items-center group/bar h-full justify-end relative z-10 w-16">
                 <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-blue-600 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">{recCo}</div>
                 <div style={{ height: `${(recCo / (Math.max(recCo, recCon, 1))) * 100}%`, minHeight: recCo > 0 ? '4px' : '0' }} className="w-full max-w-[32px] bg-blue-400 dark:bg-blue-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
@@ -3442,7 +3443,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
            </div>
         </div>
 
-        {/* CHART 3: ASSET RECOVERY (OGP) */}
+        {/* CHART 3: OGP */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group">
            <div className="flex justify-between items-start mb-6 shrink-0">
              <div>
@@ -3453,7 +3454,6 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
            </div>
            <div className="flex-1 relative flex items-end justify-around gap-4 px-2 pb-2 border-b border-slate-100 dark:border-slate-800/50 mb-2">
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-2 pb-2 opacity-[0.05] dark:opacity-[0.1]">{[...Array(5)].map((_, i) => <div key={i} className="w-full border-t border-slate-900 dark:border-slate-100"></div>)}</div>
-              {/* Bars */}
               <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
                 <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-slate-800 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">{rmgpOut}</div>
                 <div style={{ height: `${(rmgpOut / (Math.max(rmgpOut, rmgpIn, nrgp, 1))) * 100}%`, minHeight: rmgpOut > 0 ? '4px' : '0' }} className="w-full max-w-[28px] bg-amber-400 dark:bg-amber-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
@@ -3472,7 +3472,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
            </div>
         </div>
 
-        {/* CHART 4: OPERATIONS (STAFF & VEHICLES) */}
+        {/* CHART 4: OPERATIONS */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group">
            <div className="flex justify-between items-start mb-6 shrink-0">
              <div>
@@ -3483,7 +3483,6 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
            </div>
            <div className="flex-1 relative flex items-end justify-around gap-2 px-1 pb-2 border-b border-slate-100 dark:border-slate-800/50 mb-2">
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-1 pb-2 opacity-[0.05] dark:opacity-[0.1]">{[...Array(5)].map((_, i) => <div key={i} className="w-full border-t border-slate-900 dark:border-slate-100"></div>)}</div>
-              {/* Bars (4 of them!) */}
               <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
                 <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-slate-800 text-white text-[9px] font-black py-1 px-1.5 rounded-lg pointer-events-none shadow-xl border border-white/10">{footCon}</div>
                 <div style={{ height: `${(footCon / (Math.max(footCon, footRil, vehCon, vehCo, 1))) * 100}%`, minHeight: footCon > 0 ? '4px' : '0' }} className="w-full max-w-[20px] bg-blue-400 dark:bg-blue-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
@@ -3508,12 +3507,10 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
         </div>
 
       </div>
-      </div>
 
-      {/* 🗂️ ZONE 4: TACTICAL LEDGER WALL (The Cards) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      {/* 🗂️ TACTICAL LEDGER WALL (PREMIUM UPGRADE) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         {filtered.map(r => {
-          // Card Anomaly Logic
           const r_rmgpOut = num(r.ogp_rmgp);
           const r_rmgpIn = num(r.ogp_rmgp_in);
           const r_scrap = num(r.disp_scrap);
@@ -3522,26 +3519,32 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
           const hasAnomaly = isLeakage || isHighScrap;
 
           return (
-            <div key={r.id} onClick={() => setViewingRep(r)} className={`bg-white dark:bg-slate-900 p-5 rounded-2xl border cursor-pointer hover:-translate-y-1 transition-all group relative overflow-hidden ${hasAnomaly ? 'border-rose-400 dark:border-rose-500/50 shadow-sm dark:shadow-[0_0_15px_rgba(244,63,94,0.1)]' : 'border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md'}`}>
+            <div key={r.id} onClick={() => setViewingRep(r)} className={`bg-white dark:bg-[#0f172a] p-6 rounded-[2rem] border-2 cursor-pointer hover:-translate-y-1.5 transition-all group relative overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] ${hasAnomaly ? 'border-rose-200 dark:border-rose-500/30' : 'border-slate-100 dark:border-slate-800'}`}>
               
-              {hasAnomaly && <div className="absolute top-0 right-0 w-16 h-16 bg-rose-500/10 blur-xl rounded-full"></div>}
+              {hasAnomaly && <div className="absolute -top-10 -right-10 w-32 h-32 bg-rose-500/10 blur-2xl rounded-full pointer-events-none"></div>}
+              {hasAnomaly && <div className="absolute top-0 left-0 w-1.5 h-full bg-rose-500"></div>}
+              {!hasAnomaly && <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>}
               
-              <div className="flex justify-between items-start mb-3">
+              <div className="flex justify-between items-start mb-4 pl-2">
                 <div>
-                  <h4 className="font-black text-slate-900 dark:text-white uppercase text-sm">{r.site}</h4>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Sr. {r.sr_no}</p>
+                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Sr. {r.sr_no}</p>
+                  <h4 className="font-black text-slate-900 dark:text-white uppercase text-xl leading-none">{r.site}</h4>
                 </div>
-                <div className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[9px] font-black uppercase px-2 py-1 rounded">{r.date_from}</div>
+                <div className="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-1.5">
+                  <Calendar size={10} /> {r.date_from}
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 mt-4">
-                <div className="bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/50 p-2 rounded-lg">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Dispatch</span>
-                  <span className={`text-xs font-black ${isHighScrap ? 'text-rose-500' : 'text-slate-700 dark:text-slate-300'}`}>{num(r.disp_solid)+num(r.disp_gas)+r_scrap}</span>
+              <div className="grid grid-cols-2 gap-3 mt-5 pl-2">
+                <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 p-3 rounded-2xl shadow-sm relative overflow-hidden">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Total Dispatch</span>
+                  <span className={`text-xl font-black relative z-10 ${isHighScrap ? 'text-rose-600 dark:text-rose-400' : 'text-slate-800 dark:text-slate-200'}`}>{num(r.disp_solid)+num(r.disp_gas)+r_scrap}</span>
+                  {isHighScrap && <AlertTriangle size={16} className="absolute right-3 bottom-3 text-rose-500/20" />}
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/50 p-2 rounded-lg">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">RMGP Delta</span>
-                  <span className={`text-xs font-black ${isLeakage ? 'text-rose-500' : 'text-emerald-500'}`}>{isLeakage ? `-${r_rmgpOut - r_rmgpIn}` : '0 Loss'}</span>
+                <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 p-3 rounded-2xl shadow-sm relative overflow-hidden">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">RMGP Delta</span>
+                  <span className={`text-xl font-black relative z-10 ${isLeakage ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>{isLeakage ? `-${r_rmgpOut - r_rmgpIn}` : '0 Loss'}</span>
+                  {isLeakage && <Shield size={16} className="absolute right-3 bottom-3 text-rose-500/20" />}
                 </div>
               </div>
             </div>
@@ -3549,36 +3552,36 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
         })}
       </div>
 
-      {/* 📄 ZONE 5: THE DEEP DIVE MODAL */}
+      {/* 📄 DEEP DIVE MODAL (TABLE STAYS EXACTLY THE SAME!) */}
       {viewingRep && (
-        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in" onClick={() => setViewingRep(null)}>
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative" onClick={e => e.stopPropagation()}>
-             <div className="h-2 bg-emerald-500 w-full shrink-0"></div>
+        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/90 backdrop-blur-sm z-[150] flex items-center justify-center p-4 animate-in fade-in" onClick={() => setViewingRep(null)}>
+          <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col relative animate-in zoom-in-[0.98] duration-300" onClick={e => e.stopPropagation()}>
              
-             <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start bg-slate-50 dark:bg-slate-950/50 shrink-0">
+             <div className="p-6 sm:p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start bg-white dark:bg-[#0f172a] shrink-0">
                <div>
-                 <span className="text-[10px] font-black bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-1 rounded uppercase tracking-widest">Sr No. {viewingRep.sr_no}</span>
-                 <h2 className="text-xl font-black text-slate-900 dark:text-white mt-2 uppercase">{viewingRep.site}</h2>
-                 <p className="text-xs font-bold text-slate-500 mt-1">Date: {viewingRep.date_from} TO {viewingRep.date_to}</p>
+                 <span className="text-[10px] font-black bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 shadow-sm px-3 py-1.5 rounded-lg uppercase tracking-widest">Sr No. {viewingRep.sr_no}</span>
+                 <h2 className="text-3xl font-black text-slate-900 dark:text-white mt-4 uppercase tracking-tight">{viewingRep.site}</h2>
+                 <p className="text-xs font-bold text-slate-500 mt-1.5 flex items-center gap-1.5"><Calendar size={14}/> Logged: {viewingRep.date_from} TO {viewingRep.date_to}</p>
                </div>
-               <button onClick={() => setViewingRep(null)} className="p-2 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm"><X size={16} /></button>
+               <button onClick={() => setViewingRep(null)} className="p-3 text-slate-400 hover:text-rose-500 bg-slate-100 dark:bg-slate-800 rounded-full shadow-sm transition-all hover:bg-slate-200 dark:hover:bg-slate-700"><X size={18} /></button>
              </div>
              
-             <div className="p-6 overflow-y-auto custom-scrollbar">
-               <div className="overflow-x-auto border border-slate-300 dark:border-slate-700 rounded-xl">
-                 <table className="w-max min-w-full border-collapse text-center text-[10px] font-black uppercase tracking-widest bg-white dark:bg-slate-900">
+             <div className="p-6 sm:p-8 overflow-y-auto custom-scrollbar bg-slate-50/50 dark:bg-[#0B1120]">
+               <div className="overflow-x-auto border-2 border-slate-200 dark:border-slate-700 rounded-3xl shadow-sm bg-white dark:bg-slate-900">
+                 {/* EXACT TABLE - DO NOT TOUCH */}
+                 <table className="w-max min-w-full border-collapse text-center text-[10px] font-black uppercase tracking-widest">
                    <thead>
                      <tr className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2">Sr. No.</th>
-                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2">SITE</th>
-                       <th colSpan="3" className="border border-slate-300 dark:border-slate-700 p-2 bg-emerald-100/50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-400">DISPATCH</th>
-                       <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 bg-indigo-100/50 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-400">RECEIPT</th>
-                       <th colSpan="3" className="border border-slate-300 dark:border-slate-700 p-2 bg-amber-100/50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400">OGP</th>
-                       <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 bg-blue-100/50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400">VEHICLE</th>
-                       <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 bg-purple-100/50 dark:bg-purple-900/20 text-purple-800 dark:text-purple-400">CONTRACTOR/ RIL STAFF</th>
-                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 text-rose-600 dark:text-rose-400">VISITOR</th>
-                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 text-rose-600 dark:text-rose-400">GOV.<br/>OFFICIAL</th>
-                       <th colSpan="4" className="border border-slate-300 dark:border-slate-700 p-2 bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white">DEPLOYMENT</th>
+                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-3">Sr. No.</th>
+                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-3">SITE</th>
+                       <th colSpan="3" className="border border-slate-300 dark:border-slate-700 p-3 bg-emerald-100/50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-400">DISPATCH</th>
+                       <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 bg-indigo-100/50 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-400">RECEIPT</th>
+                       <th colSpan="3" className="border border-slate-300 dark:border-slate-700 p-3 bg-amber-100/50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400">OGP</th>
+                       <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 bg-blue-100/50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400">VEHICLE</th>
+                       <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 bg-purple-100/50 dark:bg-purple-900/20 text-purple-800 dark:text-purple-400">CON/RIL STAFF</th>
+                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 text-rose-600 dark:text-rose-400">VISITOR</th>
+                       <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-3 text-rose-600 dark:text-rose-400">GOV.<br/>OFF.</th>
+                       <th colSpan="4" className="border border-slate-300 dark:border-slate-700 p-3 bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white">DEPLOYMENT</th>
                      </tr>
                      <tr className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400">
                        <th className="border border-slate-300 dark:border-slate-700 p-2">SOLID</th>
@@ -3589,10 +3592,10 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
                        <th className="border border-slate-300 dark:border-slate-700 p-2">NRGP</th>
                        <th className="border border-slate-300 dark:border-slate-700 p-2">RMGP</th>
                        <th className="border border-slate-300 dark:border-slate-700 p-2">RMGP IN</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">CONTRACTOR<br/>VEHICLE</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">COMPANY/<br/>EMP. VEHICLE</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">CONTRACTOR<br/>WORKER</th>
-                       <th className="border border-slate-300 dark:border-slate-700 p-2">RIL<br/>EMPLOYE</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">CON.<br/>VEH</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">CO.<br/>VEH</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">CON.<br/>WORKER</th>
+                       <th className="border border-slate-300 dark:border-slate-700 p-2">RIL<br/>EMP.</th>
                        <th className="border border-slate-300 dark:border-slate-700 p-2">Day SS</th>
                        <th className="border border-slate-300 dark:border-slate-700 p-2">Day SG</th>
                        <th className="border border-slate-300 dark:border-slate-700 p-2">Night SS</th>
@@ -3624,13 +3627,13 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
                      </tr>
                    </tbody>
                  </table>
+                 {/* END OF TABLE */}
                </div>
              </div>
 
-             <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 flex justify-between shrink-0">
-               {/* ✨ THE NEW ADMIN DELETE BUTTON! */}
-               <button onClick={() => { onDeleteWeekly(viewingRep.id); setViewingRep(null); }} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-black text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 transition-colors shadow-sm border border-rose-200 dark:border-rose-800 uppercase tracking-widest">
-                 <Trash2 size={16} /> Delete
+             <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0f172a] flex flex-wrap justify-between gap-4 shrink-0 rounded-b-[2.5rem]">
+               <button onClick={() => { onDeleteWeekly(viewingRep.id); setViewingRep(null); }} className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-xs font-black text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 transition-all shadow-sm border border-rose-200 dark:border-rose-800 uppercase tracking-widest w-full sm:w-auto active:scale-95">
+                 <Trash2 size={16} /> Delete Ledger
                </button>
 
                <button onClick={() => {
@@ -3643,8 +3646,8 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
                   const blob = new Blob([csv], { type: 'text/csv' });
                   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
                   a.download = `Ledger_${r.site}_${r.date_from}.csv`; a.click();
-               }} className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-xs font-black text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 transition-colors shadow-sm border border-indigo-200 dark:border-indigo-800 uppercase tracking-widest">
-                 <Download size={16} /> Download Single CSV
+               }} className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 rounded-2xl text-xs font-black text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 transition-all shadow-sm border border-indigo-200 dark:border-indigo-800 uppercase tracking-widest active:scale-95">
+                 <Download size={16} /> Download .CSV
                </button>
              </div>
           </div>
@@ -3654,7 +3657,6 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
     </div>
   );
 }
-
 // ==========================================
 // ⚙️ GOD-MODE SETTINGS PANEL (UPGRADED!)
 // ==========================================
