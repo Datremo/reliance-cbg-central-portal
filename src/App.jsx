@@ -841,6 +841,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
   // 🚨 ✨ THE BROADCAST GATEKEEPER BRAIN ✨ 🚨
   const [unreadBroadcasts, setUnreadBroadcasts] = useState([]);
   const [isAcking, setIsAcking] = useState(false);
+  const [viewingBroadcast, setViewingBroadcast] = useState(null); // ✨ NEW: Pop-View Modal State!
 
   useEffect(() => {
     const fetchBroadcasts = async () => {
@@ -988,24 +989,28 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
         <div className="grid grid-cols-2 gap-4">
           <button onClick={() => { setCurrentApp('deployment'); setAppTab('form'); }} className="aspect-square bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] border border-white/60 dark:border-slate-700/50 flex flex-col items-center justify-center gap-4 transition-all active:scale-[0.96] hover:shadow-lg group">
             <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform duration-300"><Users size={28} className="stroke-[1.5]"/></div>
-            <span className="block font-bold text-slate-700 dark:text-white text-base sm:text-base tracking-wide leading-tight px-2 text-center">{t.hub.dep}</span>
+            <span className="block font-bold text-slate-700 dark:text-white text-sm sm:text-base tracking-wide leading-tight px-2 text-center">{t.hub.dep}</span>
           </button>
 
           <button onClick={() => { setCurrentApp('incident'); setAppTab('form'); }} className="aspect-square bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] border border-white/60 dark:border-slate-700/50 flex flex-col items-center justify-center gap-4 transition-all active:scale-[0.96] hover:shadow-lg group">
             <div className="w-14 h-14 bg-gradient-to-br from-rose-400 to-red-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-rose-500/30 group-hover:scale-110 transition-transform duration-300"><AlertTriangle size={28} className="stroke-[1.5]"/></div>
-            <span className="block font-bold text-slate-700 dark:text-white text-base sm:text-base tracking-wide leading-tight px-2 text-center">{t.hub.inc}</span>
+            <span className="block font-bold text-slate-700 dark:text-white text-sm sm:text-base tracking-wide leading-tight px-2 text-center">{t.hub.inc}</span>
           </button>
 
-          <button onClick={() => { setCurrentApp('weekly'); setAppTab('form'); }} className="col-span-2 py-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] border border-white/60 dark:border-slate-700/50 flex flex-row items-center justify-center gap-5 transition-all active:scale-[0.96] hover:shadow-lg group">
+          {/* ✨ Fixed Weekly App to be a square! */}
+          <button onClick={() => { setCurrentApp('weekly'); setAppTab('form'); }} className="aspect-square bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] border border-white/60 dark:border-slate-700/50 flex flex-col items-center justify-center gap-4 transition-all active:scale-[0.96] hover:shadow-lg group">
             <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 to-teal-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:scale-110 transition-transform duration-300"><BookOpen size={28} className="stroke-[1.5]"/></div>
-            <div className="text-left">
-              <span className="block font-bold text-slate-900 dark:text-white text-base tracking-wide leading-tight">{t.hub.mis}</span>
-              <span className="block text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">{t.hub.misSub}</span>
-            </div>
+            <span className="block font-bold text-slate-700 dark:text-white text-sm sm:text-base tracking-wide leading-tight px-2 text-center">{t.hub.mis}</span>
+          </button>
+
+          {/* ✨ NEW DIRECTIVES INBOX APP! */}
+          <button onClick={() => { setCurrentApp('broadcasts'); }} className="aspect-square bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] border border-white/60 dark:border-slate-700/50 flex flex-col items-center justify-center gap-4 transition-all active:scale-[0.96] hover:shadow-lg group relative overflow-hidden">
+            <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-amber-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:scale-110 transition-transform duration-300"><Megaphone size={28} className="stroke-[1.5]"/></div>
+            <span className="block font-bold text-slate-700 dark:text-white text-sm sm:text-base tracking-wide leading-tight px-2 text-center">Notice</span>
           </button>
         </div>
       </div>
-    </div>
+      </div>
   );
 
   const renderModule = () => (
@@ -1016,7 +1021,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
         </button>
         <div className="flex-1">
           <h2 className="font-black text-slate-900 dark:text-white tracking-tight text-lg leading-tight">
-            {currentApp === 'deployment' ? t.hub.dep : currentApp === 'incident' ? t.hub.inc : t.hub.mis}
+            {currentApp === 'deployment' ? t.hub.dep : currentApp === 'incident' ? t.hub.inc : currentApp === 'broadcasts' ? 'Command Directives' : t.hub.mis}
           </h2>
           <p className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5 flex items-center gap-1">
             <MapPin size={12} /> {userProfile.site}
@@ -1024,16 +1029,16 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
         </div>
       </div>
 
-      <div className="px-4 pt-5 pb-2 shrink-0 z-40 bg-[#F2F2F7] dark:bg-black">
-        <div className="bg-slate-200/60 dark:bg-slate-800/60 backdrop-blur-md p-1 rounded-[14px] flex relative shadow-inner border border-black/5 dark:border-white/5">
-          <div 
-            className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-slate-600 rounded-[10px] shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
-            style={{ transform: appTab === 'form' ? 'translateX(0)' : 'translateX(100%)' }}
-          ></div>
-          <button onClick={() => setAppTab('form')} className={`flex-1 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-colors duration-300 relative z-10 ${appTab === 'form' ? 'text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>{t.nav.newEntry}</button>
-          <button onClick={() => setAppTab('history')} className={`flex-1 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-colors duration-300 relative z-10 ${appTab === 'history' ? 'text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>{t.nav.viewLogs}</button>
+      {/* Only show New Entry/Logs toggle if it's NOT the Directives app! */}
+      {currentApp !== 'broadcasts' && (
+        <div className="px-4 pt-5 pb-2 shrink-0 z-40 bg-[#F2F2F7] dark:bg-black">
+          <div className="bg-slate-200/60 dark:bg-slate-800/60 backdrop-blur-md p-1 rounded-[14px] flex relative shadow-inner border border-black/5 dark:border-white/5">
+            <div className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-slate-600 rounded-[10px] shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" style={{ transform: appTab === 'form' ? 'translateX(0)' : 'translateX(100%)' }}></div>
+            <button onClick={() => setAppTab('form')} className={`flex-1 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-colors duration-300 relative z-10 ${appTab === 'form' ? 'text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>{t.nav.newEntry}</button>
+            <button onClick={() => setAppTab('history')} className={`flex-1 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-colors duration-300 relative z-10 ${appTab === 'history' ? 'text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>{t.nav.viewLogs}</button>
+          </div>
         </div>
-      </div>
+      )}
 
       <div key={currentApp + appTab + language} className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar pb-10 animate-android-swipe">
         {currentApp === 'deployment' && appTab === 'form' && <DeploymentMobileForm userProfile={userProfile} fetchDeployments={fetchDeployments} setActiveTab={setAppTab} fillerName={fillerName} deployments={deployments} language={language}/>}
@@ -1044,6 +1049,46 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
 
         {currentApp === 'weekly' && appTab === 'form' && <WeeklyMobileForm userProfile={userProfile} fetchWeeklyReports={fetchWeeklyReports} setActiveTab={setAppTab} language={language}/>}
         {currentApp === 'weekly' && appTab === 'history' && <WeeklyMobileHistory weeklyReports={weeklyReports} isLoading={isLoading} onEditWeekly={onEditWeekly} language={language}/>}
+      
+      {/* ✨ THE NEW DIRECTIVES INBOX LIST */}
+        {currentApp === 'broadcasts' && (
+          <div className="p-4 space-y-4 pt-6">
+            {(() => {
+              const mySite = (userProfile.site || "").toUpperCase().trim();
+              const myBroadcasts = broadcasts?.filter(b => {
+                let targets = [];
+                try { targets = typeof b.target_sites === 'string' ? JSON.parse(b.target_sites) : b.target_sites; } catch(e){}
+                const safeTargets = (Array.isArray(targets) ? targets : []).map(t => String(t).toUpperCase().trim());
+                return safeTargets.includes('ALL') || safeTargets.includes(mySite);
+              }).sort((a,b) => new Date(b.created_at) - new Date(a.created_at)) || [];
+
+              if(myBroadcasts.length === 0) return (
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-10 text-center flex flex-col items-center shadow-sm">
+                  <CheckCircle size={32} className="text-slate-300 dark:text-slate-600 mb-4"/>
+                  <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest">Inbox Zero</h3>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">No directives at this time.</p>
+                </div>
+              );
+
+              return myBroadcasts.map(broadcast => {
+                const hasAck = acks?.some(a => a.broadcast_id === broadcast.id && a.site === userProfile.site);
+                return (
+                  <div key={broadcast.id} onClick={() => setViewingBroadcast(broadcast)} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[1.5rem] p-5 shadow-sm relative overflow-hidden active:scale-95 transition-all cursor-pointer">
+                    <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${hasAck ? 'bg-emerald-500' : 'bg-orange-500'}`}></div>
+                    <div className="ml-2">
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest mb-2 border ${hasAck ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400'}`}>
+                        {hasAck ? 'Acknowledged' : 'Pending Action'}
+                      </span>
+                      <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-base mb-1 truncate">{broadcast.title || "Security Alert"}</h3>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{new Date(broadcast.created_at).toLocaleString()}</p>
+                    </div>
+                  </div>
+                )
+              });
+            })()}
+          </div>
+        )}
+      
       </div>
     </div>
   );
@@ -1095,7 +1140,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
               <div className="bg-rose-600 p-6 text-center relative overflow-hidden">
                  <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.2)_50%,transparent_75%)] bg-[length:250%_250%] animate-button-shine pointer-events-none"></div>
                  <AlertTriangle className="mx-auto text-white mb-2 drop-shadow-md animate-pulse" size={48} />
-                 <h2 className="text-white font-black uppercase tracking-widest text-xl drop-shadow-md">Urgent Directive</h2>
+                 <h2 className="text-white font-black uppercase tracking-widest text-xl drop-shadow-md">Urgent Notice</h2>
                  <div className="inline-block mt-3 px-3 py-1 bg-black/30 rounded-full text-rose-100 text-[10px] font-black uppercase tracking-widest shadow-inner">
                     Message {1} of {unreadBroadcasts.length}
                  </div>
@@ -1122,6 +1167,30 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
                  </button>
               </div>
            </div>
+        </div>
+      )}
+
+      {/* ✨ NEW: SUPERVISOR POP-VIEW MODAL */}
+      {viewingBroadcast && (
+        <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200" onClick={() => setViewingBroadcast(null)}>
+          <div className="bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-800 rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden flex flex-col max-h-[80vh]" onClick={e => e.stopPropagation()}>
+            
+            <div className="bg-slate-100 dark:bg-slate-900 p-5 flex justify-between items-start border-b border-slate-200 dark:border-slate-800 shrink-0">
+              <div>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400 mb-2 border border-orange-200 dark:border-orange-500/30"><Megaphone size={10}/> Directive Details</span>
+                <h3 className="font-black text-slate-900 dark:text-white text-lg uppercase tracking-tight leading-tight pr-4">{viewingBroadcast.title || "Security Alert"}</h3>
+                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Sent: {new Date(viewingBroadcast.created_at).toLocaleString()}</p>
+              </div>
+              <button onClick={() => setViewingBroadcast(null)} className="p-2 bg-white dark:bg-slate-800 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-full shadow-sm active:scale-95 transition-all border border-slate-200 dark:border-slate-700 shrink-0"><X size={14} /></button>
+            </div>
+
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+                {viewingBroadcast.message}
+              </p>
+            </div>
+            
+          </div>
         </div>
       )}
 
@@ -1628,16 +1697,27 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
         </div>
 
 
-        <div className="p-6 border-t border-slate-800 bg-slate-950/30">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-300 text-lg border border-slate-700">{userProfile.name.charAt(0)}</div>
-            <div>
-              <p className="text-sm font-bold text-slate-100">{userProfile.name}</p>
-              <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mt-0.5">Administrator</p>
+       {/* ✨ BRIGHT & CLASSY SIDEBAR PROFILE WIDGET */}
+        <div className="p-4 mx-3 mb-4 mt-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+          <div className="flex items-center justify-between relative z-10 mb-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center font-black text-indigo-600 dark:text-indigo-400 text-lg border border-indigo-100 dark:border-indigo-500/20 shrink-0">
+                {userProfile.name.charAt(0)}
+              </div>
+              <div className="min-w-0 pr-2">
+                <p className="text-sm font-black text-slate-800 dark:text-slate-100 uppercase truncate tracking-tight">{userProfile.name}</p>
+                <p className="text-[9px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mt-0.5">Administrator</p>
+              </div>
             </div>
+            
+            {/* ✨ SETTINGS ICON BESIDE NAME! */}
+            <button onClick={() => { setShowSettings(true); setIsMobileMenuOpen(false); }} className="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all shadow-sm shrink-0 border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+              <Settings size={18} />
+            </button>
           </div>
-          <button onClick={onLogout} className="flex items-center justify-center gap-2 py-3 px-3 bg-slate-900 border border-slate-700 hover:border-rose-500/50 rounded-xl text-sm font-semibold text-slate-400 hover:text-rose-400 w-full transition-all">
-            <LogOut size={16} /> Disconnect System
+
+          <button onClick={onLogout} className="flex items-center justify-center gap-2 py-2.5 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 dark:hover:border-rose-500/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 transition-all shadow-sm active:scale-95 group/logout">
+            <LogOut size={14} className="group-hover/logout:text-rose-500 transition-colors" /> Disconnect
           </button>
         </div>
       </aside>
@@ -1704,11 +1784,6 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
               title="Sync Data"
             >
                <RefreshCw size={18} className={isLoading ? "animate-spin" : ""} />
-            </button>
-
-            {/* ✨ SETTINGS GEAR BUTTON */}
-            <button onClick={() => setShowSettings(true)} className="p-2 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors shadow-sm">
-               <Settings size={18} />
             </button>
 
             {/* THEME TOGGLE */}
@@ -4158,60 +4233,31 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
   );
 }
 // ==========================================
-// ⚙️ GOD-MODE SETTINGS PANEL (UPGRADED!)
+// ⚙️ THE ULTIMATE HORIZONTAL SETTINGS DASHBOARD
 // ==========================================
 function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, onToggleStatus, onDeleteSite, onClose }) {
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState('profile'); 
   
   // Site Form States
   const [newSiteInput, setNewSiteInput] = useState('');
   const [newStateSelection, setNewStateSelection] = useState(''); 
   const [customStateInput, setCustomStateInput] = useState(''); 
   
-  // ✨ The Network Filter & Search Brain!
   const [networkFilter, setNetworkFilter] = useState('All');
-  const [siteSearchTerm, setSiteSearchTerm] = useState(''); // 🔍 NEW: Omni-search state!
+  const [siteSearchTerm, setSiteSearchTerm] = useState('');
 
-  // ✨ NEW: User Roster States
   const [allProfiles, setAllProfiles] = useState([]);
   const [isLoadingProfiles, setIsLoadingProfiles] = useState(false);
+  const [rosterSearch, setRosterSearch] = useState(''); 
 
-// ✨ NEW: SITE CREDENTIAL GENERATOR STATES
+  const [editingProfileId, setEditingProfileId] = useState(null);
+  const [editProfileName, setEditProfileName] = useState('');
+
   const [newCred, setNewCred] = useState({ email: '', password: '', site: '', names: '' });
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // ✨ NEW: THE API CALL TO OUR ROBOT
-  const handleCreateCredential = async (e) => {
-    e.preventDefault();
-    if (!newCred.site) return alert("Please select a site!");
-    setIsGenerating(true);
-    
-    // We call the Edge Function we just built!
-    const { data, error } = await supabase.functions.invoke('create-site-user', {
-      body: { 
-        email: newCred.email, 
-        password: newCred.password, 
-        site: newCred.site, 
-        names: newCred.names.toUpperCase() 
-      }
-    });
-
-    setIsGenerating(false);
-
-    if (error || (data && data.error)) {
-      alert(`Vault Rejection: ${error?.message || data?.error}`);
-    } else {
-      alert("✅ Site Terminal Access Granted! The supervisors can now log in.");
-      setNewCred({ email: '', password: '', site: '', names: '' });
-      // Refresh the roster!
-      const { data: newProfiles } = await supabase.from('profiles').select('*').order('role', { ascending: true });
-      if (newProfiles) setAllProfiles(newProfiles);
-    }
-  };
-  
-  // 📡 FETCH ALL PROFILES WHEN PROFILE TAB OPENS!
   useEffect(() => {
-    if (activeTab === 'profile') {
+    if (activeTab === 'profile' || activeTab === 'roster') {
       const fetchProfiles = async () => {
         setIsLoadingProfiles(true);
         const { data, error } = await supabase.from('profiles').select('*').order('role', { ascending: true });
@@ -4222,20 +4268,53 @@ function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, o
     }
   }, [activeTab]);
 
+  const handleCreateCredential = async (e) => {
+    e.preventDefault();
+    if (!newCred.site) return alert("Please select a site!");
+    setIsGenerating(true);
+    
+    const { data, error } = await supabase.functions.invoke('create-site-user', {
+      body: { email: newCred.email, password: newCred.password, site: newCred.site, names: newCred.names.toUpperCase() }
+    });
+
+    setIsGenerating(false);
+
+    if (error || (data && data.error)) {
+      alert(`Vault Rejection: ${error?.message || data?.error}`);
+    } else {
+      alert("✅ Site Terminal Access Granted!");
+      setNewCred({ email: '', password: '', site: '', names: '' });
+      const { data: newProfiles } = await supabase.from('profiles').select('*').order('role', { ascending: true });
+      if (newProfiles) setAllProfiles(newProfiles);
+    }
+  };
+
+  const handleSaveProfileEdit = async (id) => {
+    const { error } = await supabase.from('profiles').update({ name: editProfileName.toUpperCase() }).eq('id', id);
+    if (!error) {
+      setAllProfiles(allProfiles.map(p => p.id === id ? { ...p, name: editProfileName.toUpperCase() } : p));
+      setEditingProfileId(null);
+    }
+  };
+
+  const handleDeleteProfile = async (id, name, role) => {
+    if (role === 'admin') return alert("You cannot delete an Admin from this UI. 🛡️");
+    if(window.confirm(`🚨 Revoke access for ${name}?`)) {
+      const { error } = await supabase.from('profiles').delete().eq('id', id);
+      if (!error) setAllProfiles(allProfiles.filter(p => p.id !== id));
+    }
+  };
+
   const submitNewSite = (e) => {
     e.preventDefault();
     if (newSiteInput.trim()) {
       const finalState = newStateSelection === 'NEW' ? customStateInput.trim() : newStateSelection;
       if (!finalState) return alert("Please select or enter a state!");
-      
       onAddSite(newSiteInput.trim(), finalState);
-      setNewSiteInput('');
-      setNewStateSelection('');
-      setCustomStateInput('');
+      setNewSiteInput(''); setNewStateSelection(''); setCustomStateInput('');
     }
   };
 
-  // 🗺️ ✨ MAGIC: Filter & Segregate all sites beautifully by State!
   const displaySites = globalSites.filter(s => {
     const matchesFilter = networkFilter === 'All' ? true : s.status === networkFilter;
     const matchesSearch = siteSearchTerm === '' || s.name.toLowerCase().includes(siteSearchTerm.toLowerCase());
@@ -4251,215 +4330,293 @@ function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, o
   const sortedStates = Object.keys(groupedSites).sort();
 
   return (
-    <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50 dark:bg-slate-950 p-4 sm:p-8 animate-in fade-in duration-300 h-full">
+    <div className="flex flex-col h-full w-full animate-in fade-in duration-300">
       
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-8 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
-            <Settings className="text-indigo-500" /> System Control
-          </h1>
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Admin Access</p>
+      {/* ✨ THE GORGEOUS HORIZONTAL HEADER & SLIDING TABS */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-4 sm:p-6 shadow-sm mb-6 flex flex-col xl:flex-row justify-between items-center gap-6 relative overflow-hidden shrink-0">
+        {/* Ambient Glow */}
+        <div className="absolute -right-20 -top-20 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+        {/* Title Area */}
+        <div className="relative z-10 flex items-center justify-between w-full xl:w-auto">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
+              <Settings className="text-indigo-500" /> System Preferences
+            </h1>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Enterprise Configuration Vault</p>
+          </div>
+          {/* Mobile Close Button */}
+          <button onClick={onClose} className="xl:hidden p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-rose-100 hover:text-rose-600 transition-colors shadow-sm border border-slate-200 dark:border-slate-700">
+            <X size={20} />
+          </button>
         </div>
-        <button onClick={onClose} className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors active:scale-95 shadow-sm border border-slate-200 dark:border-slate-700">
+
+        {/* ✨ THE DYNAMIC COLOR-CHANGING SLIDING PILL TABS! */}
+        <div className="relative flex bg-slate-100 dark:bg-[#0B1120] p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner w-full xl:w-[550px] z-10">
+          <div className={`absolute top-1.5 bottom-1.5 w-[calc(33.333%-4px)] rounded-xl shadow-md transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] z-0 ${
+            activeTab === 'profile' ? 'bg-indigo-500 shadow-indigo-500/30' :
+            activeTab === 'roster' ? 'bg-emerald-500 shadow-emerald-500/30' :
+            'bg-blue-500 shadow-blue-500/30'
+          }`} style={{ transform: `translateX(${activeTab === 'profile' ? '0%' : activeTab === 'roster' ? 'calc(100% + 6px)' : 'calc(200% + 12px)'})`}}></div>
+
+          <button onClick={() => setActiveTab('profile')} className={`flex-1 relative z-10 py-3.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-colors duration-300 ${activeTab === 'profile' ? 'text-white' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}>My Profile</button>
+          <button onClick={() => setActiveTab('roster')} className={`flex-1 relative z-10 py-3.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-colors duration-300 ${activeTab === 'roster' ? 'text-white' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}>Profile Manager</button>
+          <button onClick={() => setActiveTab('sites')} className={`flex-1 relative z-10 py-3.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-colors duration-300 ${activeTab === 'sites' ? 'text-white' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}>Site Network</button>
+        </div>
+
+        {/* Desktop Close Button */}
+        <button onClick={onClose} className="hidden xl:block relative z-10 p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-rose-500/20 dark:hover:text-rose-400 transition-colors active:scale-95 shadow-sm border border-slate-200 dark:border-slate-700">
           <X size={20} />
         </button>
       </div>
 
-      {/* TABS */}
-      <div className="flex gap-2 mb-8 bg-slate-200/50 dark:bg-slate-800/50 p-1.5 rounded-2xl w-max border border-slate-200 dark:border-slate-800 shadow-inner mx-auto sm:mx-0">
-        <button onClick={() => setActiveTab('profile')} className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'profile' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>MANAGE PROFILE</button>
-        <button onClick={() => setActiveTab('sites')} className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'sites' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>Site Network</button>
-      </div>
+      {/* ✨ CONTENT CANVAS */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar pb-10 px-1">
+        
+        {/* 👤 TAB 1: MY PROFILE (THE CLASSY BLACK CARD) */}
+        {activeTab === 'profile' && (
+          <div className="animate-in slide-in-from-bottom-4 flex justify-center">
+            <div className="w-full max-w-2xl bg-gradient-to-br from-slate-900 via-[#0B1120] to-black rounded-[2.5rem] p-10 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.5)] border border-slate-800 relative overflow-hidden flex flex-col group mt-10">
+              <div className="absolute -right-20 -top-20 w-64 h-64 bg-gradient-to-br from-indigo-500/20 to-purple-500/10 rounded-full blur-3xl group-hover:bg-indigo-500/30 transition-all duration-700"></div>
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
 
-      {/* 👤 TAB 1: SYSTEM ACCESS ROSTER */}
-      {activeTab === 'profile' && (
-        <div className="space-y-8 animate-in slide-in-from-bottom-4">
-          
-          {/* YOUR PROFILE (THE BOSS) */}
-          <div className="max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-sm flex items-center gap-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl flex items-center justify-center border border-indigo-200 dark:border-indigo-500/20 shadow-lg shadow-indigo-500/30">
-              <User size={40} />
-            </div>
-            <div>
-              <h2 className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">ADMINISTRATOR</h2>
-              <p className="text-2xl font-black text-slate-900 dark:text-white uppercase leading-none mb-2">{userProfile.name}</p>
-              <div className="flex gap-2">
-                <span className="inline-block bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-sm">Site: {userProfile.site}</span>
-                <span className="inline-block bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-sm">Lvl: {userProfile.role}</span>
-              </div>
-            </div>
-          </div>
-{/* ✨ NEW: GENERATE TERMINAL ACCESS (FAANG UI) */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm relative overflow-hidden mt-8 mb-8">
-            <div className="absolute -right-10 -top-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-            <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest mb-6 flex items-center gap-2 relative z-10">
-              <ShieldCheck size={18} className="text-emerald-500"/> Issue Node Access
-            </h3>
-            
-            <form onSubmit={handleCreateCredential} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 relative z-10 items-end">
-              <div className="lg:col-span-1">
-                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Site Terminal</label>
-                <select required value={newCred.site} onChange={(e) => setNewCred({...newCred, site: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 dark:text-white uppercase focus:border-emerald-500 outline-none shadow-inner cursor-pointer">
-                  <option value="">Select Node...</option>
-                  {globalSites.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
-                </select>
-              </div>
-              <div className="lg:col-span-1">
-                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Mail ID</label>
-                <input type="email" required placeholder="site@cbg.com" value={newCred.email} onChange={(e) => setNewCred({...newCred, email: e.target.value.toLowerCase()})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none shadow-inner placeholder-slate-400" />
-              </div>
-              <div className="lg:col-span-1">
-                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Secure Password</label>
-                <input type="text" required placeholder="Min 6 chars" minLength="6" value={newCred.password} onChange={(e) => setNewCred({...newCred, password: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none shadow-inner placeholder-slate-400" />
-              </div>
-              <div className="lg:col-span-1">
-                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Officers (Comma separated)</label>
-                <input type="text" required placeholder="Rahul, Amit" value={newCred.names} onChange={(e) => setNewCred({...newCred, names: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none shadow-inner placeholder-slate-400 uppercase" />
-              </div>
-              <div className="lg:col-span-1">
-                <button type="submit" disabled={isGenerating} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-md shadow-emerald-500/25 flex items-center justify-center gap-2">
-                  {isGenerating ? <RefreshCw size={14} className="animate-spin" /> : <><Unlock size={14}/> Grant Access</>}
-                </button>
-              </div>
-            </form>
-          </div>
-          {/* EVERYONE ELSE'S PROFILES */}
-          <div>
-            <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 ml-1 flex items-center gap-2"><Users size={16}/> Global Security Roster</h3>
-            
-            {isLoadingProfiles ? (
-              <div className="p-10 text-center font-bold text-indigo-500 animate-pulse">Decrypting User Vault...</div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {allProfiles.map(profile => (
-                  <div key={profile.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm flex items-center gap-4 hover:shadow-md transition-all group">
-                    <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center font-black text-xl shrink-0 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-500/20 group-hover:text-indigo-600 transition-colors">
-                      {profile.name ? profile.name[0] : '?'}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase truncate leading-tight">{profile.name}</h4>
-                      <p className="text-[10px] font-bold text-slate-500 uppercase mt-0.5 truncate flex items-center gap-1"><MapPin size={10}/> {profile.site}</p>
-                    </div>
-                    <div className="shrink-0">
-                      <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-sm ${profile.role === 'admin' ? 'bg-rose-500 text-white' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'}`}>
-                        {profile.role === 'admin' ? 'Admin' : 'Officer'}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* 🌍 TAB 2: SITE NETWORK MANAGER */}
-      {activeTab === 'sites' && (
-        <div className="space-y-8 animate-in slide-in-from-bottom-4">
-          
-          {/* THE DEPLOYMENT WIDGET */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden max-w-3xl">
-            <div className="absolute -right-10 -top-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-            <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest mb-6 flex items-center gap-2 relative z-10"><PlusCircle size={18} className="text-indigo-500"/> Establish New Tracking Site</h3>
-            
-            <form onSubmit={submitNewSite} className="flex flex-col gap-3 relative z-10">
-              {/* ✨ STATE DROPDOWN */}
-              <select value={newStateSelection} onChange={e => setNewStateSelection(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-xs font-bold text-slate-900 dark:text-white uppercase focus:border-indigo-500 outline-none shadow-inner">
-                <option value="">-- SELECT STATE --</option>
-                {STATE_NAMES?.map(s => <option key={s} value={s}>{s}</option>)}
-                <option value="NEW">+ ADD NEW STATE</option>
-              </select>
-              
-              {/* ✨ THE MAGIC REVEAL BOX FOR NEW STATES! */}
-              {newStateSelection === 'NEW' && (
-                <div className="w-full animate-in fade-in slide-in-from-top-2">
-                  <input type="text" placeholder="ENTER NEW STATE NAME..." value={customStateInput} onChange={e => setCustomStateInput(e.target.value)} className="w-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 rounded-xl px-4 py-3 text-xs font-bold text-slate-900 dark:text-white uppercase focus:border-indigo-500 outline-none shadow-inner" />
+              <div className="flex justify-between items-start relative z-10 mb-10">
+                <div className="w-20 h-20 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-3xl flex items-center justify-center shadow-lg border border-white/20 text-4xl font-black text-white">
+                  {userProfile.name.charAt(0)}
                 </div>
-              )}
-              
-              {/* ✨ SITE NAME & DEPLOY BUTTON */}
-              <div className="flex gap-2">
-                <input type="text" value={newSiteInput} onChange={(e) => setNewSiteInput(e.target.value)} placeholder="ENTER SITE NAME..." className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-xs font-bold text-slate-900 dark:text-white uppercase focus:border-indigo-500 outline-none shadow-inner" />
-                <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 rounded-xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-md shadow-indigo-500/25 shrink-0 flex items-center gap-2">
-                  <Zap size={14}/> Deploy
-                </button>
-              </div>
-            </form>
-          </div>
-
-          {/* ✨ THE GORGEOUS STATE-SEGREGATED NETWORK GRID */}
-          <div>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-6 ml-1">
-              <div>
-                <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><MapPin size={16}/> Global Network Map</h3>
-                <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1">Viewing: {displaySites.length} Total Sites</p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                {/* 🔍 ✨ THE NEW SEARCH BAR! */}
-                <div className="relative w-full sm:w-48">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input type="text" placeholder="Search Site..." value={siteSearchTerm} onChange={(e) => setSiteSearchTerm(e.target.value)} className="w-full pl-8 pr-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors shadow-sm" />
+                <div className="text-right">
+                  <ShieldCheck size={28} className="text-indigo-400 ml-auto mb-2" />
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">Clearance Level</p>
+                  <p className="text-sm font-black text-indigo-400 uppercase tracking-widest">God-Mode / Admin</p>
                 </div>
-
-                {/* ✨ YOUR VIEW FILTERS! */}
-                <div className="inline-flex bg-slate-200/50 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner w-full sm:w-auto shrink-0">
-                  <button onClick={() => setNetworkFilter('All')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${networkFilter === 'All' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>All</button>
-                <button onClick={() => setNetworkFilter('commissioned')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${networkFilter === 'commissioned' ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' : 'text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400'}`}>Commissioned</button>
-                <button onClick={() => setNetworkFilter('project')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${networkFilter === 'project' ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20' : 'text-slate-500 hover:text-amber-600 dark:hover:text-amber-400'}`}>Projects</button>
               </div>
-            </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {sortedStates.map(stateName => {
-                const sitesInState = groupedSites[stateName].sort((a,b) => a.name.localeCompare(b.name));
-                const commissionedCount = sitesInState.filter(s => s.status === 'commissioned').length;
+
+              <div className="relative z-10">
+                <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Authorized Official</p>
+                <h2 className="text-4xl sm:text-5xl font-black text-white uppercase tracking-tight leading-none mb-6 drop-shadow-md">{userProfile.name}</h2>
                 
-                return (
-                  <div key={stateName} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm overflow-hidden flex flex-col max-h-[400px]">
-                    
-                    {/* STATE HEADER */}
-                    <div className="bg-slate-50 dark:bg-slate-950/50 p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
-                      <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">{stateName}</h4>
-                      <span className="text-[9px] font-black text-slate-500 bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded-md uppercase tracking-widest">
-                        {commissionedCount}/{sitesInState.length} Live
-                      </span>
-                    </div>
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-xl border border-white/10 flex items-center gap-2.5 shadow-sm">
+                    <MapPin size={16} className="text-emerald-400"/>
+                    <span className="text-xs font-bold text-slate-200 uppercase tracking-widest">{userProfile.site} Base</span>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-xl border border-white/10 flex items-center gap-2.5 shadow-sm">
+                    <Activity size={16} className="text-rose-400"/>
+                    <span className="text-xs font-bold text-slate-200 uppercase tracking-widest">Network Active</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
-                    {/* SITES LIST */}
-                    <div className="p-3 overflow-y-auto custom-scrollbar flex flex-col gap-2">
-                      {sitesInState.map(site => (
-                        <div key={site.id} className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800/50 group hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-colors">
-                          <div className="flex items-center gap-3">
-                            {/* The Glowing Status Dot */}
-                            <div className={`w-2 h-2 rounded-full shadow-sm ${site.status === 'commissioned' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse' : 'bg-amber-400'}`}></div>
-                            <span className={`text-xs font-black uppercase ${site.status === 'commissioned' ? 'text-slate-800 dark:text-slate-200' : 'text-slate-500'}`}>{site.name}</span>
-                          </div>
-                          
-                          {/* The Action Buttons */}
-                          <div className="flex items-center gap-1.5">
-                            <button onClick={() => onToggleStatus(site.id, site.status)} className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all active:scale-95 ${site.status === 'commissioned' ? 'bg-slate-200 text-slate-500 hover:bg-rose-100 hover:text-rose-600 dark:bg-slate-800 dark:hover:bg-rose-900/40 dark:hover:text-rose-400' : 'bg-indigo-50 text-indigo-600 hover:bg-emerald-500 hover:text-white dark:bg-indigo-500/10 dark:text-indigo-400 shadow-sm border border-indigo-200 dark:border-indigo-500/20'}`}>
-                              {site.status === 'commissioned' ? 'Revert' : 'Commission'}
-                            </button>
-                            
-                            {/* ✨ THE NEW DELETE BUTTON */}
-                            <button onClick={() => onDeleteSite(site.id, site.name)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors">
-                              <Trash2 size={16} />
-                            </button>
+        {/* 🔐 TAB 2: PROFILE MANAGER (CLASSY ROSTER) */}
+        {activeTab === 'roster' && (
+          <div className="space-y-8 animate-in slide-in-from-bottom-4">
+            
+            {/* THE GENERATOR UI */}
+            <div className="bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm relative overflow-hidden">
+              <div className="absolute -right-10 -top-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+              <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest mb-6 flex items-center gap-2 relative z-10">
+                <ShieldCheck size={18} className="text-emerald-500"/> Issue New Node Access
+              </h3>
+              
+              <form onSubmit={handleCreateCredential} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 relative z-10 items-end">
+                <div className="xl:col-span-1">
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Site Terminal</label>
+                  <select required value={newCred.site} onChange={(e) => setNewCred({...newCred, site: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-xs font-bold text-slate-900 dark:text-white uppercase focus:border-emerald-500 outline-none shadow-sm cursor-pointer">
+                    <option value="">Select Node...</option>
+                    {globalSites.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+                  </select>
+                </div>
+                <div className="xl:col-span-1">
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Mail ID</label>
+                  <input type="email" required placeholder="site@cbg.com" value={newCred.email} onChange={(e) => setNewCred({...newCred, email: e.target.value.toLowerCase()})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none shadow-sm placeholder-slate-400" />
+                </div>
+                <div className="xl:col-span-1">
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Secure Password</label>
+                  <input type="text" required placeholder="Min 6 chars" minLength="6" value={newCred.password} onChange={(e) => setNewCred({...newCred, password: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none shadow-sm placeholder-slate-400" />
+                </div>
+                <div className="xl:col-span-1">
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Officers (Comma separated)</label>
+                  <input type="text" required placeholder="Rahul, Amit" value={newCred.names} onChange={(e) => setNewCred({...newCred, names: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none shadow-sm placeholder-slate-400 uppercase" />
+                </div>
+                <div className="xl:col-span-1">
+                  <button type="submit" disabled={isGenerating} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2">
+                    {isGenerating ? <RefreshCw size={16} className="animate-spin" /> : <><Unlock size={16}/> Grant Access</>}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* THE MANAGE ROSTER GRID */}
+            <div>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+                <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2"><Users size={18} className="text-emerald-500"/> Active Roster</h3>
+                <div className="relative w-full sm:w-72">
+                  <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input type="text" placeholder="Search Officers or Sites..." value={rosterSearch} onChange={(e) => setRosterSearch(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition-colors shadow-sm" />
+                </div>
+              </div>
+              
+              {isLoadingProfiles ? (
+                <div className="p-10 text-center font-bold text-emerald-500 animate-pulse uppercase tracking-widest text-[10px]">Decrypting User Vault...</div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+                  {allProfiles.filter(p => p.name?.toLowerCase().includes(rosterSearch.toLowerCase()) || p.site?.toLowerCase().includes(rosterSearch.toLowerCase())).map(profile => (
+                    <div key={profile.id} className="bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-800 p-5 rounded-[2rem] shadow-sm hover:shadow-lg transition-all group flex flex-col justify-center min-h-[110px] relative overflow-hidden">
+                      
+                      {/* INLINE EDIT MODE */}
+                      {editingProfileId === profile.id ? (
+                        <div className="flex flex-col gap-3 w-full animate-in fade-in duration-200 relative z-10">
+                          <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Edit Officer Names</label>
+                          <input type="text" value={editProfileName} onChange={(e) => setEditProfileName(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500 uppercase shadow-inner" />
+                          <div className="flex gap-2 mt-1">
+                            <button onClick={() => handleSaveProfileEdit(profile.id)} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest py-2.5 rounded-xl shadow-sm flex items-center justify-center gap-1 active:scale-95 transition-transform"><Save size={14}/> Save</button>
+                            <button onClick={() => setEditingProfileId(null)} className="flex-1 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-black uppercase tracking-widest py-2.5 rounded-xl shadow-sm active:scale-95 transition-transform">Cancel</button>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                      ) : (
+                        /* NORMAL VIEW MODE */
+                        <div className="flex items-center gap-5 w-full relative z-10">
+                          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl shrink-0 transition-colors shadow-inner border ${profile.role === 'admin' ? 'bg-gradient-to-br from-rose-500 to-red-600 text-white border-rose-400 shadow-rose-500/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 group-hover:bg-emerald-50 group-hover:border-emerald-200 dark:group-hover:bg-emerald-500/10 dark:group-hover:border-emerald-500/30 group-hover:text-emerald-600 dark:group-hover:text-emerald-400'}`}>
+                            {profile.name ? profile.name[0] : '?'}
+                          </div>
+                          <div className="flex-1 min-w-0 pr-2">
+                            <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase truncate leading-tight mb-2">{profile.name}</h4>
+                            <div className="flex items-center gap-2">
+                              <p className="text-[10px] font-bold text-slate-500 uppercase truncate flex items-center gap-1 bg-slate-50 dark:bg-slate-800/50 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700/50"><MapPin size={10}/> {profile.site}</p>
+                              {profile.role === 'admin' && <span className="bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-rose-200 dark:border-rose-500/30 shadow-sm">Admin</span>}
+                            </div>
+                          </div>
 
-                  </div>
-                );
-              })}
+                          {/* HOVER ACTIONS */}
+                          <div className="shrink-0 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => { setEditingProfileId(profile.id); setEditProfileName(profile.name); }} className="p-2.5 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-900 rounded-xl hover:shadow-sm transition-all border border-slate-200 dark:border-slate-800" title="Edit Names"><Edit2 size={14}/></button>
+                            {profile.role !== 'admin' && (
+                              <button onClick={() => handleDeleteProfile(profile.id, profile.name, profile.role)} className="p-2.5 text-slate-400 hover:text-rose-600 bg-slate-50 dark:bg-slate-900 rounded-xl hover:shadow-sm transition-all border border-slate-200 dark:border-slate-800" title="Revoke Access"><Trash2 size={14}/></button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
+        )}
 
-        </div>
-      )}
+        {/* 🌍 TAB 3: SITE NETWORK MANAGER */}
+        {activeTab === 'sites' && (
+          <div className="space-y-10 animate-in slide-in-from-bottom-4">
+            
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-2">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-1">Site Network</h2>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Global base station tracking</p>
+              </div>
+            </div>
+            
+            {/* THE DEPLOYMENT WIDGET */}
+            <div className="bg-slate-50 dark:bg-[#0B1120] border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm relative overflow-hidden">
+              <div className="absolute -right-10 -top-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+              <h3 className="text-sm font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-6 flex items-center gap-2 relative z-10"><PlusCircle size={18} className="text-blue-500"/> Establish New Tracking Site</h3>
+              
+              <form onSubmit={submitNewSite} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-end relative z-10">
+                <div className="xl:col-span-1">
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Region / State</label>
+                  <select value={newStateSelection} onChange={e => setNewStateSelection(e.target.value)} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-xs font-bold text-slate-900 dark:text-white uppercase focus:border-blue-500 outline-none shadow-sm cursor-pointer">
+                    <option value="">-- SELECT STATE --</option>
+                    {STATE_NAMES?.map(s => <option key={s} value={s}>{s}</option>)}
+                    <option value="NEW">+ ADD NEW STATE</option>
+                  </select>
+                </div>
+                
+                {newStateSelection === 'NEW' && (
+                  <div className="xl:col-span-1 animate-in fade-in slide-in-from-top-2">
+                    <label className="block text-[9px] font-black text-blue-500 uppercase tracking-widest mb-2 ml-1">New State Name</label>
+                    <input type="text" placeholder="Enter here..." value={customStateInput} onChange={e => setCustomStateInput(e.target.value)} className="w-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30 rounded-2xl px-4 py-3.5 text-xs font-bold text-slate-900 dark:text-white uppercase focus:border-blue-500 outline-none shadow-sm placeholder-blue-300 dark:placeholder-blue-700" />
+                  </div>
+                )}
+                
+                <div className={`xl:col-span-${newStateSelection === 'NEW' ? '1' : '2'}`}>
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Facility Name</label>
+                  <input type="text" value={newSiteInput} onChange={(e) => setNewSiteInput(e.target.value)} placeholder="ENTER SITE NAME..." className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-xs font-bold text-slate-900 dark:text-white uppercase focus:border-blue-500 outline-none shadow-sm placeholder-slate-400" />
+                </div>
+                
+                <div className="xl:col-span-1">
+                  <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2">
+                    <Zap size={16}/> Deploy Node
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* THE NETWORK GRID */}
+            <div>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+                <div>
+                  <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2"><MapPin size={18} className="text-blue-500"/> Global Matrix</h3>
+                  <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest mt-1">Viewing: {displaySites.length} Total Sites</p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  <div className="relative w-full sm:w-64">
+                    <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input type="text" placeholder="Search Site..." value={siteSearchTerm} onChange={(e) => setSiteSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors shadow-sm placeholder-slate-400" />
+                  </div>
+
+                  <div className="inline-flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner w-full sm:w-auto shrink-0">
+                    <button onClick={() => setNetworkFilter('All')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${networkFilter === 'All' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>All</button>
+                    <button onClick={() => setNetworkFilter('commissioned')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${networkFilter === 'commissioned' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-500 hover:text-emerald-600 dark:text-emerald-400'}`}>Active</button>
+                    <button onClick={() => setNetworkFilter('project')} className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${networkFilter === 'project' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-500 hover:text-amber-600 dark:text-amber-400'}`}>Project</button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {sortedStates.map(stateName => {
+                  const sitesInState = groupedSites[stateName].sort((a,b) => a.name.localeCompare(b.name));
+                  const commissionedCount = sitesInState.filter(s => s.status === 'commissioned').length;
+                  
+                  return (
+                    <div key={stateName} className="bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-sm overflow-hidden flex flex-col max-h-[400px]">
+                      <div className="bg-slate-50 dark:bg-slate-900/50 p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
+                        <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">{stateName}</h4>
+                        <span className="text-[9px] font-black text-slate-500 bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded-md uppercase tracking-widest border border-slate-300 dark:border-slate-700">
+                          {commissionedCount}/{sitesInState.length} Live
+                        </span>
+                      </div>
+
+                      <div className="p-4 overflow-y-auto custom-scrollbar flex flex-col gap-3 bg-slate-50/30 dark:bg-slate-900/30">
+                        {sitesInState.map(site => (
+                          <div key={site.id} className="flex justify-between items-center p-3.5 bg-white dark:bg-slate-950 rounded-2xl border border-slate-200/50 dark:border-slate-800 group hover:border-blue-300 dark:hover:border-blue-500/50 transition-colors shadow-sm">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-2.5 h-2.5 rounded-full shadow-sm ${site.status === 'commissioned' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse' : 'bg-amber-400'}`}></div>
+                              <span className={`text-xs font-black uppercase tracking-wide ${site.status === 'commissioned' ? 'text-slate-800 dark:text-slate-200' : 'text-slate-500'}`}>{site.name}</span>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                              <button onClick={() => onToggleStatus(site.id, site.status)} className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all active:scale-95 ${site.status === 'commissioned' ? 'bg-slate-100 text-slate-500 hover:bg-rose-100 hover:text-rose-600 dark:bg-slate-800 dark:hover:bg-rose-900/40 dark:hover:text-rose-400' : 'bg-blue-50 text-blue-600 hover:bg-emerald-500 hover:text-white dark:bg-blue-500/10 dark:text-blue-400 shadow-sm border border-blue-200 dark:border-blue-500/20'}`}>
+                                {site.status === 'commissioned' ? 'Revert' : 'Commission'}
+                              </button>
+                              <button onClick={() => onDeleteSite(site.id, site.name)} className="p-2 text-slate-400 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 dark:bg-slate-800 dark:hover:bg-rose-500/10 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 shadow-sm">
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }
@@ -4560,10 +4717,10 @@ function WeeklyEditModal({ record, onClose, onSave }) {
 }
 
 // ==========================================
-// 📢 GOD-MODE BROADCAST MEGAPHONE (AIR-GAPPED DUAL BOX)
+// 📢 FAANG ADMIN BROADCAST VIEW (FIXED)
 // ==========================================
 function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
-  // ✨ THE BULLETPROOF SAFETY NET! (If SITES drops, it builds it from globalSites!)
+  // ✨ THE BULLETPROOF SAFETY NET!
   const safeSites = SITES.length > 0 ? SITES : (globalSites || []).map(s => s.name);
 
   const [title, setTitle] = useState('');
@@ -4575,6 +4732,13 @@ function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
   
   const [pastBroadcasts, setPastBroadcasts] = useState([]);
   const [acks, setAcks] = useState([]);
+
+  // ✨ NEW: Search & Modal States!
+  const [siteSearch, setSiteSearch] = useState('');
+  const [viewingBroadcast, setViewingBroadcast] = useState(null);
+
+  // ✨ NEW: The filtered sites brain!
+  const displaySites = safeSites.filter(s => s.toLowerCase().includes(siteSearch.toLowerCase()));
 
   const fetchBroadcastData = async () => {
      const { data: bData } = await supabase.from('broadcasts').select('*').order('created_at', { ascending: false });
@@ -4595,7 +4759,6 @@ function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
     if(targetMode === 'SPECIFIC' && selectedSites.length === 0) return alert("Babe, select at least one site first! 🛑");
     
     setIsDeploying(true);
-    // ✨ THE HYBRID DUAL-BOX MERGER!
     const finalMessage = messageReg.trim() ? `${messageEng}\n\n---\n\n${messageReg}` : messageEng;
     const targetSitesPayload = targetMode === 'ALL' ? ['ALL'] : selectedSites;
 
@@ -4622,7 +4785,9 @@ function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
      }
   }
 
+  // ✨ NOTICE THE NEW `<>` FRAGMENT WRAPPER BELOW! THIS FIXES THE CRASH!
   return (
+     <>
      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full pb-20">
         {/* LEFT: THE MEGAPHONE */}
         <div className="flex flex-col gap-4">
@@ -4641,26 +4806,34 @@ function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
                 <button type="button" onClick={() => setTargetMode('SPECIFIC')} className={`flex-1 py-3 text-xs font-black uppercase tracking-widest relative z-10 transition-colors ${targetMode === 'SPECIFIC' ? 'text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>Specific Sites</button>
               </div>
 
-              {/* The Specific Sites Selector Grid! */}
+              {/* ✨ The Specific Sites Selector Grid with Search! */}
               {targetMode === 'SPECIFIC' && (
                 <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner animate-in slide-in-from-top-2">
-                  <div className="flex justify-between items-center mb-3 border-b border-slate-200 dark:border-slate-700 pb-2">
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><MapPin size={12}/> Select Targets</span>
-                    <div className="space-x-3">
-                      <button type="button" onClick={() => setSelectedSites([...safeSites])} className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold hover:underline">Select All</button>
-                      <button type="button" onClick={() => setSelectedSites([])} className="text-[10px] text-rose-500 dark:text-rose-400 font-bold hover:underline">Clear</button>
+                  <div className="flex flex-col gap-3 mb-3 border-b border-slate-200 dark:border-slate-700 pb-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><MapPin size={12}/> Select Targets</span>
+                      <div className="space-x-3">
+                        <button type="button" onClick={() => setSelectedSites([...safeSites])} className="text-[10px] text-indigo-600 dark:text-indigo-400 font-black tracking-widest hover:underline">SELECT ALL</button>
+                        <button type="button" onClick={() => setSelectedSites([])} className="text-[10px] text-rose-500 dark:text-rose-400 font-black tracking-widest hover:underline">CLEAR</button>
+                      </div>
+                    </div>
+                    {/* ✨ THE SEARCH BAR */}
+                    <div className="relative">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input type="text" placeholder="Search specific sites..." value={siteSearch} onChange={e => setSiteSearch(e.target.value)} className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors shadow-sm placeholder-slate-400 uppercase" />
                     </div>
                   </div>
+                  
                   <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
-                    {safeSites.map(site => {
+                    {displaySites.map(site => {
                       const isSel = selectedSites.includes(site);
                       return (
-                        <button type="button" key={site} onClick={() => toggleSite(site)} className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase transition-all border ${isSel ? 'bg-indigo-500 text-white border-indigo-600 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600'}`}>
+                        <button type="button" key={site} onClick={() => toggleSite(site)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${isSel ? 'bg-indigo-500 text-white border-indigo-600 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:shadow-sm'}`}>
                           {site}
                         </button>
                       )
                     })}
-                    {safeSites.length === 0 && <span className="text-xs text-slate-400 italic font-medium p-2">No sites available. Please add sites in settings first!</span>}
+                    {displaySites.length === 0 && <span className="text-xs text-slate-400 italic font-medium p-2">No matching sites found. 🥺</span>}
                   </div>
                 </div>
               )}
@@ -4703,7 +4876,6 @@ function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
                     tCount = targetList.includes('ALL') ? safeSites.length : targetList.length;
                  } catch(e) {}
                  
-                 // Safe percentage calculation
                  const pct = tCount === 0 ? 0 : Math.round((bAcks.length / tCount) * 100);
                  const isFullyRead = pct >= 100;
 
@@ -4711,13 +4883,19 @@ function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
                     <div key={b.id} className="bg-white dark:bg-[#0f172a] p-5 rounded-[2rem] border-2 border-slate-200 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group">
                       <div className={`absolute top-0 left-0 w-1.5 h-full transition-colors ${isFullyRead ? 'bg-emerald-500' : 'bg-amber-400'}`}></div>
                       
-                      <button onClick={() => deleteBroadcast(b.id)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-rose-500 bg-slate-50 hover:bg-rose-50 dark:bg-slate-800 dark:hover:bg-rose-500/10 rounded-xl transition-all shadow-sm border border-slate-200 dark:border-slate-700">
-                         <Trash2 size={14}/>
-                      </button>
+                      {/* ✨ FAANG ACTION BUTTONS (VIEW & DELETE) */}
+                      <div className="absolute top-4 right-4 flex gap-1.5 z-10">
+                        <button onClick={() => setViewingBroadcast(b)} className="p-2 text-slate-400 hover:text-indigo-500 bg-slate-50 hover:bg-indigo-50 dark:bg-slate-800 dark:hover:bg-indigo-500/10 rounded-xl transition-all shadow-sm border border-slate-200 dark:border-slate-700">
+                           <Eye size={14}/>
+                        </button>
+                        <button onClick={() => deleteBroadcast(b.id)} className="p-2 text-slate-400 hover:text-rose-500 bg-slate-50 hover:bg-rose-50 dark:bg-slate-800 dark:hover:bg-rose-500/10 rounded-xl transition-all shadow-sm border border-slate-200 dark:border-slate-700">
+                           <Trash2 size={14}/>
+                        </button>
+                      </div>
 
                       <div className="pl-3 pr-10">
                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">{new Date(b.created_at).toLocaleString('en-IN')}</span>
-                        <h4 className="font-black text-slate-900 dark:text-white uppercase text-base mb-4 leading-tight">{b.title}</h4>
+                        <h4 className="font-black text-slate-900 dark:text-white uppercase text-base mb-4 leading-tight pr-10">{b.title}</h4>
                         
                         <div className="flex justify-between items-end mb-2">
                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
@@ -4752,5 +4930,49 @@ function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
            </div>
         </div>
      </div>
+
+     {/* ✨ FAANG BROADCAST VIEW MODAL (NOW SAFELY INSIDE THE FRAGMENT!) */}
+     {viewingBroadcast && (
+       <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setViewingBroadcast(null)}>
+         <div className="bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-amber-500/30 rounded-[2rem] shadow-[0_20px_80px_-15px_rgba(245,158,11,0.2)] w-full max-w-2xl overflow-hidden relative animate-in zoom-in-[0.95] duration-300" onClick={e => e.stopPropagation()}>
+           <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+           
+           <div className="p-6 sm:p-8 border-b border-slate-100 dark:border-slate-800/50 flex justify-between items-start relative z-10 bg-slate-50/50 dark:bg-slate-900/50">
+             <div>
+               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 mb-3 border border-amber-200 dark:border-amber-500/30"><Megaphone size={10}/> Official Directive</span>
+               <h3 className="font-black text-slate-900 dark:text-white text-xl uppercase tracking-tight">{viewingBroadcast.title || "Security Alert"}</h3>
+               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Sent: {new Date(viewingBroadcast.created_at).toLocaleString()}</p>
+             </div>
+             <button onClick={() => setViewingBroadcast(null)} className="p-2.5 text-slate-400 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 rounded-full shadow-sm transition-all active:scale-95 border border-slate-200 dark:border-slate-700"><X size={16} /></button>
+           </div>
+
+           <div className="p-6 sm:p-8 space-y-6 relative z-10">
+             <div className="bg-slate-50 dark:bg-[#0f172a] p-5 rounded-2xl border border-slate-200 dark:border-slate-800/50">
+               <p className="text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">{viewingBroadcast.message}</p>
+             </div>
+
+             <div>
+               <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Target Nodes</h4>
+               <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto custom-scrollbar">
+                 {viewingBroadcast.target_sites.includes('ALL') ? (
+                   <span className="bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border border-indigo-200 dark:border-indigo-500/30">ALL GLOBAL SITES</span>
+                 ) : (
+                   (() => {
+                     let targets = [];
+                     try { targets = typeof viewingBroadcast.target_sites === 'string' ? JSON.parse(viewingBroadcast.target_sites) : viewingBroadcast.target_sites; } catch(e){}
+                     return targets.map(site => (
+                       <span key={site} className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
+                         <MapPin size={10} className="text-slate-400"/> {site}
+                       </span>
+                     ))
+                   })()
+                 )}
+               </div>
+             </div>
+           </div>
+         </div>
+       </div>
+     )}
+     </>
   )
 }
