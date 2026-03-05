@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { 
   Plus, Trash2, Calendar, MapPin, Users, Shield, LogOut, ShieldCheck, Droplet, Wind,Globe2,
-  Filter, CheckCircle, Smartphone, Monitor, Activity,  Leaf, Zap,Eye, EyeOff, Clock,BarChart2, PieChart, TrendingUp, Target,
+  Filter, CheckCircle, Smartphone, Monitor, Activity,  Leaf, Zap,Eye, EyeOff, Clock,BarChart2, PieChart, TrendingUp, Target, Megaphone, Send, Radio, BellRing, CheckCheck, 
   X, Search, ChevronDown, Download, Edit2, Save, Sun, Moon, Sparkles, Lock, Mail,RefreshCw, Copy, BookOpen, Briefcase, Phone, Menu, Unlock, ArrowRight,ArrowLeft, AlertTriangle, Camera, FileText, Image as ImageIcon,Settings, User, PlusCircle
 } from 'lucide-react';
 
@@ -170,6 +170,8 @@ export default function App() {
   // ✨ NEW: INCIDENT & WEEKLY COMMAND STATE
   const [incidents, setIncidents] = useState([]);
   const [weeklyReports, setWeeklyReports] = useState([]);
+  const [broadcasts, setBroadcasts] = useState([]); // 📢 The Directives
+  const [acks, setAcks] = useState([]); // 🧾 The Receipts
   
   const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light');
 
@@ -217,11 +219,38 @@ export default function App() {
   };
 
 // --- 🔥 FETCH DEPLOYMENTS, CONTACTS & INCIDENTS ---
-useEffect(() => {
+  useEffect(() => {
     if (userProfile) {
       fetchDeployments();
       fetchIncidents();
-      fetchWeeklyReports(); // ✨ NEW: Tell the app to fetch the reports!
+      fetchWeeklyReports();
+      if (userProfile.role === 'admin') fetchContacts();
+    }
+  }, [userProfile]);
+
+  // ✨ NEW: THE UNIVERSAL SYNC ENGINE!
+  const fetchBroadcasts = async () => {
+    const [bRes, aRes] = await Promise.all([
+      supabase.from('broadcasts').select('*').order('created_at', { ascending: false }),
+      supabase.from('broadcast_acknowledgments').select('*')
+    ]);
+    if (bRes.data) setBroadcasts(bRes.data);
+    if (aRes.data) setAcks(aRes.data);
+  };
+
+  const handleGlobalSync = async () => {
+    setIsLoadingData(true); 
+    await Promise.all([
+      fetchDeployments(), fetchIncidents(), fetchWeeklyReports(), fetchSites(), fetchBroadcasts(),
+      userProfile?.role === 'admin' ? fetchContacts() : Promise.resolve()
+    ]);
+    setIsLoadingData(false); 
+  };
+
+  // Also make sure fetchBroadcasts runs on boot!
+  useEffect(() => {
+    if (userProfile) {
+      fetchDeployments(); fetchIncidents(); fetchWeeklyReports(); fetchBroadcasts();
       if (userProfile.role === 'admin') fetchContacts();
     }
   }, [userProfile]);
@@ -490,10 +519,13 @@ const toggleIncidentStatus = async (inc) => {
               STATE_NAMES={STATE_NAMES}
               onAddSite={handleAddSite}
               onToggleSite={handleToggleSiteStatus}
+              onSync={handleGlobalSync}
+              broadcasts={broadcasts} 
+              acks={acks} 
+              fetchBroadcasts={fetchBroadcasts}
             />
           ) : (
-            <SupervisorMobileView userProfile={userProfile} deployments={deployments} incidents={incidents} weeklyReports={weeklyReports} isLoading={isLoadingData} fetchDeployments={fetchDeployments} fetchIncidents={fetchIncidents} fetchWeeklyReports={fetchWeeklyReports} onEditWeekly={setEditingWeekly} onLogout={handleInstantLogout} onEdit={setEditingRecord} onDelete={setDeletingRecord} onView={setViewingRecord} onToggleAck={toggleIncidentStatus} onDeleteIncident={deleteIncident} onAddContact={() => setEditingContact({ name: '', phone: '', designation: 'SS - Security Supervisor', state_name: '', site: '', email: '', company: '' })} onEditContact={setEditingContact} onDeleteContact={setDeletingContact} theme={theme} toggleTheme={toggleTheme} />
-          )}
+        <SupervisorMobileView userProfile={userProfile} deployments={deployments} incidents={incidents} weeklyReports={weeklyReports} isLoading={isLoadingData} fetchDeployments={fetchDeployments} fetchIncidents={fetchIncidents} fetchWeeklyReports={fetchWeeklyReports} onEditWeekly={setEditingWeekly} onLogout={handleInstantLogout} onEdit={setEditingRecord} onDelete={setDeletingRecord} onView={setViewingRecord} onToggleAck={toggleIncidentStatus} onDeleteIncident={deleteIncident} onAddContact={() => setEditingContact({ name: '', phone: '', designation: 'SS - Security Supervisor', state_name: '', site: '', email: '', company: '' })} onEditContact={setEditingContact} onDeleteContact={setDeletingContact} theme={theme} toggleTheme={toggleTheme} broadcasts={broadcasts} acks={acks} fetchBroadcasts={fetchBroadcasts} />          )}
         </div>
           {/* Modals for Deployments */}
         {editingRecord && <EditModal record={editingRecord} onClose={() => setEditingRecord(null)} onSave={saveEdit} />}
@@ -791,15 +823,80 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
 // 📱 SUPERVISOR iOS-STYLE COMMAND HUB + CINEMATIC INTRO
 // ==========================================
 
-function SupervisorMobileView({ userProfile, deployments, incidents, weeklyReports, isLoading, fetchDeployments, fetchIncidents, fetchWeeklyReports, onEditWeekly, onLogout, onEdit, onDelete, onView, onDeleteIncident, theme, toggleTheme }) {
+function SupervisorMobileView({ userProfile, deployments, incidents, weeklyReports, isLoading, fetchDeployments, fetchIncidents, fetchWeeklyReports, onEditWeekly, onLogout, onEdit, onDelete, onView, onDeleteIncident, theme, toggleTheme, broadcasts, acks, fetchBroadcasts }) {
   const [currentApp, setCurrentApp] = useState('hub'); 
   const [appTab, setAppTab] = useState('form'); 
 
   const [introStage, setIntroStage] = useState(1);
   const [customName, setCustomName] = useState('');
   const [fillerName, setFillerName] = useState('');
+  // 🚨 ✨ THE BROADCAST GATEKEEPER BRAIN ✨ 🚨
+  const [unreadBroadcasts, setUnreadBroadcasts] = useState([]);
+  const [isAcking, setIsAcking] = useState(false);
+
+  useEffect(() => {
+    const fetchBroadcasts = async () => {
+      // 1. Grab ALL broadcasts (Oldest first)
+      const { data: broadcasts, error: bError } = await supabase
+        .from('broadcasts')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      // 2. Grab ALL the receipts this specific site has already signed
+      const { data: acks, error: aError } = await supabase
+        .from('broadcast_acknowledgments')
+        .select('broadcast_id')
+        .eq('site', userProfile.site);
+
+      if (!bError && !aError && broadcasts) {
+        const ackedIds = new Set(acks.map(a => a.broadcast_id));
+        
+        // ✨ THE GHOST BUSTER: Force the Supervisor's site to UPPERCASE and trim invisible spaces!
+        const safeUserSite = (userProfile.site || "").toUpperCase().trim();
+        
+        // 3. Filter down to ONLY the flashcards they haven't read yet!
+        const unread = broadcasts.filter(b => {
+          let isTargeted = false;
+          try {
+            // Unpack the JSON array from Supabase
+            const rawTargets = typeof b.target_sites === 'string' ? JSON.parse(b.target_sites) : b.target_sites;
+            
+            // ✨ BULLETPROOF MATCHING: Force every target site in the list to UPPERCASE and trim!
+            const safeTargets = (Array.isArray(rawTargets) ? rawTargets : []).map(t => String(t).toUpperCase().trim());
+            
+            if (safeTargets.includes('ALL') || safeTargets.includes(safeUserSite)) {
+                isTargeted = true;
+            }
+          } catch(e) { 
+              console.error("Broadcast parsing error:", e); 
+              isTargeted = false; 
+          }
+          
+          return isTargeted && !ackedIds.has(b.id); // Targeted AND Unread!
+        });
+        setUnreadBroadcasts(unread);
+      }
+    };
+    
+    if (userProfile?.site) fetchBroadcasts();
+  }, [userProfile]);
+
+  const handleAcknowledge = async (broadcastId) => {
+    setIsAcking(true);
+    await supabase.from('broadcast_acknowledgments').insert([{
+      broadcast_id: broadcastId,
+      site: userProfile.site,
+      acknowledged_by: fillerName || userProfile.name
+    }]);
+    setIsAcking(false);
+    // ✨ MAGIC: Slice the top card off the deck! The next one instantly appears!
+    setUnreadBroadcasts(prev => prev.filter(b => b.id !== broadcastId));
+  };
+
+
   const allowedSupervisors = userProfile.name ? userProfile.name.split(',').map(n => n.trim()) : [];
 
+  
   // ✨ THE MULTI-LINGUAL STATE BRAIN!
   const [language, setLanguage] = useState(localStorage.getItem('cbg_lang') || 'en');
   const [showLangMenu, setShowLangMenu] = useState(false);
@@ -977,11 +1074,54 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
               </div>
             )}
           </div>
-        ) : ( currentApp === 'hub' ? renderHub() : renderModule() )}
+    
+      ) : ( currentApp === 'hub' ? renderHub() : renderModule() )}
       </div>
+
+      {/* 🚨 THE ZERO-ESCAPE GATEKEEPER MODAL 🚨 */}
+      {unreadBroadcasts.length > 0 && introStage === 0 && (
+        <div className="fixed inset-0 bg-slate-900/95 dark:bg-black/95 backdrop-blur-2xl z-[9999] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
+           <div className="bg-white dark:bg-[#0B1120] w-full max-w-md rounded-[2.5rem] shadow-[0_0_100px_rgba(225,29,72,0.4)] border-4 border-rose-500 overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-500">
+              
+              {/* Flashing Red Alert Header */}
+              <div className="bg-rose-600 p-6 text-center relative overflow-hidden">
+                 <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.2)_50%,transparent_75%)] bg-[length:250%_250%] animate-button-shine pointer-events-none"></div>
+                 <AlertTriangle className="mx-auto text-white mb-2 drop-shadow-md animate-pulse" size={48} />
+                 <h2 className="text-white font-black uppercase tracking-widest text-xl drop-shadow-md">Urgent Directive</h2>
+                 <div className="inline-block mt-3 px-3 py-1 bg-black/30 rounded-full text-rose-100 text-[10px] font-black uppercase tracking-widest shadow-inner">
+                    Message {1} of {unreadBroadcasts.length}
+                 </div>
+              </div>
+
+              {/* The Custom Message Box */}
+              <div className="p-6 sm:p-8 flex flex-col items-center text-center space-y-4 max-h-[50vh] overflow-y-auto custom-scrollbar">
+                 <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{unreadBroadcasts[0].title}</h3>
+                 <p className="text-sm font-bold text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed text-left w-full bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-700">
+                   {unreadBroadcasts[0].message}
+                 </p>
+              </div>
+
+              {/* The Trap Button */}
+              <div className="p-6 bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
+                 <button
+                   onClick={() => handleAcknowledge(unreadBroadcasts[0].id)}
+                   disabled={isAcking}
+                   className="w-full bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase tracking-[0.2em] py-5 rounded-2xl shadow-xl shadow-rose-600/30 transition-all active:scale-95 flex justify-center items-center gap-2 group"
+                 >
+                   {isAcking ? <RefreshCw className="animate-spin" size={20} /> : (
+                     <><CheckCircle size={20} className="group-hover:scale-110 transition-transform"/> I Have Read & Understood</>
+                   )}
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
+
     </div>
   );
 }
+
+
 function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fillerName, deployments, language}) {
   const t = TRANSLATIONS[language] || TRANSLATIONS['en'];
   const today = getISTDate();
@@ -1238,9 +1378,10 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
 // ==========================================
 // ADMIN VIEW (MASTER PORTAL + COMMAND CENTER)
 // ==========================================
-function AdminDesktopView({ userProfile, deployments, contacts, incidents, weeklyReports, isLoading, onToggleAck, onDeleteIncident, onLogout, onEdit, onView, onDelete, onAddContact, onEditContact, onDeleteContact, onViewContact, onImportCSV, theme, toggleTheme, globalSites = [], SITES = [], COMMISSIONED_SITES = [], SITES_BY_STATE = {}, STATE_NAMES = [], onAddSite, onToggleSite, onDeleteSite, onDeleteWeekly }) {  const [activeTab, setActiveTab] = useState('deployments'); 
+function AdminDesktopView({ userProfile, deployments, contacts, incidents, weeklyReports, isLoading, onToggleAck, onDeleteIncident, onLogout, onEdit, onView, onDelete, onAddContact, onEditContact, onDeleteContact, onViewContact, onImportCSV, theme, toggleTheme, globalSites = [], SITES = [], COMMISSIONED_SITES = [], SITES_BY_STATE = {}, STATE_NAMES = [], onAddSite, onToggleSite, onDeleteSite, onDeleteWeekly, onSync, broadcasts, acks, fetchBroadcasts }) { 
+  const [activeTab, setActiveTab] = useState('deployments'); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showSettings, setShowSettings] = useState(false); // ✨ NEW: Settings Toggle!
+  const [showSettings, setShowSettings] = useState(false);
   
   // ✨ NEW: TODAY'S INCIDENT TRACKER LOGIC
   const todayStr = getISTDate();
@@ -1449,37 +1590,31 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
           {/* ✨ THE SLIDING MENU CONTAINER */}
           <div className="relative flex flex-col gap-2">
             
-            {/* ✨ THE MAGICAL SLIDING BACKGROUND PILL (COLOR CHANGING!) */}
+            {/* ✨ THE MAGICAL SLIDING BACKGROUND PILL (5 TABS NOW!) */}
             <div 
               className={`absolute left-0 w-full h-12 rounded-xl shadow-lg transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] z-0 will-change-transform ${
                 activeTab === 'deployments' ? 'bg-indigo-600 shadow-indigo-900/20' : 
                 activeTab === 'contacts' ? 'bg-blue-600 shadow-blue-900/20' : 
                 activeTab === 'incidents' ? 'bg-rose-600 shadow-rose-900/20' : 
-                'bg-emerald-600 shadow-emerald-900/20'
+                activeTab === 'weekly' ? 'bg-emerald-600 shadow-emerald-900/20' :
+                'bg-amber-500 shadow-amber-900/20' /* The Broadcast Color! */
               }`}
               style={{ 
                 transform: `translateY(${
                   activeTab === 'deployments' ? '0px' : 
                   activeTab === 'contacts' ? '56px' : 
                   activeTab === 'incidents' ? '112px' : 
-                  '168px'
+                  activeTab === 'weekly' ? '168px' :
+                  '224px' /* The exact pixel drop for the 5th tab! */
                 })` 
               }}
             ></div>
 
-            {/* THE BUTTONS (With transparent backgrounds so the pill shows through!) */}
-            <button onClick={() => { setActiveTab('deployments'); setIsMobileMenuOpen(false); }} className={`relative z-10 h-12 w-full flex items-center gap-3 px-4 rounded-xl text-sm font-bold transition-colors duration-300 ${activeTab === 'deployments' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}>
-              <Activity size={18} /> Deployment Matrix
-            </button>
-            <button onClick={() => { setActiveTab('contacts'); setIsMobileMenuOpen(false); }} className={`relative z-10 h-12 w-full flex items-center gap-3 px-4 rounded-xl text-sm font-bold transition-colors duration-300 ${activeTab === 'contacts' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}>
-              <BookOpen size={18} /> Directory
-            </button>
-            <button onClick={() => { setActiveTab('incidents'); setIsMobileMenuOpen(false); }} className={`relative z-10 h-12 w-full flex items-center gap-3 px-4 rounded-xl text-sm font-bold transition-colors duration-300 ${activeTab === 'incidents' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}>
-              <AlertTriangle size={18} /> Incident Report
-            </button>
-            <button onClick={() => { setActiveTab('weekly'); setIsMobileMenuOpen(false); }} className={`relative z-10 h-12 w-full flex items-center gap-3 px-4 rounded-xl text-sm font-bold transition-colors duration-300 ${activeTab === 'weekly' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}>
-              <Activity size={18} /> MIS Reports
-            </button>
+            <button onClick={() => { setActiveTab('deployments'); setIsMobileMenuOpen(false); }} className={`relative z-10 h-12 w-full flex items-center gap-3 px-4 rounded-xl text-sm font-bold transition-colors duration-300 ${activeTab === 'deployments' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}><Activity size={18} /> Deployment Matrix</button>
+            <button onClick={() => { setActiveTab('contacts'); setIsMobileMenuOpen(false); }} className={`relative z-10 h-12 w-full flex items-center gap-3 px-4 rounded-xl text-sm font-bold transition-colors duration-300 ${activeTab === 'contacts' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}><BookOpen size={18} /> Directory</button>
+            <button onClick={() => { setActiveTab('incidents'); setIsMobileMenuOpen(false); }} className={`relative z-10 h-12 w-full flex items-center gap-3 px-4 rounded-xl text-sm font-bold transition-colors duration-300 ${activeTab === 'incidents' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}><AlertTriangle size={18} /> Incident Report</button>
+            <button onClick={() => { setActiveTab('weekly'); setIsMobileMenuOpen(false); }} className={`relative z-10 h-12 w-full flex items-center gap-3 px-4 rounded-xl text-sm font-bold transition-colors duration-300 ${activeTab === 'weekly' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}><FileText size={18} /> MIS Reports</button>
+            <button onClick={() => { setActiveTab('broadcasts'); setIsMobileMenuOpen(false); }} className={`relative z-10 h-12 w-full flex items-center gap-3 px-4 rounded-xl text-sm font-bold transition-colors duration-300 ${activeTab === 'broadcasts' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}><Megaphone size={18} /> Directives</button>
           </div>
         </div>
 
@@ -1551,11 +1686,23 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
               )}
             </div>
 
-            {/* ✨ NEW: SETTINGS GEAR BUTTON */}
+            {/* ✨ NEW: UNIVERSAL SYNC BUTTON */}
+            <button 
+              onClick={onSync} 
+              disabled={isLoading}
+              className={`p-2 rounded-lg border transition-colors shadow-sm flex items-center justify-center ${isLoading ? 'bg-indigo-50 text-indigo-500 border-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-500/30' : 'text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 active:scale-95'}`}
+              title="Sync Data"
+            >
+               <RefreshCw size={18} className={isLoading ? "animate-spin" : ""} />
+            </button>
+
+            {/* ✨ SETTINGS GEAR BUTTON */}
             <button onClick={() => setShowSettings(true)} className="p-2 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors shadow-sm">
                <Settings size={18} />
             </button>
-            <button onClick={toggleTheme} className="p-2 text-slate-500 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors">
+
+            {/* THEME TOGGLE */}
+            <button onClick={toggleTheme} className="p-2 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors shadow-sm">
                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
           </div>
@@ -1965,7 +2112,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
           )}
         {activeTab === 'incidents' && <AdminIncidentView incidents={incidents} isLoading={isLoading} onAcknowledge={onToggleAck} onDelete={onDeleteIncident} SITES={SITES} STATE_NAMES={STATE_NAMES} SITES_BY_STATE={SITES_BY_STATE} />}
         {activeTab === 'weekly' && <AdminWeeklyView weeklyReports={weeklyReports} isLoading={isLoading} COMMISSIONED_SITES={COMMISSIONED_SITES} SITES={SITES} STATE_NAMES={STATE_NAMES} SITES_BY_STATE={SITES_BY_STATE} onDeleteWeekly={onDeleteWeekly} />}
-            </div>
+        {activeTab === 'broadcasts' && <AdminBroadcastView SITES={SITES} globalSites={globalSites} userProfile={userProfile} />}            </div>
           )}
         </div>
         
@@ -4181,4 +4328,200 @@ function WeeklyEditModal({ record, onClose, onSave }) {
       </div>
     </div>
   );
+}
+
+// ==========================================
+// 📢 GOD-MODE BROADCAST MEGAPHONE (AIR-GAPPED DUAL BOX)
+// ==========================================
+function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
+  // ✨ THE BULLETPROOF SAFETY NET! (If SITES drops, it builds it from globalSites!)
+  const safeSites = SITES.length > 0 ? SITES : (globalSites || []).map(s => s.name);
+
+  const [title, setTitle] = useState('');
+  const [messageEng, setMessageEng] = useState('');
+  const [messageReg, setMessageReg] = useState('');
+  const [targetMode, setTargetMode] = useState('ALL');
+  const [selectedSites, setSelectedSites] = useState([]);
+  const [isDeploying, setIsDeploying] = useState(false);
+  
+  const [pastBroadcasts, setPastBroadcasts] = useState([]);
+  const [acks, setAcks] = useState([]);
+
+  const fetchBroadcastData = async () => {
+     const { data: bData } = await supabase.from('broadcasts').select('*').order('created_at', { ascending: false });
+     const { data: aData } = await supabase.from('broadcast_acknowledgments').select('*');
+     if(bData) setPastBroadcasts(bData);
+     if(aData) setAcks(aData);
+  }
+
+  React.useEffect(() => { fetchBroadcastData(); }, []);
+
+  const toggleSite = (site) => {
+     if (selectedSites.includes(site)) setSelectedSites(selectedSites.filter(s => s !== site));
+     else setSelectedSites([...selectedSites, site]);
+  };
+
+  const handleDeploy = async (e) => {
+    e.preventDefault();
+    if(targetMode === 'SPECIFIC' && selectedSites.length === 0) return alert("Babe, select at least one site first! 🛑");
+    
+    setIsDeploying(true);
+    // ✨ THE HYBRID DUAL-BOX MERGER!
+    const finalMessage = messageReg.trim() ? `${messageEng}\n\n---\n\n${messageReg}` : messageEng;
+    const targetSitesPayload = targetMode === 'ALL' ? ['ALL'] : selectedSites;
+
+    const { error } = await supabase.from('broadcasts').insert([{
+       title: title.toUpperCase(),
+       message: finalMessage,
+       target_sites: targetSitesPayload,
+       created_by: userProfile.name
+    }]);
+    
+    setIsDeploying(false);
+    if(error) alert("Vault Error: " + error.message);
+    else {
+       setTitle(''); setMessageEng(''); setMessageReg(''); setSelectedSites([]); setTargetMode('ALL');
+       fetchBroadcastData();
+       alert(`🚀 Directive Deployed to ${targetSitesPayload.includes('ALL') ? 'Global Network' : targetSitesPayload.length + ' targets'}!`);
+    }
+  };
+
+  const deleteBroadcast = async (id) => {
+     if(window.confirm("🚨 Permanently recall this directive?")) {
+        await supabase.from('broadcasts').delete().eq('id', id);
+        fetchBroadcastData();
+     }
+  }
+
+  return (
+     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full pb-20">
+        {/* LEFT: THE MEGAPHONE */}
+        <div className="flex flex-col gap-4">
+           <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-6 rounded-3xl shadow-lg shadow-amber-500/30 text-white relative overflow-hidden group">
+              <div className="absolute -right-6 -top-6 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
+              <h2 className="font-black uppercase tracking-widest text-xl flex items-center gap-2 relative z-10"><Zap size={24}/> Global Megaphone</h2>
+              <p className="text-xs font-bold text-amber-100 mt-1 relative z-10">Air-Gapped Confidential Broadcasting</p>
+           </div>
+
+           <form onSubmit={handleDeploy} className="bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm flex flex-col gap-6">
+              
+              {/* Target Toggle */}
+              <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl shadow-inner relative">
+                <div className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] rounded-xl transition-all duration-300 ${targetMode === 'ALL' ? 'bg-amber-500 translate-x-0 shadow-md shadow-amber-500/20' : 'bg-indigo-500 translate-x-[calc(100%+4px)] shadow-md shadow-indigo-500/20'}`}></div>
+                <button type="button" onClick={() => setTargetMode('ALL')} className={`flex-1 py-3 text-xs font-black uppercase tracking-widest relative z-10 transition-colors ${targetMode === 'ALL' ? 'text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>Global Network</button>
+                <button type="button" onClick={() => setTargetMode('SPECIFIC')} className={`flex-1 py-3 text-xs font-black uppercase tracking-widest relative z-10 transition-colors ${targetMode === 'SPECIFIC' ? 'text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>Specific Sites</button>
+              </div>
+
+              {/* The Specific Sites Selector Grid! */}
+              {targetMode === 'SPECIFIC' && (
+                <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner animate-in slide-in-from-top-2">
+                  <div className="flex justify-between items-center mb-3 border-b border-slate-200 dark:border-slate-700 pb-2">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><MapPin size={12}/> Select Targets</span>
+                    <div className="space-x-3">
+                      <button type="button" onClick={() => setSelectedSites([...safeSites])} className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold hover:underline">Select All</button>
+                      <button type="button" onClick={() => setSelectedSites([])} className="text-[10px] text-rose-500 dark:text-rose-400 font-bold hover:underline">Clear</button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
+                    {safeSites.map(site => {
+                      const isSel = selectedSites.includes(site);
+                      return (
+                        <button type="button" key={site} onClick={() => toggleSite(site)} className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase transition-all border ${isSel ? 'bg-indigo-500 text-white border-indigo-600 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600'}`}>
+                          {site}
+                        </button>
+                      )
+                    })}
+                    {safeSites.length === 0 && <span className="text-xs text-slate-400 italic font-medium p-2">No sites available. Please add sites in settings first!</span>}
+                  </div>
+                </div>
+              )}
+
+              {/* Input Fields */}
+              <div>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Directive Subject</label>
+                <input required value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. MANDATORY HELMET CHECK" className="w-full bg-slate-50 dark:bg-[#0B1120] border-2 border-slate-200 dark:border-slate-700 rounded-xl p-3.5 text-sm font-black text-slate-900 dark:text-white focus:border-amber-500 outline-none uppercase transition-all" />
+              </div>
+
+              {/* Dual Box */}
+              <div>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Primary Instruction (English)</label>
+                <textarea required value={messageEng} onChange={e => setMessageEng(e.target.value)} placeholder="Type confidential instruction here..." className="w-full bg-slate-50 dark:bg-[#0B1120] border-2 border-slate-200 dark:border-slate-700 rounded-xl p-4 text-sm font-bold text-slate-900 dark:text-white focus:border-amber-500 outline-none min-h-[100px] resize-y transition-all"></textarea>
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest mb-1.5 ml-1 flex items-center gap-1.5"><Activity size={12}/> Regional Translation (Optional)</label>
+                <textarea value={messageReg} onChange={e => setMessageReg(e.target.value)} placeholder="Type Hindi/Regional translation here..." className="w-full bg-amber-50/50 dark:bg-amber-500/5 border-2 border-amber-200 dark:border-amber-500/30 rounded-xl p-4 text-sm font-bold text-slate-900 dark:text-white focus:border-amber-500 outline-none min-h-[80px] resize-y placeholder-amber-700/40 dark:placeholder-amber-500/40 transition-all"></textarea>
+              </div>
+
+              <button type="submit" disabled={isDeploying} className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-amber-500/30 flex justify-center items-center gap-2 active:scale-95 transition-all">
+                 {isDeploying ? <RefreshCw size={18} className="animate-spin" /> : <><Zap size={18}/> Deploy to Vault</>}
+              </button>
+           </form>
+        </div>
+
+        {/* RIGHT: THE LIVE RECEIPTS DASHBOARD */}
+        <div className="flex flex-col gap-4">
+           <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2 px-2">
+             <CheckCircle size={20} className="text-emerald-500" /> Live Read Receipts
+           </h2>
+           
+           <div className="space-y-4 overflow-y-auto custom-scrollbar pr-2 h-full">
+              {pastBroadcasts.map(b => {
+                 const bAcks = acks.filter(a => a.broadcast_id === b.id);
+                 let tCount = 0;
+                 let targetList = [];
+                 try {
+                    targetList = typeof b.target_sites === 'string' ? JSON.parse(b.target_sites) : b.target_sites;
+                    tCount = targetList.includes('ALL') ? safeSites.length : targetList.length;
+                 } catch(e) {}
+                 
+                 // Safe percentage calculation
+                 const pct = tCount === 0 ? 0 : Math.round((bAcks.length / tCount) * 100);
+                 const isFullyRead = pct >= 100;
+
+                 return (
+                    <div key={b.id} className="bg-white dark:bg-[#0f172a] p-5 rounded-[2rem] border-2 border-slate-200 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group">
+                      <div className={`absolute top-0 left-0 w-1.5 h-full transition-colors ${isFullyRead ? 'bg-emerald-500' : 'bg-amber-400'}`}></div>
+                      
+                      <button onClick={() => deleteBroadcast(b.id)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-rose-500 bg-slate-50 hover:bg-rose-50 dark:bg-slate-800 dark:hover:bg-rose-500/10 rounded-xl transition-all shadow-sm border border-slate-200 dark:border-slate-700">
+                         <Trash2 size={14}/>
+                      </button>
+
+                      <div className="pl-3 pr-10">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">{new Date(b.created_at).toLocaleString('en-IN')}</span>
+                        <h4 className="font-black text-slate-900 dark:text-white uppercase text-base mb-4 leading-tight">{b.title}</h4>
+                        
+                        <div className="flex justify-between items-end mb-2">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                             <Users size={12}/> Acknowledged: {bAcks.length} / {tCount}
+                          </span>
+                          <span className={`text-xs font-black ${isFullyRead ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-500'}`}>{pct}%</span>
+                        </div>
+                        
+                        {/* Progress bar */}
+                        <div className="w-full bg-slate-100 dark:bg-slate-800/80 rounded-full h-2 overflow-hidden border border-slate-200 dark:border-slate-700 shadow-inner">
+                          <div style={{width: `${pct}%`}} className={`h-full transition-all duration-1000 ${isFullyRead ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]' : 'bg-amber-400'}`}></div>
+                        </div>
+
+                        {/* View Read List Hover */}
+                        {bAcks.length > 0 && (
+                           <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Signed By:</p>
+                              <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar">
+                                 {bAcks.map(a => (
+                                    <span key={a.id} className="text-[9px] font-bold px-2 py-1 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-1">
+                                       <CheckCircle size={10} className="text-emerald-500"/> {a.site}
+                                    </span>
+                                 ))}
+                              </div>
+                           </div>
+                        )}
+                      </div>
+                    </div>
+                 )
+              })}
+              {pastBroadcasts.length === 0 && <p className="text-center text-slate-500 text-sm font-bold italic mt-10">No directives deployed yet.</p>}
+           </div>
+        </div>
+     </div>
+  )
 }
