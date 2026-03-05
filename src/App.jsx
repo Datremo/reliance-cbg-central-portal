@@ -442,6 +442,13 @@ const toggleIncidentStatus = async (inc) => {
     }
   };
 
+  // ✨ FAANG FILE-EXPLORER QUICK MOVE ENGINE!
+  const quickUpdateContact = async (id, updateData) => {
+    const { data, error } = await supabase.from('contacts').update(updateData).eq('id', id).select();
+    if (!error && data) setContacts(contacts.map(c => c.id === id ? data[0] : c));
+    else if (error) alert(`Vault Rejection: ${error.message}`);
+  };
+
   // DELETE FUNCTION
   const confirmDelete = async () => {
     if (!deletingRecord) return;
@@ -509,6 +516,7 @@ const toggleIncidentStatus = async (inc) => {
               onEditContact={setEditingContact} 
               onDeleteContact={setDeletingContact} 
               onViewContact={setViewingContact}
+              onQuickUpdateContact={quickUpdateContact} // 👈 ADD THIS NEW LINE HERE!
               onImportCSV={handleCSVImport} 
               theme={theme} 
               toggleTheme={toggleTheme} 
@@ -1378,11 +1386,11 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
 // ==========================================
 // ADMIN VIEW (MASTER PORTAL + COMMAND CENTER)
 // ==========================================
-function AdminDesktopView({ userProfile, deployments, contacts, incidents, weeklyReports, isLoading, onToggleAck, onDeleteIncident, onLogout, onEdit, onView, onDelete, onAddContact, onEditContact, onDeleteContact, onViewContact, onImportCSV, theme, toggleTheme, globalSites = [], SITES = [], COMMISSIONED_SITES = [], SITES_BY_STATE = {}, STATE_NAMES = [], onAddSite, onToggleSite, onDeleteSite, onDeleteWeekly, onSync, broadcasts, acks, fetchBroadcasts }) { 
+function AdminDesktopView({ userProfile, deployments, contacts, incidents, weeklyReports, isLoading, onToggleAck, onDeleteIncident, onLogout, onEdit, onView, onDelete, onAddContact, onEditContact, onDeleteContact, onViewContact, onImportCSV, theme, toggleTheme, globalSites = [], SITES = [], COMMISSIONED_SITES = [], SITES_BY_STATE = {}, STATE_NAMES = [], onAddSite, onToggleSite, onDeleteSite, onDeleteWeekly, onSync, onQuickUpdateContact }) { 
   const [activeTab, setActiveTab] = useState('deployments'); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  
+  const [showSettings, setShowSettings] = useState(false); 
+  const [movingContact, setMovingContact] = useState(null); // 👈 THE NEW FILE EXPLORER STATE!
   // ✨ NEW: TODAY'S INCIDENT TRACKER LOGIC
   const todayStr = getISTDate();
   const todaysIncidents = incidents ? incidents.filter(i => (i.created_at || '').startsWith(todayStr)) : [];
@@ -1402,8 +1410,9 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
   const [searchTerm, setSearchTerm] = useState(""); 
   const [siteTier, setSiteTier] = useState("All"); //   NEW: VIP Toggle
 
-  // Contact Omni-Search
+  // Contact Omni-Search & Folder Brain 🧠
   const [contactSearchTerm, setContactSearchTerm] = useState("");
+  const [selectedFolder, setSelectedFolder] = useState(null);
 
   // ✨ RESTORED: Your flawless state-to-site logic!
   const availableSites = filterState === "All" ? SITES : SITES_BY_STATE[filterState] || [];
@@ -1643,10 +1652,11 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
             </button>
             {/* ✨ SMART HEADER THAT KNOWS EVERY TAB! */}
           <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white truncate max-w-[140px] sm:max-w-none">
-            {activeTab === 'deployments' && 'Deployment Matrix'}
+            {activeTab === 'deployments' && 'Deployment Command'}
             {activeTab === 'incidents' && 'Incident Report'}
             {activeTab === 'contacts' && 'Directory'}
             {activeTab === 'weekly' && 'MIS Report'}
+            {activeTab === 'broadcasts' && 'Command Broadcasts'}
           </h1>
             <span className="hidden sm:flex bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase items-center gap-1.5 shadow-sm">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> Secure Cloud Vault
@@ -2021,17 +2031,27 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
           )}
 
           {/* ===================================== */}
-          {/* 📖 TAB: GLOBAL CONTACTS VIEW */}
+          {/* 📖 TAB: GLOBAL CONTACTS VIEW (FOLDERS EDITION 📁) */}
           {/* ===================================== */}
-          {activeTab === 'contacts' && (
+          {activeTab === 'contacts' && (() => {
+            // 🧠 Folder Math: Automatically groups contacts by their Role/Designation!
+            const folders = [...new Set((contacts || []).map(c => c.designation || 'Uncategorized'))].sort();
+            
+            // If we are IN a folder, only show contacts from that folder!
+            let displayedContacts = filteredContacts;
+            if (selectedFolder) {
+              displayedContacts = filteredContacts.filter(c => (c.designation || 'Uncategorized') === selectedFolder);
+            }
+
+            return (
             <>
-              {/* Contacts Header & Search */}
+              {/* Contacts Header & Action Buttons */}
               <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
                 <div className="relative w-full md:w-96">
                   <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input 
                     type="text" 
-                    placeholder="Omni-Search (Name, Phone, Site, Email...)" 
+                    placeholder={selectedFolder ? `Search in ${selectedFolder}...` : "Omni-Search All Contacts..."} 
                     value={contactSearchTerm} 
                     onChange={(e) => setContactSearchTerm(e.target.value)} 
                     className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold text-slate-800 dark:text-slate-300 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all shadow-sm"
@@ -2039,84 +2059,196 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
                 </div>
                 <div className="flex gap-2 w-full md:w-auto">
                   <button onClick={onAddContact} className="flex-1 md:flex-none py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-900/20 transition-all shrink-0">
-                  <Plus size={16} /> ADD CONTACT
-                </button>
-                {/* Secret invisible file input that triggers when you click the label! */}
-                <input type="file" accept=".csv" id="csv-upload" className="hidden" onChange={(e) => { onImportCSV(e.target.files[0]); e.target.value = null; }} />
-                <label htmlFor="csv-upload" className="flex-1 md:flex-none py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/20 transition-all cursor-pointer">
-                  <Download size={16} className="rotate-180" /> IMPORT CSV
-                </label>
-                
+                    <Plus size={16} /> ADD CONTACT
+                  </button>
+                  <input type="file" accept=".csv" id="csv-upload" className="hidden" onChange={(e) => { onImportCSV(e.target.files[0]); e.target.value = null; }} />
+                  <label htmlFor="csv-upload" className="flex-1 md:flex-none py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/20 transition-all cursor-pointer">
+                    <Download size={16} className="rotate-180" /> IMPORT CSV
+                  </label>
                 </div>
-
               </div>
 
-              {/* Contacts Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredContacts.map(contact => (
-                <div key={contact.id} onClick={() => onViewContact(contact)} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md transition-shadow relative group cursor-pointer">                    
-                    {/* Actions Menu (Edit/Delete) -   ADDED stopPropagation! */}
-                    <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={(e) => { e.stopPropagation(); onEditContact(contact); }} className="p-1.5 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded-md"><Edit2 size={14} /></button>
-                      <button onClick={(e) => { e.stopPropagation(); onDeleteContact(contact); }} className="p-1.5 text-slate-400 hover:text-red-600 bg-slate-50 dark:bg-slate-800 rounded-md"><Trash2 size={14} /></button>
-                    </div>
+              {/* ✨ THE FOLDER NAVIGATION BREADCRUMB */}
+              {selectedFolder && (
+                <div className="mb-6 flex items-center gap-3 animate-in fade-in slide-in-from-left-4">
+                  <button onClick={() => {setSelectedFolder(null); setContactSearchTerm('');}} className="flex items-center gap-1.5 px-4 py-2 text-[10px] font-black uppercase tracking-widest bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-indigo-100 hover:text-indigo-600 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400 rounded-xl transition-all shadow-sm">
+                    <ArrowLeft size={14} /> Folders
+                  </button>
+                  <span className="text-sm font-black text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                     <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div> {selectedFolder}
+                  </span>
+                </div>
+              )}
 
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-lg font-black text-indigo-600 shrink-0">
-                        {(contact.name || "?")[0]}
+              {/* ✨ VIEW SWITCHER: Folders vs Contacts */}
+              {!selectedFolder && contactSearchTerm === "" ? (
+                /* 📁 GRID OF FOLDERS */
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-in fade-in zoom-in-95 duration-300">
+                  {folders.map(folder => {
+                    const count = (contacts || []).filter(c => (c.designation || 'Uncategorized') === folder).length;
+                    return (
+                      <div key={folder} onClick={() => setSelectedFolder(folder)} className="bg-white dark:bg-[#0f172a] p-5 sm:p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-xl hover:-translate-y-1 hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all cursor-pointer group relative overflow-hidden">
+                        <div className="absolute -right-4 -top-4 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl group-hover:bg-indigo-500/20 transition-all"></div>
+                        <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-indigo-500 group-hover:text-white transition-all shadow-sm">
+                          <BookOpen size={24} />
+                        </div>
+                        <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-sm mb-1 truncate">{folder}</h3>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{count} {count === 1 ? 'Contact' : 'Contacts'}</p>
                       </div>
-                      <div className="pr-10">
-                        <h3 className="font-bold text-slate-900 dark:text-white uppercase text-sm leading-tight">{contact.name}</h3>
-                        <p className="text-[10px] font-bold text-indigo-500 uppercase mt-0.5">{contact.designation}</p>
+                    )
+                  })}
+                </div>
+              ) : (
+                /* 📇 GRID OF ACTUAL CONTACTS */
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                  {displayedContacts.map(contact => (
+                    <div key={contact.id} onClick={() => onViewContact(contact)} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md transition-shadow relative group cursor-pointer">                   
+                      {/* FAANG Actions Menu */}
+                      <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={(e) => { e.stopPropagation(); setMovingContact(contact); }} className="p-1.5 text-slate-400 hover:text-emerald-600 bg-slate-50 dark:bg-slate-800 rounded-md shadow-sm border border-transparent hover:border-emerald-200 dark:hover:border-emerald-500/30 transition-all" title="Move to Folder"><ArrowRight size={14} /></button>
+                        <button onClick={(e) => { e.stopPropagation(); onEditContact(contact); }} className="p-1.5 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded-md shadow-sm border border-transparent hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all" title="Edit Contact"><Edit2 size={14} /></button>
+                        <button onClick={(e) => { e.stopPropagation(); onDeleteContact(contact); }} className="p-1.5 text-slate-400 hover:text-rose-600 bg-slate-50 dark:bg-slate-800 rounded-md shadow-sm border border-transparent hover:border-rose-200 dark:hover:border-rose-500/30 transition-all" title="Delete Contact"><Trash2 size={14} /></button>
+                      </div>
+
+                      <div className="flex items-start gap-4 mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-lg font-black text-indigo-600 shrink-0">
+                          {(contact.name || "?")[0]}
+                        </div>
+                        <div className="pr-10">
+                          <h3 className="font-bold text-slate-900 dark:text-white uppercase text-sm leading-tight">{contact.name}</h3>
+                          <p className="text-[10px] font-bold text-indigo-500 uppercase mt-0.5">{contact.designation}</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-950/50 p-2 rounded-lg border border-slate-100 dark:border-slate-800/50">
+                          <div className="flex items-center gap-2 text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
+                            <Phone size={12} className="text-slate-400" /> {formatPhone(contact.phone)}
+                          </div>
+                          <button onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(contact.phone); alert('Copied!'); }} className="text-slate-400 hover:text-indigo-500"><Copy size={14} /></button>                      
+                        </div>
+                        
+                        {(contact.site || contact.state_name) && (
+                          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 px-1">
+                            <MapPin size={14} className="text-emerald-500 shrink-0" /> 
+                            <span className="truncate">{contact.site ? contact.site : 'Various Sites'} {contact.state_name ? `(${contact.state_name})` : ''}</span>
+                          </div>
+                        )}
+
+                        {contact.email && (
+                          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 px-1">
+                            <Mail size={14} className="text-blue-500 shrink-0" /> <span className="truncate">{contact.email}</span>
+                          </div>
+                        )}
+
+                        {contact.company && (
+                          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 px-1">
+                            <Briefcase size={14} className="text-orange-500 shrink-0" /> <span className="truncate">{contact.company}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
-
-                    <div className="space-y-2.5">
-                      <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-950/50 p-2 rounded-lg border border-slate-100 dark:border-slate-800/50">
-                        <div className="flex items-center gap-2 text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
-                          <Phone size={12} className="text-slate-400" /> {formatPhone(contact.phone)}
-                        </div>
-                        <button onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(contact.phone); alert('Copied!'); }} className="text-slate-400 hover:text-indigo-500"><Copy size={14} /></button>                      </div>
-                      
-                      {(contact.site || contact.state_name) && (
-                        <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 px-1">
-                          <MapPin size={14} className="text-emerald-500 shrink-0" /> 
-                          <span className="truncate">{contact.site ? contact.site : 'Various Sites'} {contact.state_name ? `(${contact.state_name})` : ''}</span>
-                        </div>
-                      )}
-
-                      {contact.email && (
-                        <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 px-1">
-                          <Mail size={14} className="text-blue-500 shrink-0" /> <span className="truncate">{contact.email}</span>
-                        </div>
-                      )}
-
-                      {contact.company && (
-                        <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 px-1">
-                          <Briefcase size={14} className="text-orange-500 shrink-0" /> <span className="truncate">{contact.company}</span>
-                        </div>
-                      )}
+                  ))}
+                  
+                  {displayedContacts.length === 0 && (
+                    <div className="col-span-full py-20 text-center flex flex-col items-center">
+                      <BookOpen size={48} className="text-slate-300 dark:text-slate-700 mb-4" />
+                      <h3 className="text-lg font-bold text-slate-500 dark:text-slate-400">No contacts found</h3>
+                      <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Try adjusting your search terms</p>
                     </div>
-                  </div>
-                ))}
-                
-                {filteredContacts.length === 0 && (
-                  <div className="col-span-full py-20 text-center flex flex-col items-center">
-                    <BookOpen size={48} className="text-slate-300 dark:text-slate-700 mb-4" />
-                    <h3 className="text-lg font-bold text-slate-500 dark:text-slate-400">No contacts found</h3>
-                    <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Try adjusting your omni-search terms</p>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </>
-          )}
+          );})()}
         {activeTab === 'incidents' && <AdminIncidentView incidents={incidents} isLoading={isLoading} onAcknowledge={onToggleAck} onDelete={onDeleteIncident} SITES={SITES} STATE_NAMES={STATE_NAMES} SITES_BY_STATE={SITES_BY_STATE} />}
         {activeTab === 'weekly' && <AdminWeeklyView weeklyReports={weeklyReports} isLoading={isLoading} COMMISSIONED_SITES={COMMISSIONED_SITES} SITES={SITES} STATE_NAMES={STATE_NAMES} SITES_BY_STATE={SITES_BY_STATE} onDeleteWeekly={onDeleteWeekly} />}
         {activeTab === 'broadcasts' && <AdminBroadcastView SITES={SITES} globalSites={globalSites} userProfile={userProfile} />}            </div>
           )}
         </div>
         
+        {/* 📁 FAANG FILE EXPLORER: MOVE MODAL */}
+        {movingContact && (
+          <MoveContactModal 
+            contact={movingContact} 
+            folders={[...new Set((contacts || []).map(c => c.designation || 'Uncategorized'))].sort()} 
+            onClose={() => setMovingContact(null)} 
+            onMove={async (newFolder) => {
+              await onQuickUpdateContact(movingContact.id, { designation: newFolder.toUpperCase() });
+              setMovingContact(null);
+            }} 
+          />
+        )}
       </main>
+    </div>
+  );
+}
+
+// ==========================================
+// 📁 FAANG-STYLE FILE EXPLORER MODAL (MOVE CONTACT)
+// ==========================================
+function MoveContactModal({ contact, folders, onClose, onMove }) {
+  const [selectedFolder, setSelectedFolder] = useState(contact.designation || folders[0] || '');
+  const [newFolderInput, setNewFolderInput] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const finalFolder = selectedFolder === 'NEW_FOLDER' ? newFolderInput : selectedFolder;
+    if (!finalFolder.trim()) return alert("Please select or name a folder!");
+    onMove(finalFolder.trim());
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={onClose}>
+      <div className="bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-indigo-500/30 rounded-[2.5rem] shadow-[0_20px_80px_-15px_rgba(79,70,229,0.3)] w-full max-w-md overflow-hidden relative animate-in zoom-in-[0.95] duration-300" onClick={e => e.stopPropagation()}>
+        
+        <div className="absolute -top-20 -right-20 w-48 h-48 bg-emerald-500/10 rounded-full blur-[50px] pointer-events-none"></div>
+
+        <div className="p-6 sm:p-8 border-b border-slate-100 dark:border-slate-800/50 flex justify-between items-center relative z-10 bg-slate-50/50 dark:bg-slate-900/50">
+          <div>
+            <h3 className="font-black text-slate-900 dark:text-white flex items-center gap-2 text-lg uppercase tracking-tight">
+              <BookOpen size={18} className="text-emerald-500" /> Move Contact
+            </h3>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Transferring: <span className="text-indigo-500">{contact.name}</span></p>
+          </div>
+          <button onClick={onClose} className="p-2.5 text-slate-400 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 rounded-full shadow-sm transition-all active:scale-95"><X size={16} /></button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6 relative z-10">
+          <div>
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-1">Select Destination Folder</label>
+            <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-2">
+              {folders.map(folder => (
+                <label key={folder} className={`flex items-center justify-between p-3 rounded-xl border-2 cursor-pointer transition-all ${selectedFolder === folder ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10' : 'border-slate-200 dark:border-slate-700/50 hover:border-emerald-300 dark:hover:border-emerald-500/30'}`}>
+                  <span className={`text-xs font-bold uppercase tracking-wide ${selectedFolder === folder ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'}`}>{folder}</span>
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${selectedFolder === folder ? 'border-emerald-500' : 'border-slate-300 dark:border-slate-600'}`}>
+                    {selectedFolder === folder && <div className="w-2 h-2 rounded-full bg-emerald-500"></div>}
+                  </div>
+                  <input type="radio" name="folder" value={folder} checked={selectedFolder === folder} onChange={() => setSelectedFolder(folder)} className="hidden" />
+                </label>
+              ))}
+              
+              <label className={`flex items-center justify-between p-3 rounded-xl border-2 cursor-pointer transition-all ${selectedFolder === 'NEW_FOLDER' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10' : 'border-slate-200 dark:border-slate-700/50 hover:border-indigo-300 dark:hover:border-indigo-500/30'}`}>
+                <span className={`text-xs font-bold uppercase tracking-wide flex items-center gap-2 ${selectedFolder === 'NEW_FOLDER' ? 'text-indigo-700 dark:text-indigo-400' : 'text-slate-700 dark:text-slate-300'}`}><Plus size={14}/> Create New Folder</span>
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${selectedFolder === 'NEW_FOLDER' ? 'border-indigo-500' : 'border-slate-300 dark:border-slate-600'}`}>
+                  {selectedFolder === 'NEW_FOLDER' && <div className="w-2 h-2 rounded-full bg-indigo-500"></div>}
+                </div>
+                <input type="radio" name="folder" value="NEW_FOLDER" checked={selectedFolder === 'NEW_FOLDER'} onChange={() => setSelectedFolder('NEW_FOLDER')} className="hidden" />
+              </label>
+            </div>
+          </div>
+
+          {selectedFolder === 'NEW_FOLDER' && (
+            <div className="animate-in fade-in slide-in-from-top-2">
+              <input type="text" required placeholder="Name new folder..." value={newFolderInput} onChange={(e) => setNewFolderInput(e.target.value)} className="w-full bg-indigo-50/50 dark:bg-indigo-900/20 border-2 border-indigo-200 dark:border-indigo-500/50 rounded-xl py-3 px-4 text-xs font-bold text-indigo-900 dark:text-indigo-100 uppercase outline-none focus:ring-4 focus:ring-indigo-500/20 transition-all placeholder-indigo-300 dark:placeholder-indigo-500/50" />
+            </div>
+          )}
+
+          <button type="submit" className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest bg-emerald-500 text-white flex items-center justify-center gap-2 hover:bg-emerald-600 shadow-lg shadow-emerald-500/30 active:scale-95 transition-all">
+            <ArrowRight size={16} /> Move Contact
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
@@ -2960,6 +3092,30 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete, SITE
     a.download = `Incident_${viewingInc.site}_Photo_${idx+1}.jpg`;
     a.click();
   };
+  // ✨ FAANG BULK EXPORT ENGINE!
+  const exportIncidentsCSV = () => {
+    if (filtered.length === 0) return alert("Oops! 🥺 No incidents to export with these filters!");
+    
+    const headers = ['Date Occurred', 'Date Reported', 'Site', 'Pincode', 'Incident Type', 'Exact Location', 'Reported By', 'EP Number', 'Status', 'Details', 'Findings', 'Action Taken', 'Recommendations'];
+    
+    const csvRows = filtered.map(i => {
+      // We clean the text so commas inside descriptions don't break the Excel file!
+      const clean = (text) => `"${(text || '').replace(/"/g, '""').replace(/\n/g, ' ')}"`;
+      
+      return [
+        clean(i.time_of_incident), clean(i.time_of_reporting), clean(i.site), clean(i.pincode),
+        clean(i.incident_name), clean(i.incident_location), clean(i.reported_by), clean(i.ep_number),
+        clean(i.status), clean(i.details), clean(i.findings), clean(i.actions_taken), clean(i.recommendations)
+      ].join(',');
+    });
+
+    const csvContent = [headers.join(','), ...csvRows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `CBG_Bulk_Incidents_${filterSite}_${getISTDate()}.csv`;
+    link.click();
+  };
 
   const downloadReport = (inc) => {
     const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Incident Report</title></head><body style='font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6;'>";
@@ -3009,7 +3165,14 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete, SITE
         <FilterSelect label="State" value={filterState} onChange={e => {setFilterState(e); setFilterSite("All");}} options={STATE_NAMES} />
         <FilterSelect label="Site" value={filterSite} onChange={setFilterSite} options={[...availableSites].sort()} />
         
-        <button onClick={() => { setFilterDate(''); setFilterState('All'); setFilterSite('All'); setSearchTerm(''); }} className="text-[11px] font-black tracking-widest text-slate-500 bg-slate-100 dark:bg-slate-800 px-5 py-3 rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">CLEAR</button>
+        <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0 ml-auto">
+          <button onClick={exportIncidentsCSV} className="text-[11px] font-black tracking-widest text-white bg-rose-600 hover:bg-rose-500 px-5 py-3 rounded-2xl transition-all shadow-md shadow-rose-600/20 flex items-center gap-2 transform hover:-translate-y-0.5 active:scale-95 shrink-0">
+            <Download size={14} /> BULK EXPORT
+          </button>
+          <button onClick={() => { setFilterDate(''); setFilterState('All'); setFilterSite('All'); setSearchTerm(''); }} className="text-[11px] font-black tracking-widest text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 px-5 py-3 rounded-2xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors shrink-0">
+            CLEAR
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -4013,6 +4176,39 @@ function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, o
   const [allProfiles, setAllProfiles] = useState([]);
   const [isLoadingProfiles, setIsLoadingProfiles] = useState(false);
 
+// ✨ NEW: SITE CREDENTIAL GENERATOR STATES
+  const [newCred, setNewCred] = useState({ email: '', password: '', site: '', names: '' });
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // ✨ NEW: THE API CALL TO OUR ROBOT
+  const handleCreateCredential = async (e) => {
+    e.preventDefault();
+    if (!newCred.site) return alert("Please select a site!");
+    setIsGenerating(true);
+    
+    // We call the Edge Function we just built!
+    const { data, error } = await supabase.functions.invoke('create-site-user', {
+      body: { 
+        email: newCred.email, 
+        password: newCred.password, 
+        site: newCred.site, 
+        names: newCred.names.toUpperCase() 
+      }
+    });
+
+    setIsGenerating(false);
+
+    if (error || (data && data.error)) {
+      alert(`Vault Rejection: ${error?.message || data?.error}`);
+    } else {
+      alert("✅ Site Terminal Access Granted! The supervisors can now log in.");
+      setNewCred({ email: '', password: '', site: '', names: '' });
+      // Refresh the roster!
+      const { data: newProfiles } = await supabase.from('profiles').select('*').order('role', { ascending: true });
+      if (newProfiles) setAllProfiles(newProfiles);
+    }
+  };
+  
   // 📡 FETCH ALL PROFILES WHEN PROFILE TAB OPENS!
   useEffect(() => {
     if (activeTab === 'profile') {
@@ -4094,7 +4290,40 @@ function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, o
               </div>
             </div>
           </div>
-
+{/* ✨ NEW: GENERATE TERMINAL ACCESS (FAANG UI) */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm relative overflow-hidden mt-8 mb-8">
+            <div className="absolute -right-10 -top-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest mb-6 flex items-center gap-2 relative z-10">
+              <ShieldCheck size={18} className="text-emerald-500"/> Issue Node Access
+            </h3>
+            
+            <form onSubmit={handleCreateCredential} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 relative z-10 items-end">
+              <div className="lg:col-span-1">
+                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Site Terminal</label>
+                <select required value={newCred.site} onChange={(e) => setNewCred({...newCred, site: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 dark:text-white uppercase focus:border-emerald-500 outline-none shadow-inner cursor-pointer">
+                  <option value="">Select Node...</option>
+                  {globalSites.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+                </select>
+              </div>
+              <div className="lg:col-span-1">
+                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Mail ID</label>
+                <input type="email" required placeholder="site@cbg.com" value={newCred.email} onChange={(e) => setNewCred({...newCred, email: e.target.value.toLowerCase()})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none shadow-inner placeholder-slate-400" />
+              </div>
+              <div className="lg:col-span-1">
+                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Secure Password</label>
+                <input type="text" required placeholder="Min 6 chars" minLength="6" value={newCred.password} onChange={(e) => setNewCred({...newCred, password: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none shadow-inner placeholder-slate-400" />
+              </div>
+              <div className="lg:col-span-1">
+                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Officers (Comma separated)</label>
+                <input type="text" required placeholder="Rahul, Amit" value={newCred.names} onChange={(e) => setNewCred({...newCred, names: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none shadow-inner placeholder-slate-400 uppercase" />
+              </div>
+              <div className="lg:col-span-1">
+                <button type="submit" disabled={isGenerating} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-md shadow-emerald-500/25 flex items-center justify-center gap-2">
+                  {isGenerating ? <RefreshCw size={14} className="animate-spin" /> : <><Unlock size={14}/> Grant Access</>}
+                </button>
+              </div>
+            </form>
+          </div>
           {/* EVERYONE ELSE'S PROFILES */}
           <div>
             <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 ml-1 flex items-center gap-2"><Users size={16}/> Global Security Roster</h3>
