@@ -20,58 +20,58 @@ const formatPhone = (phone) => {
 };
 
 // ==========================================
-// 🌍 THE MULTI-LINGUAL TRANSLATION BRAIN (NOW WITH PLACEHOLDERS!)
+// 🌍 THE MULTI-LINGUAL TRANSLATION BRAIN (UPGRADED FOR V2.0!)
 // ==========================================
 const TRANSLATIONS = {
   en: {
-    hub: { title: "Security Dashboard", apps: "Secure Apps", dep: "Daily Deployment", inc: "Incident Report", mis: "MIS Report", misSub: "Submit Ledger", overview: "Overview" },
+    hub: { title: "Security Dashboard", apps: "Secure Apps", dep: "Daily Deployment", inc: "Incident Report", mis: "MIS Report", misSub: "Submit Ledger", leave: "Leave", leaveSub: "Request Leaves", notice: "Notice", noticeSub: "Directives", overview: "Overview" },
     nav: { back: "Back", newEntry: "New Entry", viewLogs: "View Logs", clear: "CLEAR", dateFilter: "Date Filter" },
     dep: { clone: "Copy Yesterday's Deployment", date: "Deployment Date", shift: "Shift", desig: "Designation", name: "Full Name", phone: "Phone No.", loc: "Location", customLoc: "Specify sector exactly...", addAnother: "Add another", submit: "SUBMIT DEPLOYMENT", encrypting: "ENCRYPTING...", recorded: "RECORDED", noLogs: "No deployment logs found for this date.", secData: "Security Data", day: "Day Shift", night: "Night Shift", off: "Weekly Off" },
     inc: { title: "Incident Report", subtitle: "Direct uplink to Command Center.", type: "Incident Type / Name", occDate: "Occurrence Date & Time", repBy: "Reported By", ep: "EP Number", site: "Site Name", pin: "Pincode", exactLoc: "Location of Incident", details: "Details of Incident", findings: "Findings", action: "Action Taken", reco: "Follow-up & Recommendations", photo: "Photographic Evidence", attach: "Attach", submit: "SUBMIT REPORT", adminSeen: "Admin Acknowledged", pending: "Pending Review", timeOcc: "Time Occurred", timeRep: "Time Reported", copyWA: "COPY FOR WHATSAPP", copyFull: "Copy Full Report", noInc: "No incidents found for this date.", encrypting: "ENCRYPTING UPLINK...", 
-      // ✨ NEW PLACEHOLDERS!
       phType: "e.g. Theft, Fire, Breach...", phRepBy: "Officer Name", phEp: "ID Number", phPin: "Code", phLoc: "Specific spot on site...", phDetails: "What exactly happened? Provide full context.", phFindings: "Investigative findings...", phAction: "Immediate response deployed...", phReco: "Suggested protocols to prevent recurrence..."
     },
-    mis: { selectDates: "Select MIS Report Dates", dateFrom: "Date From", dateTo: "Date To", register: "Official Register", submit: "SUBMIT Report", syncing: "SYNCING...", decrypting: "Decrypting Ledgers...", viewMaster: "View Master", editResend: "Edit / Resend", noLedgers: "No weekly ledgers found.", delete: "Delete Ledger", download: "Download .CSV" }
+    mis: { selectDates: "Select MIS Report Dates", dateFrom: "Date From", dateTo: "Date To", register: "Official Register", submit: "SUBMIT Report", syncing: "SYNCING...", decrypting: "Decrypting Ledgers...", viewMaster: "View Master", editResend: "Edit / Resend", noLedgers: "No weekly ledgers found.", delete: "Delete Ledger", download: "Download .CSV" },
+    filter: { today: "Today", yesterday: "Yesterday", last7: "Last 7 Days", thisMonth: "This Month", last90: "Last 90 Days", clearAll: "Clear All", custom: "Custom Date Selection", from: "From Date", to: "To Date (Optional Range)", apply: "Apply Filter" }
   },
   hi: {
-    hub: { title: "सुरक्षा डैशबोर्ड", apps: "सिक्योर ऐप्स", dep: "डेली ड्यूटी (Deployment)", inc: "घटना रिपोर्ट (Incident)", mis: "MIS रिपोर्ट", misSub: "लेजर सबमिट करें", overview: "अवलोकन" },
+    hub: { title: "सुरक्षा डैशबोर्ड", apps: "सिक्योर ऐप्स", dep: "डेली ड्यूटी (Deployment)", inc: "घटना रिपोर्ट (Incident)", mis: "MIS रिपोर्ट", misSub: "लेजर सबमिट करें", leave: "छुट्टी", leaveSub: "छुट्टी का आवेदन", notice: "सूचना", noticeSub: "कमांड निर्देश", overview: "अवलोकन" },
     nav: { back: "पीछे", newEntry: "नई एंट्री", viewLogs: "पुराने लॉग्स", clear: "साफ़ करें", dateFilter: "तारीख चुनें" },
     dep: { clone: "कल की ड्यूटी कॉपी करें", date: "ड्यूटी की तारीख", shift: "शिफ्ट", desig: "पद ", name: "पूरा नाम", phone: "मोबाइल नंबर", loc: "लोकेशन", customLoc: "लोकेशन का नाम लिखें...", addAnother: "एक और जोड़ें", submit: "ड्यूटी सबमिट करें", encrypting: "सबमिट हो रहा है...", recorded: "सेव हो गया", noLogs: "इस तारीख की कोई ड्यूटी नहीं मिली।", secData: "सुरक्षा गार्ड डेटा", day: "डे शिफ्ट (Day)", night: "नाईट शिफ्ट (Night)", off: "वीकली ऑफ (Off)" },
     inc: { title: "घटना रिपोर्ट", subtitle: "कमांड सेंटर को डायरेक्ट रिपोर्ट।", type: "घटना का प्रकार / नाम", occDate: "घटना की तारीख और समय", repBy: "रिपोर्ट करने वाले का नाम", ep: "EP नंबर", site: "साइट का नाम", pin: "पिनकोड", exactLoc: "घटना की सटीक लोकेशन", details: "घटना की पूरी जानकारी", findings: "जांच के नतीजे (Findings)", action: "क्या एक्शन लिया गया", reco: "सुझाव (Recommendations)", photo: "फोटो / सबूत", attach: "फोटो जोड़ें", submit: "रिपोर्ट सबमिट करें", adminSeen: "एडमिन ने देख लिया", pending: "अभी पेंडिंग है", timeOcc: "घटना का समय", timeRep: "रिपोर्ट करने का समय", copyWA: "WA कॉपी", copyFull: "पूरी रिपोर्ट कॉपी करें", noInc: "इस तारीख की कोई घटना नहीं मिली।", encrypting: "रिपोर्ट जा रही है...",
-      // ✨ NEW PLACEHOLDERS!
       phType: "जैसे: चोरी, आग, लड़ाई...", phRepBy: "ऑफिसर का नाम", phEp: "आईडी नंबर", phPin: "पिनकोड", phLoc: "साइट पर किस जगह...", phDetails: "क्या हुआ था? पूरी जानकारी दें।", phFindings: "जांच में क्या पता चला...", phAction: "तुरंत क्या कदम उठाए गए...", phReco: "आगे से रोकने के सुझाव..."
     },
-    mis: { selectDates: "MIS रिपोर्ट की तारीख चुनें", dateFrom: "कब से (From)", dateTo: "कब तक (To)", register: "ऑफिशियल रजिस्टर", submit: "रिपोर्ट सबमिट करें", syncing: "सिंक हो रहा है...", decrypting: "लेजर लोड हो रहा है...", viewMaster: "मास्टर देखें", editResend: "एडिट / रीसेंड", noLedgers: "कोई MIS लेजर नहीं मिला।", delete: "डिलीट करें", download: "CSV डाउनलोड करें" }
+    mis: { selectDates: "MIS रिपोर्ट की तारीख चुनें", dateFrom: "कब से (From)", dateTo: "कब तक (To)", register: "ऑफिशियल रजिस्टर", submit: "रिपोर्ट सबमिट करें", syncing: "सिंक हो रहा है...", decrypting: "लेजर लोड हो रहा है...", viewMaster: "मास्टर देखें", editResend: "एडिट / रीसेंड", noLedgers: "कोई MIS लेजर नहीं मिला।", delete: "डिलीट करें", download: "CSV डाउनलोड करें" },
+    filter: { today: "आज", yesterday: "कल (बीता हुआ)", last7: "पिछले 7 दिन", thisMonth: "इस महीने", last90: "पिछले 90 दिन", clearAll: "सब साफ़ करें", custom: "तारीख चुनें", from: "कब से", to: "कब तक (वैकल्पिक)", apply: "फ़िल्टर लगाएं" }
   },
   mr: {
-    hub: { title: "सुरक्षा डॅशबोर्ड", apps: "सिक्योर ॲप्स", dep: "डेली ड्युटी (Deployment)", inc: "घटना रिपोर्ट (Incident)", mis: "MIS रिपोर्ट", misSub: "लेजर सबमिट करा", overview: "आढावा" },
+    hub: { title: "सुरक्षा डॅशबोर्ड", apps: "सिक्योर ॲप्स", dep: "डेली ड्युटी (Deployment)", inc: "घटना रिपोर्ट (Incident)", mis: "MIS रिपोर्ट", misSub: "लेजर सबमिट करा", leave: "सुट्टी", leaveSub: "सुट्टीचा अर्ज", notice: "सूचना", noticeSub: "कमांड निर्देश", overview: "आढावा" },
     nav: { back: "मागे", newEntry: "नवीन एंट्री", viewLogs: "जुने लॉग्स", clear: "क्लिअर", dateFilter: "तारीख निवडा" },
     dep: { clone: "कालची ड्युटी कॉपी करा", date: "ड्युटीची तारीख", shift: "शिफ्ट", desig: "पद", name: "पूर्ण नाव", phone: "मोबाईल नंबर", loc: "लोकेशन", customLoc: "लोकेशनचे नाव लिहा...", addAnother: "आणखी एक जोडा", submit: "ड्युटी सबमिट करा", encrypting: "सबमिट होत आहे...", recorded: "सेव्ह झाले", noLogs: "या तारखेची कोणतीही ड्युटी आढळली नाही.", secData: "सुरक्षा रक्षक डेटा", day: "डे शिफ्ट (Day)", night: "नाईट शिफ्ट (Night)", off: "वीकली ऑफ (Off)" },
     inc: { title: "घटना रिपोर्ट", subtitle: "कमांड सेंटरला डायरेक्ट रिपोर्ट.", type: "घटनेचा प्रकार / नाव", occDate: "घटनेची तारीख आणि वेळ", repBy: "रिपोर्ट करणाऱ्याचे नाव", ep: "EP नंबर", site: "साईटचे नाव", pin: "पिनकोड", exactLoc: "घटनेची नेमकी लोकेशन", details: "घटनेची संपूर्ण माहिती", findings: "तपासाचे निष्कर्ष (Findings)", action: "काय ॲक्शन घेतली", reco: "सूचना (Recommendations)", photo: "फोटो / पुरावा", attach: "फोटो जोडा", submit: "रिपोर्ट सबमिट करा", adminSeen: "ॲडमिनने पाहिले", pending: "अजून पेंडिंग आहे", timeOcc: "घटनेची वेळ", timeRep: "रिपोर्ट केल्याची वेळ", copyWA: "WA कॉपी", copyFull: "संपूर्ण रिपोर्ट कॉपी करा", noInc: "या तारखेची कोणतीही घटना आढळली नाही.", encrypting: "रिपोर्ट जात आहे...",
-      // ✨ NEW PLACEHOLDERS!
       phType: "उदा: चोरी, आग, भांडण...", phRepBy: "अधिकाऱ्याचे नाव", phEp: "आयडी क्रमांक", phPin: "पिनकोड", phLoc: "नेमकी कोणती जागा...", phDetails: "नेमके काय घडले? संपूर्ण माहिती द्या.", phFindings: "तपासात काय आढळले...", phAction: "त्वरित काय कारवाई केली...", phReco: "पुढे असे घडू नये म्हणून सूचना..."
     },
-    mis: { selectDates: "MIS रिपोर्टची तारीख निवडा", dateFrom: "कधीपासून (From)", dateTo: "कधीपर्यंत (To)", register: "ऑफिशियल रजिस्टर", submit: "रिपोर्ट सबमिट करा", syncing: "सिंक होत आहे...", decrypting: "लेजर लोड होत आहे...", viewMaster: "मास्टर पहा", editResend: "एडिट / रीसेंड", noLedgers: "कोणतेही MIS लेजर आढळले नाही.", delete: "डिलीट करा", download: "CSV डाउनलोड करा" }
+    mis: { selectDates: "MIS रिपोर्टची तारीख निवडा", dateFrom: "कधीपासून (From)", dateTo: "कधीपर्यंत (To)", register: "ऑफिशियल रजिस्टर", submit: "रिपोर्ट सबमिट करा", syncing: "सिंक होत आहे...", decrypting: "लेजर लोड होत आहे...", viewMaster: "मास्टर पहा", editResend: "एडिट / रीसेंड", noLedgers: "कोणतेही MIS लेजर आढळले नाही.", delete: "डिलीट करा", download: "CSV डाउनलोड करा" },
+    filter: { today: "आज", yesterday: "काल", last7: "मागील 7 दिवस", thisMonth: "या महिन्यात", last90: "मागील 90 दिवस", clearAll: "सर्व क्लिअर करा", custom: "तारीख निवडा", from: "कधीपासून", to: "कधीपर्यंत (पर्यायी)", apply: "फिल्टर लावा" }
   },
   te: {
-    hub: { title: "సెక్యూరిటీ డాష్‌బోర్డ్", apps: "సెక్యూర్ యాప్స్", dep: "డైలీ డ్యూటీ (Deployment)", inc: "సంఘటన రిపోర్ట్ (Incident)", mis: "MIS రిపోర్ట్", misSub: "లెడ్జర్ సబ్మిట్ చేయండి", overview: "అవలోకనం" },
+    hub: { title: "సెక్యూరిటీ డాష్‌బోర్డ్", apps: "సెక్యూర్ యాప్స్", dep: "డైలీ డ్యూటీ (Deployment)", inc: "సంఘటన రిపోర్ట్ (Incident)", mis: "MIS రిపోర్ట్", misSub: "లెడ్జర్ సబ్మిట్ చేయండి", leave: "సెలవు", leaveSub: "సెలవు దరఖాస్తు", notice: "నోటీసు", noticeSub: "కమాండ్ సూచనలు", overview: "అవలోకనం" },
     nav: { back: "వెనుకకు", newEntry: "కొత్త ఎంట్రీ", viewLogs: "పాత లాగ్స్", clear: "క్లియర్", dateFilter: "తేదీ ఎంచుకోండి" },
     dep: { clone: "నిన్నటి డ్యూటీ కాపీ చేయండి", date: "డ్యూటీ తేదీ", shift: "షిఫ్ట్", desig: "హోదా", name: "పూర్తి పేరు", phone: "మొబైల్ నంబర్", loc: "లోకేషన్", customLoc: "లోకేషన్ పేరు రాయండి...", addAnother: "ఇంకొకటి జోడించండి", submit: "డ్యూటీ సబ్మిట్ చేయండి", encrypting: "సబ్మిట్ అవుతోంది...", recorded: "సేవ్ చేయబడింది", noLogs: "ఈ తేదీకి డ్యూటీ రికార్డ్ లేదు.", secData: "సెక్యూరిటీ గార్డ్ డేటా", day: "డే షిఫ్ట్ (Day)", night: "నైట్ షిఫ్ట్ (Night)", off: "వీక్లీ ఆఫ్ (Off)" },
     inc: { title: "సంఘటన రిపోర్ట్", subtitle: "కమాండ్ సెంటర్‌కు డైరెక్ట్ రిపోర్ట్.", type: "సంఘటన రకం / పేరు", occDate: "సంఘటన తేదీ మరియు సమయం", repBy: "రిపోర్ట్ చేసినవారి పేరు", ep: "EP నంబర్", site: "సైట్ పేరు", pin: "పిన్‌కోడ్", exactLoc: "సంఘటన జరిగిన ప్రదేశం", details: "సంఘటన పూర్తి వివరాలు", findings: "పరిశోధనలు (Findings)", action: "తీసుకున్న చర్య", reco: "సూచనలు (Recommendations)", photo: "ఫోటో / ఆధారం", attach: "ఫోటో జోడించండి", submit: "రిపోర్ట్ సబ్మిట్ చేయండి", adminSeen: "అడ్మిన్ చూశారు", pending: "ఇంకా పెండింగ్‌లో ఉంది", timeOcc: "సంఘటన సమయం", timeRep: "రిపోర్ట్ చేసిన సమయం", copyWA: "WA కాపీ", copyFull: "పూర్తి రిపోర్ట్ కాపీ చేయండి", noInc: "ఈ తేదీకి ఎలాంటి సంఘటన లేదు.", encrypting: "అప్‌లోడ్ అవుతోంది...",
-      // ✨ NEW PLACEHOLDERS!
       phType: "ఉదా: దొంగతనం, అగ్నిప్రమాదం...", phRepBy: "ఆఫీసర్ పేరు", phEp: "ID నంబర్", phPin: "పిన్‌కోడ్", phLoc: "కచ్చితమైన ప్రదేశం...", phDetails: "ఏం జరిగింది? పూర్తి వివరాలు రాయండి.", phFindings: "విచారణలో ఏం తేలింది...", phAction: "వెంటనే తీసుకున్న చర్యలు...", phReco: "మళ్లీ జరగకుండా సూచనలు..."
     },
-    mis: { selectDates: "MIS రిపోర్ట్ తేదీని ఎంచుకోండి", dateFrom: "ఎప్పటినుండి (From)", dateTo: "ఎప్పటివరకు (To)", register: "అధికారిక రిజిస్టర్", submit: "రిపోర్ట్ సబ్మిట్ చేయండి", syncing: "సింక్ అవుతోంది...", decrypting: "లెడ్జర్ లోడ్ అవుతోంది...", viewMaster: "మాస్టర్ చూడండి", editResend: "ఎడిట్ / రీసెండ్", noLedgers: "ఎలాంటి MIS లెడ్జర్ లేదు.", delete: "డిలీట్ చేయండి", download: "CSV డౌన్‌లోడ్" }
+    mis: { selectDates: "MIS రిపోర్ట్ తేదీని ఎంచుకోండి", dateFrom: "ఎప్పటినుండి (From)", dateTo: "ఎప్పటివరకు (To)", register: "అధికారిక రిజిస్టర్", submit: "రిపోర్ట్ సబ్మిట్ చేయండి", syncing: "సింక్ అవుతోంది...", decrypting: "లెడ్జర్ లోడ్ అవుతోంది...", viewMaster: "మాస్టర్ చూడండి", editResend: "ఎడిట్ / రీసెండ్", noLedgers: "ఎలాంటి MIS లెడ్జర్ లేదు.", delete: "డిలీట్ చేయండి", download: "CSV డౌన్‌లోడ్" },
+    filter: { today: "నేడు", yesterday: "నిన్న", last7: "గత 7 రోజులు", thisMonth: "ఈ నెల", last90: "గత 90 రోజులు", clearAll: "అన్నీ క్లియర్ చేయండి", custom: "తేదీ ఎంచుకోండి", from: "నుండి", to: "వరకు (ఐచ్ఛికం)", apply: "ఫిల్టర్ చేయండి" }
   },
   pa: {
-    hub: { title: "ਸੁਰੱਖਿਆ ਡੈਸ਼ਬੋਰਡ", apps: "ਸੁਰੱਖਿਅਤ ਐਪਸ", dep: "ਰੋਜ਼ਾਨਾ ਡਿਊਟੀ (Deployment)", inc: "ਘਟਨਾ ਰਿਪੋਰਟ (Incident)", mis: "MIS ਰਿਪੋਰਟ", misSub: "ਲੇਜਰ ਜਮ੍ਹਾਂ ਕਰੋ", overview: "ਸੰਖੇਪ ਜਾਣਕਾਰੀ" },
+    hub: { title: "ਸੁਰੱਖਿਆ ਡੈਸ਼ਬੋਰਡ", apps: "ਸੁਰੱਖਿਅਤ ਐਪਸ", dep: "ਰੋਜ਼ਾਨਾ ਡਿਊਟੀ (Deployment)", inc: "ਘਟਨਾ ਰਿਪੋਰਟ (Incident)", mis: "MIS ਰਿਪੋਰਟ", misSub: "ਲੇਜਰ ਜਮ੍ਹਾਂ ਕਰੋ", leave: "ਛੁੱਟੀ", leaveSub: "ਛੁੱਟੀ ਦੀ ਅਰਜ਼ੀ", notice: "ਨੋਟਿਸ", noticeSub: "ਕਮਾਂਡ ਨਿਰਦੇਸ਼", overview: "ਸੰਖੇਪ ਜਾਣਕਾਰੀ" },
     nav: { back: "ਪਿੱਛੇ", newEntry: "ਨਵੀਂ ਐਂਟਰੀ", viewLogs: "ਪੁਰਾਣੇ ਲੌਗ", clear: "ਸਾਫ਼ ਕਰੋ", dateFilter: "ਤਾਰੀਖ ਚੁਣੋ" },
     dep: { clone: "ਕੱਲ੍ਹ ਦੀ ਡਿਊਟੀ ਕਾਪੀ ਕਰੋ", date: "ਡਿਊਟੀ ਦੀ ਤਾਰੀਖ", shift: "ਸ਼ਿਫਟ", desig: "ਅਹੁਦਾ ", name: "ਪੂਰਾ ਨਾਮ", phone: "ਮੋਬਾਈਲ ਨੰਬਰ", loc: "ਲੋਕੇਸ਼ਨ", customLoc: "ਲੋਕੇਸ਼ਨ ਦਾ ਨਾਮ ਲਿਖੋ...", addAnother: "ਇੱਕ ਹੋਰ ਜੋੜੋ", submit: "ਡਿਊਟੀ ਜਮ੍ਹਾਂ ਕਰੋ", encrypting: "ਜਮ੍ਹਾਂ ਹੋ ਰਿਹਾ ਹੈ...", recorded: "ਸੇਵ ਹੋ ਗਿਆ", noLogs: "ਇਸ ਤਾਰੀਖ ਦੀ ਕੋਈ ਡਿਊਟੀ ਨਹੀਂ ਮਿਲੀ।", secData: "ਸੁਰੱਖਿਆ ਡੇਟਾ", day: "ਡੇ ਸ਼ਿਫਟ (Day)", night: "ਨਾਈਟ ਸ਼ਿਫਟ (Night)", off: "ਵੀਕਲੀ ਆਫ (Off)" },
     inc: { title: "ਘਟਨਾ ਰਿਪੋਰਟ", subtitle: "ਕਮਾਂਡ ਸੈਂਟਰ ਨੂੰ ਸਿੱਧੀ ਰਿਪੋਰਟ।", type: "ਘਟਨਾ ਦੀ ਕਿਸਮ / ਨਾਮ", occDate: "ਘਟਨਾ ਦੀ ਤਾਰੀਖ ਅਤੇ ਸਮਾਂ", repBy: "ਰਿਪੋਰਟ ਕਰਨ ਵਾਲੇ ਦਾ ਨਾਮ", ep: "EP ਨੰਬਰ", site: "ਸਾਈਟ ਦਾ ਨਾਮ", pin: "ਪਿਨਕੋਡ", exactLoc: "ਘਟਨਾ ਦੀ ਸਹੀ ਲੋਕੇਸ਼ਨ", details: "ਘਟਨਾ ਦੀ ਪੂਰੀ ਜਾਣਕਾਰੀ", findings: "ਜਾਂਚ ਦੇ ਨਤੀਜੇ (Findings)", action: "ਕੀ ਕਾਰਵਾਈ ਕੀਤੀ ਗਈ", reco: "ਸੁਝਾਅ (Recommendations)", photo: "ਫੋਟੋ / ਸਬੂਤ", attach: "ਫੋਟੋ ਜੋੜੋ", submit: "ਰਿਪੋਰਟ ਜਮ੍ਹਾਂ ਕਰੋ", adminSeen: "ਐਡਮਿਨ ਨੇ ਦੇਖ ਲਿਆ", pending: "ਅਜੇ ਪੈਂਡਿੰਗ ਹੈ", timeOcc: "ਘਟਨਾ ਦਾ ਸਮਾਂ", timeRep: "ਰਿਪੋਰਟ ਕਰਨ ਦਾ ਸਮਾਂ", copyWA: "WA ਕਾਪੀ", copyFull: "ਪੂਰੀ ਰਿਪੋਰਟ ਕਾਪੀ ਕਰੋ", noInc: "ਇਸ ਤਾਰੀਖ ਦੀ ਕੋਈ ਘਟਨਾ ਨਹੀਂ ਮਿਲੀ।", encrypting: "ਅੱਪਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...",
-      // ✨ NEW PLACEHOLDERS!
       phType: "ਜਿਵੇਂ: ਚੋਰੀ, ਅੱਗ, ਲੜਾਈ...", phRepBy: "ਅਫਸਰ ਦਾ ਨਾਮ", phEp: "ਆਈਡੀ ਨੰਬਰ", phPin: "ਪਿਨਕੋਡ", phLoc: "ਸਾਈਟ 'ਤੇ ਕਿਹੜੀ ਜਗ੍ਹਾ...", phDetails: "ਕੀ ਹੋਇਆ ਸੀ? ਪੂਰੀ ਜਾਣਕਾਰੀ ਦਿਓ।", phFindings: "ਜਾਂਚ ਵਿੱਚ ਕੀ ਪਤਾ ਲੱਗਾ...", phAction: "ਤੁਰੰਤ ਕੀ ਕਾਰਵਾਈ ਕੀਤੀ ਗਈ...", phReco: "ਅੱਗੇ ਤੋਂ ਰੋਕਣ ਲਈ ਸੁਝਾਅ..."
     },
-    mis: { selectDates: "MIS ਰਿਪੋਰਟ ਦੀ ਤਾਰੀਖ ਚੁਣੋ", dateFrom: "ਕਦੋਂ ਤੋਂ (From)", dateTo: "ਕਦੋਂ ਤੱਕ (To)", register: "ਅਧਿਕਾਰਤ ਰਜਿਸਟਰ", submit: "ਰਿਪੋਰਟ ਜਮ੍ਹਾਂ ਕਰੋ", syncing: "ਸਿੰਕ ਹੋ ਰਿਹਾ ਹੈ...", decrypting: "ਲੇਜਰ ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...", viewMaster: "ਮਾਸਟਰ ਦੇਖੋ", editResend: "ਐਡਿਟ / ਰੀਸੈਂਡ", noLedgers: "ਕੋਈ MIS ਲੇਜਰ ਨਹੀਂ ਮਿਲਿਆ।", delete: "ਮਿਟਾਓ", download: "CSV ਡਾਊਨਲੋਡ" }
+    mis: { selectDates: "MIS ਰਿਪੋਰਟ ਦੀ ਤਾਰੀਖ ਚੁਣੋ", dateFrom: "ਕਦੋਂ ਤੋਂ (From)", dateTo: "ਕਦੋਂ ਤੱਕ (To)", register: "ਅਧਿਕਾਰਤ ਰਜਿਸਟਰ", submit: "ਰਿਪੋਰਟ ਜਮ੍ਹਾਂ ਕਰੋ", syncing: "ਸਿੰਕ ਹੋ ਰਿਹਾ ਹੈ...", decrypting: "ਲੇਜਰ ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...", viewMaster: "ਮਾਸਟਰ ਦੇਖੋ", editResend: "ਐਡਿਟ / ਰੀਸੈਂਡ", noLedgers: "ਕੋਈ MIS ਲੇਜਰ ਨਹੀਂ ਮਿਲਿਆ।", delete: "ਮਿਟਾਓ", download: "CSV ਡਾਊਨਲੋਡ" },
+    filter: { today: "ਅੱਜ", yesterday: "ਕੱਲ੍ਹ", last7: "ਪਿਛਲੇ 7 ਦਿਨ", thisMonth: "ਇਸ ਮਹੀਨੇ", last90: "ਪਿਛਲੇ 90 ਦਿਨ", clearAll: "ਸਭ ਸਾਫ਼ ਕਰੋ", custom: "ਤਾਰੀਖ ਚੁਣੋ", from: "ਕਦੋਂ ਤੋਂ", to: "ਕਦੋਂ ਤੱਕ (ਵਿਕਲਪਿਕ)", apply: "ਫਿਲਟਰ ਲਗਾਓ" }
   }
 };
 // 🇮🇳 ✨ THE BULLETPROOF IST TIMEZONE FIXER!
@@ -83,6 +83,19 @@ const getISTDate = (offsetDays = 0) => {
   istDate.setDate(istDate.getDate() + offsetDays);
   
   // Manually construct the YYYY-MM-DD string so UTC never touches it!
+  const year = istDate.getFullYear();
+  const month = String(istDate.getMonth() + 1).padStart(2, '0');
+  const day = String(istDate.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// ✨ NEW: Converts ANY Cloud UTC timestamp directly into a clean YYYY-MM-DD IST string!
+const getISTDateString = (utcTimestamp) => {
+  if (!utcTimestamp) return "";
+  const d = new Date(utcTimestamp);
+  if (isNaN(d.getTime())) return "";
+  const istString = d.toLocaleString("en-US", {timeZone: "Asia/Kolkata"});
+  const istDate = new Date(istString);
   const year = istDate.getFullYear();
   const month = String(istDate.getMonth() + 1).padStart(2, '0');
   const day = String(istDate.getDate()).padStart(2, '0');
@@ -838,10 +851,14 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
   const [introStage, setIntroStage] = useState(1);
   const [customName, setCustomName] = useState('');
   const [fillerName, setFillerName] = useState('');
-  // 🚨 ✨ THE BROADCAST GATEKEEPER BRAIN ✨ 🚨
+// 🚨 ✨ THE BROADCAST GATEKEEPER BRAIN ✨ 🚨
   const [unreadBroadcasts, setUnreadBroadcasts] = useState([]);
   const [isAcking, setIsAcking] = useState(false);
   const [viewingBroadcast, setViewingBroadcast] = useState(null); // ✨ NEW: Pop-View Modal State!
+  
+  // ✨ NEW: Supervisor Broadcast Filters
+  const [broadcastSearch, setBroadcastSearch] = useState('');
+  const [broadcastDate, setBroadcastDate] = useState(getISTDate());
 
   useEffect(() => {
     const fetchBroadcasts = async () => {
@@ -1008,9 +1025,18 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
             <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-amber-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:scale-110 transition-transform duration-300"><Megaphone size={28} className="stroke-[1.5]"/></div>
             <span className="block font-bold text-slate-700 dark:text-white text-sm sm:text-base tracking-wide leading-tight px-2 text-center">Notice</span>
           </button>
+
+          {/* ✨ NEW TIME-OFF APP (Spans 2 columns at the bottom!) */}
+          <button onClick={() => { setCurrentApp('leave'); setAppTab('form'); }} className="col-span-2 py-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] border border-white/60 dark:border-slate-700/50 flex flex-row items-center justify-center gap-5 transition-all active:scale-[0.96] hover:shadow-lg group">
+            <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-violet-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform duration-300"><Calendar size={28} className="stroke-[1.5]"/></div>
+            <div className="text-left">
+              <span className="block font-bold text-slate-900 dark:text-white text-base tracking-wide leading-tight">{t.hub?.leave || 'Leave'}</span>
+              <span className="block text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">{t.hub?.leaveSub || 'Request Leaves'}</span>
+            </div>
+          </button>
         </div>
       </div>
-      </div>
+    </div>
   );
 
   const renderModule = () => (
@@ -1021,7 +1047,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
         </button>
         <div className="flex-1">
           <h2 className="font-black text-slate-900 dark:text-white tracking-tight text-lg leading-tight">
-            {currentApp === 'deployment' ? t.hub.dep : currentApp === 'incident' ? t.hub.inc : currentApp === 'broadcasts' ? 'Command Directives' : t.hub.mis}
+            {currentApp === 'deployment' ? t.hub.dep : currentApp === 'incident' ? t.hub.inc : currentApp === 'broadcasts' ? 'Command Directives' : currentApp === 'leave' ? (t.hub?.leave || 'Leave') : t.hub.mis}
           </h2>
           <p className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5 flex items-center gap-1">
             <MapPin size={12} /> {userProfile.site}
@@ -1040,7 +1066,8 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
         </div>
       )}
 
-      <div key={currentApp + appTab + language} className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar pb-10 animate-android-swipe">
+      {/* ✨ FIXED: Changed overflow-x-hidden to overflow-visible so the dropdown can escape the mobile frame! */}
+      <div key={currentApp + appTab + language} className="flex-1 overflow-y-auto overflow-visible custom-scrollbar pb-10 animate-android-swipe">
         {currentApp === 'deployment' && appTab === 'form' && <DeploymentMobileForm userProfile={userProfile} fetchDeployments={fetchDeployments} setActiveTab={setAppTab} fillerName={fillerName} deployments={deployments} language={language}/>}
         {currentApp === 'deployment' && appTab === 'history' && <SupervisorMobileHistory deployments={deployments} isLoading={isLoading} onEdit={onEdit} onDelete={onDelete} onView={onView} language={language}/>}
         
@@ -1050,23 +1077,51 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
         {currentApp === 'weekly' && appTab === 'form' && <WeeklyMobileForm userProfile={userProfile} fetchWeeklyReports={fetchWeeklyReports} setActiveTab={setAppTab} language={language}/>}
         {currentApp === 'weekly' && appTab === 'history' && <WeeklyMobileHistory weeklyReports={weeklyReports} isLoading={isLoading} onEditWeekly={onEditWeekly} language={language}/>}
       
+        {/* ✨ NEW LEAVE ROUTERS */}
+        {currentApp === 'leave' && appTab === 'form' && <LeaveMobileForm userProfile={userProfile} fillerName={fillerName} setActiveTab={setAppTab} />}
+        {currentApp === 'leave' && appTab === 'history' && <LeaveMobileHistory userProfile={userProfile} />}
+
       {/* ✨ THE NEW DIRECTIVES INBOX LIST */}
         {currentApp === 'broadcasts' && (
-          <div className="p-4 space-y-4 pt-6">
+          <div className="p-4 space-y-4 pt-4 pb-24">
+            
+            {/* ✨ NATIVE SUPERVISOR BROADCAST FILTERS */}
+            <div className="bg-white dark:bg-[#0B1120] p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-3 mb-2 relative overflow-hidden">
+               <div className="flex justify-between items-center">
+                 <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><Search size={14} className="text-orange-500"/> Search Inbox</span>
+                 {(broadcastDate || broadcastSearch) && <button onClick={() => {setBroadcastDate(''); setBroadcastSearch('');}} className="text-[9px] font-black tracking-widest text-orange-500 bg-orange-50 dark:bg-orange-500/10 px-2 py-1 rounded-lg hover:bg-orange-100 transition-colors">CLEAR</button>}
+               </div>
+               <div className="flex gap-2 items-center">
+                  <div className="relative flex-1">
+                    <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input type="text" placeholder="Search..." value={broadcastSearch} onChange={e => setBroadcastSearch(e.target.value)} className="w-full pl-7 pr-2 py-2 text-xs font-bold bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-orange-500 shadow-inner text-slate-700 dark:text-slate-300 transition-colors" />
+                  </div>
+                  <input type="date" value={broadcastDate} onChange={e => setBroadcastDate(e.target.value)} className="w-28 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-2 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-orange-500 shadow-inner [color-scheme:light] dark:[color-scheme:dark]" title="Filter Date" />
+               </div>
+            </div>
+
             {(() => {
               const mySite = (userProfile.site || "").toUpperCase().trim();
               const myBroadcasts = broadcasts?.filter(b => {
                 let targets = [];
                 try { targets = typeof b.target_sites === 'string' ? JSON.parse(b.target_sites) : b.target_sites; } catch(e){}
                 const safeTargets = (Array.isArray(targets) ? targets : []).map(t => String(t).toUpperCase().trim());
-                return safeTargets.includes('ALL') || safeTargets.includes(mySite);
+                const isTargeted = safeTargets.includes('ALL') || safeTargets.includes(mySite);
+                
+                // ✨ Apply the Date & Search Math! (NOW WITH IST TIMEZONE FIX!)
+                const bDateIST = getISTDateString(b.created_at);
+                const matchDate = broadcastDate === '' || bDateIST === broadcastDate;
+                const q = broadcastSearch.toLowerCase();
+                const matchSearch = q === '' || (b.title || '').toLowerCase().includes(q) || (b.message || '').toLowerCase().includes(q);
+
+                return isTargeted && matchDate && matchSearch;
               }).sort((a,b) => new Date(b.created_at) - new Date(a.created_at)) || [];
 
               if(myBroadcasts.length === 0) return (
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-10 text-center flex flex-col items-center shadow-sm">
                   <CheckCircle size={32} className="text-slate-300 dark:text-slate-600 mb-4"/>
-                  <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest">Inbox Zero</h3>
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">No directives at this time.</p>
+                  <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest">{(broadcastDate || broadcastSearch) ? 'No Results' : 'Inbox Zero'}</h3>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{(broadcastDate || broadcastSearch) ? 'Try clearing your filters.' : 'No directives at this time.'}</p>
                 </div>
               );
 
@@ -1334,14 +1389,14 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
   const [viewDate, setViewDate] = useState(getISTDate());
   const [isCopied, setIsCopied] = useState(false);
   
-  // ✨ THE TIMELOCK BRAIN 🧠
+// ✨ THE TIMELOCK BRAIN 🧠
   const checkIsEditable = (createdAt) => {
-    if (!createdAt) return false;
+    if (!createdAt) return true; // ✨ FIXED: Brand new unsynced records are ALWAYS editable!
     const recordTime = new Date(createdAt).getTime();
     const currentTime = new Date().getTime();
-    if (isNaN(recordTime)) return false; // Safety net!
+    if (isNaN(recordTime)) return true; // Safety net!
     const hoursPassed = (currentTime - recordTime) / (1000 * 60 * 60);
-    return hoursPassed >= 0 && hoursPassed <= 24; 
+    return hoursPassed >= -24 && hoursPassed <= 24; 
   };
 
   if (isLoading) return <div className="p-10 text-center text-indigo-500 font-bold animate-pulse">Syncing...</div>;
@@ -1472,7 +1527,8 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
   // Deployment Filters
   const [filterState, setFilterState] = useState("All");
   const [filterSite, setFilterSite] = useState("All");
-  const [filterDate, setFilterDate] = useState(getISTDate());
+  const [filterStartDate, setFilterStartDate] = useState(getISTDate());
+  const [filterEndDate, setFilterEndDate] = useState(getISTDate());
   const [filterShift, setFilterShift] = useState("All");
   const [filterDesignation, setFilterDesignation] = useState("All");
   const [filterLocation, setFilterLocation] = useState("All"); //   NEW: Location Filter
@@ -1494,7 +1550,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
     // Make sure our state map checks against uppercase too!
     const stateMatch = filterState === "All" || (SITES_BY_STATE[filterState] && SITES_BY_STATE[filterState].map(s => s.toUpperCase().trim()).includes(safeSiteName));
     const siteMatch = filterSite === "All" || safeSiteName === filterSite.toUpperCase().trim();
-    const dateMatch = filterDate === "" || d.date === filterDate;
+    const dateMatch = (!filterStartDate || d.date >= filterStartDate) && (!filterEndDate || d.date <= filterEndDate);
     const shiftMatch = filterShift === "All" || d.shift === filterShift;
     const designationMatch = filterDesignation === "All" || (d.designation && d.designation.startsWith(filterDesignation));
     const locationMatch = filterLocation === "All" || d.location === filterLocation;
@@ -1668,14 +1724,15 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
           {/* ✨ THE SLIDING MENU CONTAINER */}
           <div className="relative flex flex-col gap-2">
             
-            {/* ✨ THE MAGICAL SLIDING BACKGROUND PILL (5 TABS NOW!) */}
+            {/* ✨ THE MAGICAL SLIDING BACKGROUND PILL (NOW 6 TABS!) */}
             <div 
               className={`absolute left-0 w-full h-12 rounded-xl shadow-lg transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] z-0 will-change-transform ${
                 activeTab === 'deployments' ? 'bg-indigo-600 shadow-indigo-900/20' : 
                 activeTab === 'contacts' ? 'bg-blue-600 shadow-blue-900/20' : 
                 activeTab === 'incidents' ? 'bg-rose-600 shadow-rose-900/20' : 
                 activeTab === 'weekly' ? 'bg-emerald-600 shadow-emerald-900/20' :
-                'bg-amber-500 shadow-amber-900/20' /* The Broadcast Color! */
+                activeTab === 'broadcasts' ? 'bg-amber-500 shadow-amber-900/20' :
+                'bg-purple-600 shadow-purple-900/20' /* The Leave Color! */
               }`}
               style={{ 
                 transform: `translateY(${
@@ -1683,7 +1740,8 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
                   activeTab === 'contacts' ? '56px' : 
                   activeTab === 'incidents' ? '112px' : 
                   activeTab === 'weekly' ? '168px' :
-                  '224px' /* The exact pixel drop for the 5th tab! */
+                  activeTab === 'broadcasts' ? '224px' :
+                  '280px' /* The exact pixel drop for the 6th tab! */
                 })` 
               }}
             ></div>
@@ -1693,6 +1751,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
             <button onClick={() => { setActiveTab('incidents'); setIsMobileMenuOpen(false); }} className={`relative z-10 h-12 w-full flex items-center gap-3 px-4 rounded-xl text-sm font-bold transition-colors duration-300 ${activeTab === 'incidents' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}><AlertTriangle size={18} /> Incident Report</button>
             <button onClick={() => { setActiveTab('weekly'); setIsMobileMenuOpen(false); }} className={`relative z-10 h-12 w-full flex items-center gap-3 px-4 rounded-xl text-sm font-bold transition-colors duration-300 ${activeTab === 'weekly' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}><FileText size={18} /> MIS Reports</button>
             <button onClick={() => { setActiveTab('broadcasts'); setIsMobileMenuOpen(false); }} className={`relative z-10 h-12 w-full flex items-center gap-3 px-4 rounded-xl text-sm font-bold transition-colors duration-300 ${activeTab === 'broadcasts' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}><Megaphone size={18} /> Directives</button>
+            <button onClick={() => { setActiveTab('leave'); setIsMobileMenuOpen(false); }} className={`relative z-10 h-12 w-full flex items-center gap-3 px-4 rounded-xl text-sm font-bold transition-colors duration-300 ${activeTab === 'leave' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}><Calendar size={18} /> Absence Command</button>
           </div>
         </div>
 
@@ -1737,9 +1796,10 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
             {activeTab === 'contacts' && 'Directory'}
             {activeTab === 'weekly' && 'MIS Report'}
             {activeTab === 'broadcasts' && 'Command Broadcasts'}
+            {activeTab === 'leave' && 'Absence Command'}
           </h1>
             <span className="hidden sm:flex bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase items-center gap-1.5 shadow-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> Secure Cloud Vault
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Secure Cloud Vault
             </span>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
@@ -2024,15 +2084,16 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
               </div>
 
               {/* 🎛️ TIER 3: DATA TABLE & FILTERS */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden flex flex-col mt-6">
-                <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex flex-wrap gap-3 items-end">
+              {/* ✨ FIXED: overflow-visible lets the dropdown escape! */}
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-visible flex flex-col mt-6 relative z-30">
+                <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex flex-wrap gap-3 items-end rounded-t-2xl">
                   <div className="flex-1 min-w-[200px] sm:min-w-[250px] relative">
                     <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input type="text" placeholder="Search Guard Name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors" />
                   </div>
                   
                   {/* ✨ FIXED: The Filters now use the live data! */}
-                  <FilterSelect label="Date" value={filterDate} onChange={setFilterDate} type="date" />
+                  <SmartDateFilter startDate={filterStartDate} setStartDate={setFilterStartDate} endDate={filterEndDate} setEndDate={setFilterEndDate} />
                   <FilterSelect label="State" value={filterState} onChange={(e) => { setFilterState(e); setFilterSite("All"); }} options={STATE_NAMES} />
                   <FilterSelect label="Site" value={filterSite} onChange={setFilterSite} options={[...availableSites].sort()} />
                   <FilterSelect label="Shift" value={filterShift} onChange={setFilterShift} options={["Day Shift", "Night Shift", "Weekly Off"]} />
@@ -2043,11 +2104,12 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
                     <button onClick={exportToCSV} className="text-xs font-black tracking-widest text-white bg-emerald-600 hover:bg-emerald-500 px-4 py-2.5 rounded-xl transition-all shadow-md shadow-emerald-600/20 flex items-center gap-2 transform hover:-translate-y-0.5">
                       <Download size={14} /> EXPORT
                     </button>
-                    <button onClick={() => { setFilterState("All"); setFilterSite("All"); setFilterDate(getISTDate()); setFilterShift("All"); setFilterDesignation("All"); setFilterLocation("All"); setSearchTerm(""); }} className="text-xs font-black tracking-widest text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 px-4 py-2.5 rounded-xl transition-colors hover:bg-slate-300 dark:hover:bg-slate-700">
+                    {/* ✨ FIXED: CLEAR button now correctly targets the new Start/End date states! */}
+                    <button onClick={() => { setFilterState("All"); setFilterSite("All"); setFilterStartDate(getISTDate()); setFilterEndDate(getISTDate()); setFilterShift("All"); setFilterDesignation("All"); setFilterLocation("All"); setSearchTerm(""); }} className="text-xs font-black tracking-widest text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 px-4 py-2.5 rounded-xl transition-colors hover:bg-slate-300 dark:hover:bg-slate-700">
                       CLEAR
                     </button>
                   </div>
-                </div>
+                  </div>
 
                 <div className="overflow-x-auto custom-scrollbar">
                   {isLoading ? (
@@ -2238,7 +2300,10 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
           );})()}
         {activeTab === 'incidents' && <AdminIncidentView incidents={incidents} isLoading={isLoading} onAcknowledge={onToggleAck} onDelete={onDeleteIncident} SITES={SITES} STATE_NAMES={STATE_NAMES} SITES_BY_STATE={SITES_BY_STATE} />}
         {activeTab === 'weekly' && <AdminWeeklyView weeklyReports={weeklyReports} isLoading={isLoading} COMMISSIONED_SITES={COMMISSIONED_SITES} SITES={SITES} STATE_NAMES={STATE_NAMES} SITES_BY_STATE={SITES_BY_STATE} onDeleteWeekly={onDeleteWeekly} />}
-        {activeTab === 'broadcasts' && <AdminBroadcastView SITES={SITES} globalSites={globalSites} userProfile={userProfile} />}            </div>
+        {activeTab === 'broadcasts' && <AdminBroadcastView SITES={SITES} globalSites={globalSites} userProfile={userProfile} />}
+        {/* ✨ NEW: ROUTE FOR THE LEAVE MODULE */}
+        {activeTab === 'leave' && <AdminLeaveView />}
+            </div>
           )}
         </div>
         
@@ -2460,7 +2525,80 @@ function FilterSelect({ label, value, onChange, options, type = "select" }) {
     </div>
   );
 }
+// ==========================================
+// 📅 FAANG DATE RANGE PICKER COMPONENT
+// ==========================================
+function DateRangeFilter({ startDate, setStartDate, endDate, setEndDate }) {
+  const [isOpen, setIsOpen] = useState(false);
 
+  const applyPreset = (daysBack, type) => {
+    const today = new Date();
+    let start = new Date();
+    let end = new Date();
+
+    if (type === 'today') {
+      // just today
+    } else if (type === 'yesterday') {
+      start.setDate(today.getDate() - 1);
+      end.setDate(today.getDate() - 1);
+    } else if (type === 'last7') {
+      start.setDate(today.getDate() - 7);
+    } else if (type === 'last30') {
+      start.setDate(today.getDate() - 30);
+    } else if (type === 'lastMonth') {
+      start.setMonth(today.getMonth() - 1);
+      start.setDate(1);
+      end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+    } else if (type === 'all') {
+      setStartDate(''); setEndDate(''); setIsOpen(false); return;
+    }
+
+    setStartDate(start.toISOString().split('T')[0]);
+    setEndDate(end.toISOString().split('T')[0]);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative w-full sm:w-auto">
+      <button type="button" onClick={() => setIsOpen(!isOpen)} className="flex items-center justify-between gap-3 w-full sm:w-auto bg-white dark:bg-[#0B1120] border-2 border-slate-200 dark:border-slate-700/80 rounded-xl px-4 py-2.5 hover:border-indigo-500 transition-colors shadow-sm text-xs font-bold text-slate-700 dark:text-slate-300 h-[42px]">
+        <span className="flex items-center gap-2"><Calendar size={14} className="text-indigo-500"/> {startDate && endDate ? `${startDate} to ${endDate}` : startDate ? `From ${startDate}` : endDate ? `Until ${endDate}` : 'Filter Dates'}</span>
+        <ChevronDown size={14} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)}></div>
+          <div className="absolute top-full mt-2 right-0 sm:left-0 sm:right-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 flex flex-col sm:flex-row w-[280px] sm:w-[480px] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+             <div className="bg-slate-50 dark:bg-slate-800/50 p-2 sm:w-1/3 flex flex-col gap-1 border-b sm:border-b-0 sm:border-r border-slate-200 dark:border-slate-800">
+                <button onClick={() => applyPreset(0, 'today')} className="text-[10px] font-black uppercase tracking-widest text-left px-3 py-2.5 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/20 dark:hover:text-indigo-400 text-slate-600 dark:text-slate-300 transition-colors">Today</button>
+                <button onClick={() => applyPreset(1, 'yesterday')} className="text-[10px] font-black uppercase tracking-widest text-left px-3 py-2.5 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/20 dark:hover:text-indigo-400 text-slate-600 dark:text-slate-300 transition-colors">Yesterday</button>
+                <button onClick={() => applyPreset(7, 'last7')} className="text-[10px] font-black uppercase tracking-widest text-left px-3 py-2.5 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/20 dark:hover:text-indigo-400 text-slate-600 dark:text-slate-300 transition-colors">Last 7 Days</button>
+                <button onClick={() => applyPreset(30, 'last30')} className="text-[10px] font-black uppercase tracking-widest text-left px-3 py-2.5 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/20 dark:hover:text-indigo-400 text-slate-600 dark:text-slate-300 transition-colors">Last 30 Days</button>
+                <button onClick={() => applyPreset(0, 'lastMonth')} className="text-[10px] font-black uppercase tracking-widest text-left px-3 py-2.5 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/20 dark:hover:text-indigo-400 text-slate-600 dark:text-slate-300 transition-colors">Last Month</button>
+                <button onClick={() => applyPreset(0, 'all')} className="text-[10px] font-black uppercase tracking-widest text-left px-3 py-2.5 rounded-lg hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/20 dark:hover:text-rose-400 text-slate-600 dark:text-slate-300 transition-colors mt-auto">All Time</button>
+             </div>
+             <div className="p-5 sm:w-2/3 flex flex-col gap-4">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><Calendar size={12}/> Custom Range</span>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1 block">From Date</label>
+                    <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500 [color-scheme:light] dark:[color-scheme:dark] shadow-inner" />
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1 block">To Date</label>
+                    <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500 [color-scheme:light] dark:[color-scheme:dark] shadow-inner" />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 mt-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <button onClick={() => setIsOpen(false)} className="w-full py-3 text-[10px] font-black uppercase tracking-widest bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-500/30 transition-all active:scale-95">Apply Filter</button>
+                </div>
+             </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
 // ==========================================
 // 🛡️ DIGITAL SECURITY BADGE (DEPLOYMENT VIEW)
 // ==========================================
@@ -2837,7 +2975,7 @@ function ContactViewModal({ record, onClose }) {
                 <div className={`relative z-10 ${record.state_name ? "border-t border-slate-200/50 dark:border-slate-700/50 pt-4 mt-2" : ""}`}>
                   <span className="text-[9px] font-bold text-slate-500 uppercase block mb-2">Assigned Site(s)</span>
                   <div className="flex flex-wrap gap-2">
-                    {record.site.split(',').map(s => <span key={s} className="px-3 py-1.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1.5"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>{s.trim()}</span>)}
+                    {record.site.split(',').map(s => <span key={s} className="px-3 py-1.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>{s.trim()}</span>)}
                   </div>
                 </div>
               )}
@@ -2966,14 +3104,14 @@ function IncidentMobileHistory({ incidents, isLoading, language, onEdit, onDelet
   // ✨ THE GPS TRACKER 📍
   const [scrollPos, setScrollPos] = useState(0);
 
-  // ✨ THE TIMELOCK BRAIN 🧠
+ // ✨ THE TIMELOCK BRAIN 🧠
   const checkIsEditable = (createdAt) => {
-    if (!createdAt) return false;
+    if (!createdAt) return true; // ✨ FIXED: Brand new unsynced records are ALWAYS editable!
     const recordTime = new Date(createdAt).getTime();
     const currentTime = new Date().getTime();
-    if (isNaN(recordTime)) return false; 
+    if (isNaN(recordTime)) return true; // Safety net!
     const hoursPassed = (currentTime - recordTime) / (1000 * 60 * 60);
-    return hoursPassed >= 0 && hoursPassed <= 24; 
+    return hoursPassed >= -24 && hoursPassed <= 24; 
   };
 
   // ✨ THE BACKGROUND LOCK! 🔒 (Stops the background sandwich spilling!)
@@ -3135,8 +3273,14 @@ function IncidentMobileHistory({ incidents, isLoading, language, onEdit, onDelet
     </div>
   );
 }
+// ==========================================
+// 🚨 FAANG ADMIN INCIDENT VIEW (UPGRADED DUAL-DATE)
+// ==========================================
 function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete, SITES = [], STATE_NAMES = [], SITES_BY_STATE = {} }) {
-  const [filterDate, setFilterDate] = useState(getISTDate());
+  // ✨ FAANG DATE RANGE ENGINE!
+  const [filterStartDate, setFilterStartDate] = useState(getISTDate());
+  const [filterEndDate, setFilterEndDate] = useState(getISTDate());
+  
   const [filterState, setFilterState] = useState("All");
   const [filterSite, setFilterSite] = useState("All");
   const [searchTerm, setSearchTerm] = useState(""); 
@@ -3144,8 +3288,8 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete, SITE
 
   const availableSites = filterState === "All" ? SITES : SITES_BY_STATE[filterState] || [];
   
+  // ✨ THE SMART DATE RANGE FILTER!
   const filtered = incidents.filter(i => {
-    const dMatch = filterDate === '' || (i.created_at || '').startsWith(filterDate);
     const safeSiteName = (i.site || "").toUpperCase();
     const stMatch = filterState === "All" || (SITES_BY_STATE[filterState] && SITES_BY_STATE[filterState].includes(safeSiteName));
     const siMatch = filterSite === "All" || safeSiteName === filterSite;
@@ -3157,6 +3301,22 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete, SITE
       (i.reported_by || "").toLowerCase().includes(q) ||
       (i.details || "").toLowerCase().includes(q);
 
+    // ⏱️ The Time-Travel Math!
+    let dMatch = true;
+    if (filterStartDate || filterEndDate) {
+      // Safely grab the "YYYY-MM-DD" part of the incident date
+      const rawDate = i.time_of_incident || i.created_at || "";
+      const incDateStr = rawDate.includes('T') ? rawDate.split('T')[0] : rawDate.split(' ')[0];
+      
+      if (filterStartDate && filterEndDate) {
+        dMatch = incDateStr >= filterStartDate && incDateStr <= filterEndDate;
+      } else if (filterStartDate) {
+        dMatch = incDateStr >= filterStartDate;
+      } else if (filterEndDate) {
+        dMatch = incDateStr <= filterEndDate;
+      }
+    }
+
     return dMatch && stMatch && siMatch && searchMatch;
   });
 
@@ -3167,6 +3327,7 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete, SITE
     a.download = `Incident_${viewingInc.site}_Photo_${idx+1}.jpg`;
     a.click();
   };
+
   // ✨ FAANG BULK EXPORT ENGINE!
   const exportIncidentsCSV = () => {
     if (filtered.length === 0) return alert("Oops! 🥺 No incidents to export with these filters!");
@@ -3174,9 +3335,7 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete, SITE
     const headers = ['Date Occurred', 'Date Reported', 'Site', 'Pincode', 'Incident Type', 'Exact Location', 'Reported By', 'EP Number', 'Status', 'Details', 'Findings', 'Action Taken', 'Recommendations'];
     
     const csvRows = filtered.map(i => {
-      // We clean the text so commas inside descriptions don't break the Excel file!
       const clean = (text) => `"${(text || '').replace(/"/g, '""').replace(/\n/g, ' ')}"`;
-      
       return [
         clean(i.time_of_incident), clean(i.time_of_reporting), clean(i.site), clean(i.pincode),
         clean(i.incident_name), clean(i.incident_location), clean(i.reported_by), clean(i.ep_number),
@@ -3188,7 +3347,7 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete, SITE
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `CBG_Bulk_Incidents_${filterSite}_${getISTDate()}.csv`;
+    link.download = `CBG_Bulk_Incidents_${filterSite}_RangeExport.csv`;
     link.click();
   };
 
@@ -3236,15 +3395,18 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete, SITE
           <input type="text" placeholder="Search Incidents (Name, Location, Reporter)..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 transition-all" />
         </div>
 
-        <FilterSelect label="Date" value={filterDate} onChange={setFilterDate} type="date" />
+        <SmartDateFilter startDate={filterStartDate} setStartDate={setFilterStartDate} endDate={filterEndDate} setEndDate={setFilterEndDate} />
+
         <FilterSelect label="State" value={filterState} onChange={e => {setFilterState(e); setFilterSite("All");}} options={STATE_NAMES} />
         <FilterSelect label="Site" value={filterSite} onChange={setFilterSite} options={[...availableSites].sort()} />
         
-        <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0 ml-auto">
-          <button onClick={exportIncidentsCSV} className="text-[11px] font-black tracking-widest text-white bg-rose-600 hover:bg-rose-500 px-5 py-3 rounded-2xl transition-all shadow-md shadow-rose-600/20 flex items-center gap-2 transform hover:-translate-y-0.5 active:scale-95 shrink-0">
+        <div className="flex gap-2 w-full xl:w-auto mt-2 xl:mt-0 ml-auto">
+          <button onClick={exportIncidentsCSV} className="text-[11px] font-black tracking-widest text-white bg-rose-600 hover:bg-rose-500 px-5 py-3 rounded-2xl transition-all shadow-md shadow-rose-600/20 flex items-center justify-center gap-2 transform hover:-translate-y-0.5 active:scale-95 flex-1 sm:flex-none">
             <Download size={14} /> BULK EXPORT
           </button>
-          <button onClick={() => { setFilterDate(''); setFilterState('All'); setFilterSite('All'); setSearchTerm(''); }} className="text-[11px] font-black tracking-widest text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 px-5 py-3 rounded-2xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors shrink-0">
+          
+          {/* ✨ फिक्स: क्लियर बटन अब 'Today' पर रीसेट होगा! */}
+          <button onClick={() => { setFilterStartDate(getISTDate()); setFilterEndDate(getISTDate()); setFilterState('All'); setFilterSite('All'); setSearchTerm(''); }} className="text-[11px] font-black tracking-widest text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 px-5 py-3 rounded-2xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors flex-1 sm:flex-none">
             CLEAR
           </button>
         </div>
@@ -3279,7 +3441,7 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete, SITE
             </div>
           </div>
         ))}
-        {filtered.length === 0 && <div className="col-span-full py-24 text-center text-slate-500 font-bold flex flex-col items-center"><CheckCircle size={56} className="text-slate-300 dark:text-slate-700 mb-5"/> No incidents reported! All clear! 🟢</div>}
+        {filtered.length === 0 && <div className="col-span-full py-24 text-center text-slate-500 font-bold flex flex-col items-center"><CheckCircle size={56} className="text-slate-300 dark:text-slate-700 mb-5"/> No incidents reported in this timeframe! 🟢</div>}
       </div>
 
       {/* ✨ GOD-MODE ADMIN INCIDENT MODAL ✨ */}
@@ -3629,7 +3791,8 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
 // 📈 VIP OPERATIONS & THREAT MATRIX (CSO DASHBOARD)
 // ==========================================
 function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SITES = [], STATE_NAMES = [], SITES_BY_STATE = {}, onDeleteWeekly }) {
-  const [filterDate, setFilterDate] = useState('');
+  const [filterStartDate, setFilterStartDate] = useState(getISTDate());
+  const [filterEndDate, setFilterEndDate] = useState(getISTDate());
   const [filterState, setFilterState] = useState("All"); 
   const [filterSite, setFilterSite] = useState("All");
   const [viewingRep, setViewingRep] = useState(null);
@@ -3646,10 +3809,19 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
     return () => { document.body.style.overflow = 'auto'; }; // Safety cleanup
   }, [viewingRep]);
 
-  const availableSites = filterState === "All" ? SITES : SITES_BY_STATE[filterState] || [];
+  // ✨ VIP FILTER MAGIC: We ONLY want operational/commissioned sites in this dropdown!
+  const baseSites = filterState === "All" ? SITES : SITES_BY_STATE[filterState] || [];
+  const availableSites = baseSites.filter(site => (COMMISSIONED_SITES || []).includes(site));
+
+  // ✨ VIP STATE MAGIC: Only show states that actually have commissioned sites!
+  const operationalStates = STATE_NAMES.filter(st => 
+    (SITES_BY_STATE[st] || []).some(site => (COMMISSIONED_SITES || []).includes(site))
+  );
 
   const filtered = weeklyReports.filter(r => {
-    const dMatch = filterDate === '' || (r.created_at && r.created_at.startsWith(filterDate));
+    // ✨ MAGIC: Filter MIS Reports by the date they were SUBMITTED to the vault!
+    const rDate = getISTDateString(r.created_at); 
+    const dMatch = (!filterStartDate || rDate >= filterStartDate) && (!filterEndDate || rDate <= filterEndDate);
     const safeSiteName = (r.site || "").toUpperCase();
     const stMatch = filterState === "All" || (SITES_BY_STATE[filterState] && SITES_BY_STATE[filterState].includes(safeSiteName));
     const sMatch = filterSite === "All" || safeSiteName === filterSite;
@@ -3713,10 +3885,13 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
   const assetDeficit = totalStrictDeficit;
   const isAssetAlert = assetDeficit > 0;
 
-  const commissionedSites = typeof COMMISSIONED_SITES !== 'undefined' ? COMMISSIONED_SITES : SITES;
-  const submittedSitesList = [...new Set(weeklyReports.map(r => (r.site || "").toUpperCase()))]; 
-  const pendingSitesList = commissionedSites.filter(s => !submittedSitesList.includes((s || "").toUpperCase()));
-  const complianceRate = Math.round((submittedSitesList.length / (commissionedSites.length || 1)) * 100) || 0;
+  // ✨ FIXED: The Compliance math now perfectly respects the Date & State filters!
+  let expectedCommissionedSites = availableSites.filter(s => (COMMISSIONED_SITES || []).includes(s));
+  if (filterSite !== "All") expectedCommissionedSites = expectedCommissionedSites.filter(s => s === filterSite);
+  
+  const submittedSitesList = [...new Set(filtered.map(r => (r.site || "").toUpperCase()))]; 
+  const pendingSitesList = expectedCommissionedSites.filter(s => !submittedSitesList.includes((s || "").toUpperCase()));
+  const complianceRate = expectedCommissionedSites.length > 0 ? Math.round((submittedSitesList.length / expectedCommissionedSites.length) * 100) : 0;
 
   const exportMasterAudit = () => {
     const row1 = ["Sr_No", "SITE", "Date_From", "Date_To", "DISPATCH", "", "", "RECEIPT", "", "OGP", "", "", "VEHICLE", "", "CONTRACTOR/ RIL STAFF", "", "VISITOR", "GOV. OFFICIAL", "DEPLOYMENT", "", "", ""];
@@ -3760,14 +3935,22 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
   return (
     <div className="space-y-6 relative">
       
-      {/* 🟢 COMMAND BAR */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 flex flex-wrap justify-between items-end gap-4 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-3xl rounded-full pointer-events-none"></div>
+    {/* 🟢 COMMAND BAR */}
+      {/* ✨ फिक्स: z-[100] इसे Asset Leakage कार्ड के बिल्कुल ऊपर रखेगा! */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 flex flex-wrap justify-between items-end gap-4 relative overflow-visible z-[100]">
+        
+        {/* ✨ FIXED: Trap the glow inside an absolute hidden div, free the dropdown! */}
+        <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-3xl rounded-full"></div>
+        </div>
+
         <div className="flex flex-wrap gap-3 relative z-10">
-          <FilterSelect label="Filter Date" value={filterDate} onChange={setFilterDate} type="date" />
-          <FilterSelect label="State" value={filterState} onChange={e => {setFilterState(e); setFilterSite("All");}} options={STATE_NAMES} />
+          <SmartDateFilter startDate={filterStartDate} setStartDate={setFilterStartDate} endDate={filterEndDate} setEndDate={setFilterEndDate} />
+          <FilterSelect label="State" value={filterState} onChange={e => {setFilterState(e); setFilterSite("All");}} options={operationalStates} />
           <FilterSelect label="VIP Site" value={filterSite} onChange={setFilterSite} options={[...availableSites].sort()} />
-          <button onClick={() => { setFilterDate(''); setFilterState('All'); setFilterSite('All'); }} className="text-[10px] font-black tracking-widest text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors h-max mb-0.5">CLEAR</button>
+          
+          {/* ✨ FIXED: CLEAR button now correctly resets the new date states! */}
+          <button onClick={() => { setFilterStartDate(getISTDate()); setFilterEndDate(getISTDate()); setFilterState('All'); setFilterSite('All'); }} className="text-[10px] font-black tracking-widest text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors h-max mb-0.5">CLEAR</button>
         </div>
         <button onClick={exportMasterAudit} className="relative z-10 px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 active:scale-95">
           <Download size={16} /> Export Master Audit
@@ -3847,7 +4030,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
              <div className="flex justify-between items-end mb-2">
                <span className="text-3xl font-black text-slate-900 dark:text-white leading-none">{complianceRate}%</span>
                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                 {submittedSitesList.length} / {commissionedSites.length}
+                 {submittedSitesList.length} / {expectedCommissionedSites.length}
                </span>
              </div>
              <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 overflow-hidden border border-slate-200 dark:border-slate-700">
@@ -3914,7 +4097,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
            <div className="flex justify-between items-start mb-6 shrink-0">
              <div>
                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Dispatch</h3>
-               <p className="text-[9px] font-bold text-emerald-500 uppercase mt-1 flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></div>{filterSite === "All" ? "Global Network" : filterSite}</p>
+               <p className="text-[9px] font-bold text-emerald-500 uppercase mt-1 flex items-center gap-1.5"> <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></span>{filterSite === "All" ? "Global Network" : filterSite}</p>
              </div>
              <Activity size={16} className="text-emerald-500"/>
            </div>
@@ -3943,7 +4126,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
            <div className="flex justify-between items-start mb-6 shrink-0">
              <div>
                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Receipts</h3>
-               <p className="text-[9px] font-bold text-blue-500 uppercase mt-1 flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse"></div>{filterSite === "All" ? "Global Network" : filterSite}</p>
+               <p className="text-[9px] font-bold text-blue-500 uppercase mt-1 flex items-center gap-1.5"><span className="w-1 h-1 rounded-full bg-blue-500 animate-pulse"></span>{filterSite === "All" ? "Global Network" : filterSite}</p>
              </div>
              <Activity size={16} className="text-blue-500"/>
            </div>
@@ -3967,7 +4150,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
            <div className="flex justify-between items-start mb-6 shrink-0">
              <div>
                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">OGP Assets</h3>
-               <p className="text-[9px] font-bold text-amber-500 uppercase mt-1 flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-amber-500 animate-pulse"></div>{filterSite === "All" ? "Global Network" : filterSite}</p>
+               <p className="text-[9px] font-bold text-amber-500 uppercase mt-1 flex items-center gap-1.5"><span className="w-1 h-1 rounded-full bg-amber-500 animate-pulse"></span>{filterSite === "All" ? "Global Network" : filterSite}</p>
              </div>
              <Shield size={16} className="text-amber-500"/>
            </div>
@@ -3996,7 +4179,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
            <div className="flex justify-between items-start mb-6 shrink-0">
              <div>
                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Site Presence</h3>
-               <p className="text-[9px] font-bold text-indigo-500 uppercase mt-1 flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse"></div>{filterSite === "All" ? "Global Network" : filterSite}</p>
+               <p className="text-[9px] font-bold text-indigo-500 uppercase mt-1 flex items-center gap-1.5"><span className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse"></span>{filterSite === "All" ? "Global Network" : filterSite}</p>
              </div>
              <Users size={16} className="text-indigo-500"/>
            </div>
@@ -4717,10 +4900,9 @@ function WeeklyEditModal({ record, onClose, onSave }) {
 }
 
 // ==========================================
-// 📢 FAANG ADMIN BROADCAST VIEW (FIXED)
+// 📢 FAANG ADMIN BROADCAST VIEW (WITH SCHEDULER!)
 // ==========================================
 function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
-  // ✨ THE BULLETPROOF SAFETY NET!
   const safeSites = SITES.length > 0 ? SITES : (globalSites || []).map(s => s.name);
 
   const [title, setTitle] = useState('');
@@ -4733,11 +4915,21 @@ function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
   const [pastBroadcasts, setPastBroadcasts] = useState([]);
   const [acks, setAcks] = useState([]);
 
-  // ✨ NEW: Search & Modal States!
+  // ✨ NEW: DIRECTIVE FILTERS
+  const [filterStartDate, setFilterStartDate] = useState(getISTDate());
+  const [filterEndDate, setFilterEndDate] = useState(getISTDate());
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // ✨ FAANG SCHEDULER STATES ✨
+  const [isScheduled, setIsScheduled] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
+  const [repeatType, setRepeatType] = useState('none'); 
+  const [repeatCount, setRepeatCount] = useState(1);
+
   const [siteSearch, setSiteSearch] = useState('');
   const [viewingBroadcast, setViewingBroadcast] = useState(null);
 
-  // ✨ NEW: The filtered sites brain!
   const displaySites = safeSites.filter(s => s.toLowerCase().includes(siteSearch.toLowerCase()));
 
   const fetchBroadcastData = async () => {
@@ -4757,24 +4949,33 @@ function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
   const handleDeploy = async (e) => {
     e.preventDefault();
     if(targetMode === 'SPECIFIC' && selectedSites.length === 0) return alert("Babe, select at least one site first! 🛑");
+    if(isScheduled && (!scheduleDate || !scheduleTime)) return alert("Cutie, you forgot to pick a date or time for the schedule! ⏰");
     
     setIsDeploying(true);
     const finalMessage = messageReg.trim() ? `${messageEng}\n\n---\n\n${messageReg}` : messageEng;
     const targetSitesPayload = targetMode === 'ALL' ? ['ALL'] : selectedSites;
 
-    const { error } = await supabase.from('broadcasts').insert([{
+    // ✨ Bundle the schedule data for the vault!
+    const insertPayload = {
        title: title.toUpperCase(),
        message: finalMessage,
        target_sites: targetSitesPayload,
-       created_by: userProfile.name
-    }]);
+       created_by: userProfile.name,
+       is_scheduled: isScheduled,
+       scheduled_time: isScheduled ? `${scheduleDate}T${scheduleTime}:00` : null,
+       repeat_type: isScheduled ? repeatType : 'none',
+       repeat_count: isScheduled && repeatType !== 'none' ? parseInt(repeatCount) : 0
+    };
+
+    const { error } = await supabase.from('broadcasts').insert([insertPayload]);
     
     setIsDeploying(false);
     if(error) alert("Vault Error: " + error.message);
     else {
-       setTitle(''); setMessageEng(''); setMessageReg(''); setSelectedSites([]); setTargetMode('ALL');
+       setTitle(''); setMessageEng(''); setMessageReg(''); setSelectedSites([]); 
+       setTargetMode('ALL'); setIsScheduled(false); setScheduleDate(''); setScheduleTime(''); setRepeatType('none'); setRepeatCount(1);
        fetchBroadcastData();
-       alert(`🚀 Directive Deployed to ${targetSitesPayload.includes('ALL') ? 'Global Network' : targetSitesPayload.length + ' targets'}!`);
+       alert(`🚀 ${isScheduled ? 'Scheduled Routine' : 'Immediate Directive'} Deployed to ${targetSitesPayload.includes('ALL') ? 'Global Network' : targetSitesPayload.length + ' targets'}!`);
     }
   };
 
@@ -4785,28 +4986,74 @@ function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
      }
   }
 
-  // ✨ NOTICE THE NEW `<>` FRAGMENT WRAPPER BELOW! THIS FIXES THE CRASH!
   return (
      <>
-     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full pb-20">
+     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 h-full pb-20">
         {/* LEFT: THE MEGAPHONE */}
         <div className="flex flex-col gap-4">
-           <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-6 rounded-3xl shadow-lg shadow-amber-500/30 text-white relative overflow-hidden group">
+           
+           <div className={`p-6 rounded-3xl shadow-lg relative overflow-hidden group transition-all duration-500 ${isScheduled ? 'bg-gradient-to-br from-indigo-500 to-purple-600 shadow-indigo-500/30' : 'bg-gradient-to-br from-amber-500 to-orange-600 shadow-amber-500/30'} text-white`}>
               <div className="absolute -right-6 -top-6 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
-              <h2 className="font-black uppercase tracking-widest text-xl flex items-center gap-2 relative z-10"><Zap size={24}/> Global Megaphone</h2>
-              <p className="text-xs font-bold text-amber-100 mt-1 relative z-10">Air-Gapped Confidential Broadcasting</p>
+              <h2 className="font-black uppercase tracking-widest text-xl flex items-center gap-2 relative z-10">
+                {isScheduled ? <><Clock size={24}/> Routine Scheduler</> : <><Zap size={24}/> Global Megaphone</>}
+              </h2>
+              <p className="text-xs font-bold text-white/80 mt-1 relative z-10">
+                {isScheduled ? 'Automated Time-Released Directives' : 'Air-Gapped Confidential Broadcasting'}
+              </p>
            </div>
 
            <form onSubmit={handleDeploy} className="bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm flex flex-col gap-6">
               
-              {/* Target Toggle */}
+              {/* ✨ IMMEDIATE VS SCHEDULED TOGGLE */}
               <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl shadow-inner relative">
-                <div className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] rounded-xl transition-all duration-300 ${targetMode === 'ALL' ? 'bg-amber-500 translate-x-0 shadow-md shadow-amber-500/20' : 'bg-indigo-500 translate-x-[calc(100%+4px)] shadow-md shadow-indigo-500/20'}`}></div>
-                <button type="button" onClick={() => setTargetMode('ALL')} className={`flex-1 py-3 text-xs font-black uppercase tracking-widest relative z-10 transition-colors ${targetMode === 'ALL' ? 'text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>Global Network</button>
-                <button type="button" onClick={() => setTargetMode('SPECIFIC')} className={`flex-1 py-3 text-xs font-black uppercase tracking-widest relative z-10 transition-colors ${targetMode === 'SPECIFIC' ? 'text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>Specific Sites</button>
+                <div className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] rounded-xl transition-all duration-300 shadow-md ${!isScheduled ? 'bg-amber-500 translate-x-0 shadow-amber-500/20' : 'bg-indigo-500 translate-x-[calc(100%+4px)] shadow-indigo-500/20'}`}></div>
+                <button type="button" onClick={() => setIsScheduled(false)} className={`flex-1 py-3 flex justify-center items-center gap-2 text-xs font-black uppercase tracking-widest relative z-10 transition-colors ${!isScheduled ? 'text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}><Zap size={14}/> Instant Action</button>
+                <button type="button" onClick={() => setIsScheduled(true)} className={`flex-1 py-3 flex justify-center items-center gap-2 text-xs font-black uppercase tracking-widest relative z-10 transition-colors ${isScheduled ? 'text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}><Clock size={14}/> Schedule Time</button>
               </div>
 
-              {/* ✨ The Specific Sites Selector Grid with Search! */}
+              {/* ✨ THE GORGEOUS SCHEDULER UI! */}
+              {isScheduled && (
+                <div className="bg-indigo-50 dark:bg-indigo-500/5 p-5 rounded-2xl border border-indigo-100 dark:border-indigo-500/20 shadow-inner animate-in slide-in-from-top-2">
+                  <h3 className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-4 flex items-center gap-1.5"><Calendar size={12}/> Time & Repeat Configuration</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Trigger Date</label>
+                      <input type="date" required={isScheduled} value={scheduleDate} onChange={e => setScheduleDate(e.target.value)} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500" />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Trigger Time</label>
+                      <input type="time" required={isScheduled} value={scheduleTime} onChange={e => setScheduleTime(e.target.value)} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Recurrence Pattern</label>
+                      <select value={repeatType} onChange={e => setRepeatType(e.target.value)} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500 uppercase">
+                        <option value="none">Onetime Alert</option>
+                        <option value="daily">Every Day</option>
+                        <option value="weekly">Every Week</option>
+                      </select>
+                    </div>
+                    {repeatType !== 'none' && (
+                      <div className="animate-in fade-in">
+                        <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Repeat Count</label>
+                        <input type="number" min="1" max="365" value={repeatCount} onChange={e => setRepeatCount(e.target.value)} placeholder="e.g. 5 times" className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Target Toggle */}
+              <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl shadow-inner relative mt-2">
+                <div className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] rounded-xl transition-all duration-300 ${targetMode === 'ALL' ? 'bg-slate-400 dark:bg-slate-600 translate-x-0 shadow-md' : 'bg-slate-400 dark:bg-slate-600 translate-x-[calc(100%+4px)] shadow-md'}`}></div>
+                <button type="button" onClick={() => setTargetMode('ALL')} className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest relative z-10 transition-colors ${targetMode === 'ALL' ? 'text-white' : 'text-slate-500 hover:text-slate-700'}`}>Global Network</button>
+                <button type="button" onClick={() => setTargetMode('SPECIFIC')} className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest relative z-10 transition-colors ${targetMode === 'SPECIFIC' ? 'text-white' : 'text-slate-500 hover:text-slate-700'}`}>Specific Sites</button>
+              </div>
+
+              {/* The Specific Sites Selector Grid with Search! */}
               {targetMode === 'SPECIFIC' && (
                 <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner animate-in slide-in-from-top-2">
                   <div className="flex flex-col gap-3 mb-3 border-b border-slate-200 dark:border-slate-700 pb-3">
@@ -4817,7 +5064,7 @@ function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
                         <button type="button" onClick={() => setSelectedSites([])} className="text-[10px] text-rose-500 dark:text-rose-400 font-black tracking-widest hover:underline">CLEAR</button>
                       </div>
                     </div>
-                    {/* ✨ THE SEARCH BAR */}
+                    {/* THE SEARCH BAR */}
                     <div className="relative">
                       <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                       <input type="text" placeholder="Search specific sites..." value={siteSearch} onChange={e => setSiteSearch(e.target.value)} className="w-full pl-9 pr-3 py-2.5 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors shadow-sm placeholder-slate-400 uppercase" />
@@ -4828,7 +5075,7 @@ function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
                     {displaySites.map(site => {
                       const isSel = selectedSites.includes(site);
                       return (
-                        <button type="button" key={site} onClick={() => toggleSite(site)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${isSel ? 'bg-indigo-500 text-white border-indigo-600 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:shadow-sm'}`}>
+                        <button type="button" key={site} onClick={() => toggleSite(site)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${isSel ? 'bg-slate-700 text-white border-slate-800 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-400'}`}>
                           {site}
                         </button>
                       )
@@ -4854,20 +5101,49 @@ function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
                 <textarea value={messageReg} onChange={e => setMessageReg(e.target.value)} placeholder="Type Hindi/Regional translation here..." className="w-full bg-amber-50/50 dark:bg-amber-500/5 border-2 border-amber-200 dark:border-amber-500/30 rounded-xl p-4 text-sm font-bold text-slate-900 dark:text-white focus:border-amber-500 outline-none min-h-[80px] resize-y placeholder-amber-700/40 dark:placeholder-amber-500/40 transition-all"></textarea>
               </div>
 
-              <button type="submit" disabled={isDeploying} className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-amber-500/30 flex justify-center items-center gap-2 active:scale-95 transition-all">
-                 {isDeploying ? <RefreshCw size={18} className="animate-spin" /> : <><Zap size={18}/> Deploy to Vault</>}
+              <button type="submit" disabled={isDeploying} className={`w-full py-4 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg flex justify-center items-center gap-2 active:scale-95 transition-all ${isScheduled ? 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/30' : 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/30'}`}>
+                 {isDeploying ? <RefreshCw size={18} className="animate-spin" /> : (
+                   isScheduled ? <><Clock size={18}/> Arm Schedule in Vault</> : <><Zap size={18}/> Deploy to Vault</>
+                 )}
               </button>
            </form>
         </div>
 
         {/* RIGHT: THE LIVE RECEIPTS DASHBOARD */}
-        <div className="flex flex-col gap-4">
-           <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2 px-2">
-             <CheckCircle size={20} className="text-emerald-500" /> Live Read Receipts
-           </h2>
+        <div className="flex flex-col gap-4 mt-6 xl:mt-0">
+           <div className="flex flex-col gap-3 px-2">
+             <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+               <CheckCircle size={20} className="text-emerald-500" /> Dispatch History
+             </h2>
+             
+             {/* ✨ NEW: ADMIN BROADCAST FILTERS */}
+             <div className="flex gap-2">
+               <div className="relative flex-1">
+                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                 <input type="text" placeholder="Search Directive..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full pl-8 pr-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors shadow-sm" />
+               </div>
+              <SmartDateFilter startDate={filterStartDate} setStartDate={setFilterStartDate} endDate={filterEndDate} setEndDate={setFilterEndDate} />
+               {/* ✨ फिक्स: ब्रॉडकास्ट क्लियर बटन भी अब 'Today' पर रीसेट होगा! */}
+               {(filterStartDate !== getISTDate() || filterEndDate !== getISTDate() || searchQuery) && <button onClick={() => {setFilterStartDate(getISTDate()); setFilterEndDate(getISTDate()); setSearchQuery('');}} className="px-3 py-2 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-xl text-[10px] font-black hover:bg-rose-100 hover:text-rose-600 transition-colors">CLEAR</button>}
+             </div>
+           </div>
            
-           <div className="space-y-4 overflow-y-auto custom-scrollbar pr-2 h-full">
-              {pastBroadcasts.map(b => {
+           <div className="space-y-4 overflow-y-auto custom-scrollbar pr-2 h-full pb-10">
+              {(() => {
+                 // ✨ Filter Math runs right here! (NOW WITH IST TIMEZONE FIX!)
+                 const filteredAdminBroadcasts = pastBroadcasts.filter(b => {
+                    const bDateIST = getISTDateString(b.created_at);
+                    const matchDate = (!filterStartDate || bDateIST >= filterStartDate) && (!filterEndDate || bDateIST <= filterEndDate);
+                    const q = searchQuery.toLowerCase();
+                    const matchSearch = q === '' || (b.title || '').toLowerCase().includes(q) || (b.message || '').toLowerCase().includes(q);
+                    return matchDate && matchSearch;
+                 });
+
+                 if (filteredAdminBroadcasts.length === 0) {
+                    return <p className="text-center text-slate-500 text-sm font-bold italic mt-10">No directives found.</p>;
+                 }
+
+                 return filteredAdminBroadcasts.map(b => {
                  const bAcks = acks.filter(a => a.broadcast_id === b.id);
                  let tCount = 0;
                  let targetList = [];
@@ -4880,10 +5156,10 @@ function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
                  const isFullyRead = pct >= 100;
 
                  return (
-                    <div key={b.id} className="bg-white dark:bg-[#0f172a] p-5 rounded-[2rem] border-2 border-slate-200 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group">
-                      <div className={`absolute top-0 left-0 w-1.5 h-full transition-colors ${isFullyRead ? 'bg-emerald-500' : 'bg-amber-400'}`}></div>
+                    <div key={b.id} className="bg-white dark:bg-[#0f172a] p-5 rounded-[2rem] border-2 border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+                      <div className={`absolute top-0 left-0 w-1.5 h-full transition-colors ${b.is_scheduled ? 'bg-indigo-500' : (isFullyRead ? 'bg-emerald-500' : 'bg-amber-400')}`}></div>
                       
-                      {/* ✨ FAANG ACTION BUTTONS (VIEW & DELETE) */}
+                      {/* FAANG ACTION BUTTONS (VIEW & DELETE) */}
                       <div className="absolute top-4 right-4 flex gap-1.5 z-10">
                         <button onClick={() => setViewingBroadcast(b)} className="p-2 text-slate-400 hover:text-indigo-500 bg-slate-50 hover:bg-indigo-50 dark:bg-slate-800 dark:hover:bg-indigo-500/10 rounded-xl transition-all shadow-sm border border-slate-200 dark:border-slate-700">
                            <Eye size={14}/>
@@ -4894,23 +5170,40 @@ function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
                       </div>
 
                       <div className="pl-3 pr-10">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">{new Date(b.created_at).toLocaleString('en-IN')}</span>
-                        <h4 className="font-black text-slate-900 dark:text-white uppercase text-base mb-4 leading-tight pr-10">{b.title}</h4>
-                        
-                        <div className="flex justify-between items-end mb-2">
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-                             <Users size={12}/> Acknowledged: {bAcks.length} / {tCount}
-                          </span>
-                          <span className={`text-xs font-black ${isFullyRead ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-500'}`}>{pct}%</span>
-                        </div>
-                        
-                        {/* Progress bar */}
-                        <div className="w-full bg-slate-100 dark:bg-slate-800/80 rounded-full h-2 overflow-hidden border border-slate-200 dark:border-slate-700 shadow-inner">
-                          <div style={{width: `${pct}%`}} className={`h-full transition-all duration-1000 ${isFullyRead ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]' : 'bg-amber-400'}`}></div>
+                        <div className="flex items-center gap-2 mb-2">
+                          {b.is_scheduled ? (
+                            <span className="bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-indigo-200 dark:border-indigo-500/30 flex items-center gap-1"><Clock size={10}/> Scheduled</span>
+                          ) : (
+                            <span className="bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-amber-200 dark:border-amber-500/30 flex items-center gap-1"><Zap size={10}/> Instant</span>
+                          )}
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{new Date(b.created_at).toLocaleString('en-IN')}</span>
                         </div>
 
-                        {/* View Read List Hover */}
-                        {bAcks.length > 0 && (
+                        <h4 className="font-black text-slate-900 dark:text-white uppercase text-base mb-4 leading-tight pr-10">{b.title}</h4>
+                        
+                        {b.is_scheduled && (
+                           <div className="mb-4 bg-indigo-50/50 dark:bg-indigo-500/5 p-2 rounded-lg border border-indigo-100 dark:border-indigo-500/20">
+                             <p className="text-[9px] font-bold text-indigo-500 uppercase flex items-center gap-1.5"><Calendar size={12}/> Next Run: {new Date(b.scheduled_time).toLocaleString('en-IN')}</p>
+                             {b.repeat_type !== 'none' && <p className="text-[9px] font-bold text-indigo-400 uppercase mt-1">Repeats: {b.repeat_type} ({b.repeat_count}x)</p>}
+                           </div>
+                        )}
+
+                        {!b.is_scheduled && (
+                          <>
+                            <div className="flex justify-between items-end mb-2">
+                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                                 <Users size={12}/> Acknowledged: {bAcks.length} / {tCount}
+                              </span>
+                              <span className={`text-xs font-black ${isFullyRead ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-500'}`}>{pct}%</span>
+                            </div>
+                            
+                            <div className="w-full bg-slate-100 dark:bg-slate-800/80 rounded-full h-2 overflow-hidden border border-slate-200 dark:border-slate-700 shadow-inner">
+                              <div style={{width: `${pct}%`}} className={`h-full transition-all duration-1000 ${isFullyRead ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]' : 'bg-amber-400'}`}></div>
+                            </div>
+                          </>
+                        )}
+
+                        {bAcks.length > 0 && !b.is_scheduled && (
                            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Signed By:</p>
                               <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar">
@@ -4925,21 +5218,24 @@ function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
                       </div>
                     </div>
                  )
-              })}
-              {pastBroadcasts.length === 0 && <p className="text-center text-slate-500 text-sm font-bold italic mt-10">No directives deployed yet.</p>}
+              })
+            })()} {/* ✨ THIS MAGICAL LINE EXECUTES THE FILTER ENGINE! */}
            </div>
         </div>
      </div>
 
-     {/* ✨ FAANG BROADCAST VIEW MODAL (NOW SAFELY INSIDE THE FRAGMENT!) */}
+     {/* ✨ FAANG BROADCAST VIEW MODAL */}
      {viewingBroadcast && (
        <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setViewingBroadcast(null)}>
-         <div className="bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-amber-500/30 rounded-[2rem] shadow-[0_20px_80px_-15px_rgba(245,158,11,0.2)] w-full max-w-2xl overflow-hidden relative animate-in zoom-in-[0.95] duration-300" onClick={e => e.stopPropagation()}>
-           <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+         <div className="bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-700 rounded-[2rem] shadow-[0_20px_80px_-15px_rgba(0,0,0,0.5)] w-full max-w-2xl overflow-hidden relative animate-in zoom-in-[0.95] duration-300" onClick={e => e.stopPropagation()}>
+           
+           <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl pointer-events-none ${viewingBroadcast.is_scheduled ? 'bg-indigo-500/10' : 'bg-amber-500/10'}`}></div>
            
            <div className="p-6 sm:p-8 border-b border-slate-100 dark:border-slate-800/50 flex justify-between items-start relative z-10 bg-slate-50/50 dark:bg-slate-900/50">
              <div>
-               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 mb-3 border border-amber-200 dark:border-amber-500/30"><Megaphone size={10}/> Official Directive</span>
+               <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest mb-3 border ${viewingBroadcast.is_scheduled ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/30' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 border-amber-200 dark:border-amber-500/30'}`}>
+                 {viewingBroadcast.is_scheduled ? <><Clock size={10}/> Scheduled Routine</> : <><Megaphone size={10}/> Official Directive</>}
+               </span>
                <h3 className="font-black text-slate-900 dark:text-white text-xl uppercase tracking-tight">{viewingBroadcast.title || "Security Alert"}</h3>
                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Sent: {new Date(viewingBroadcast.created_at).toLocaleString()}</p>
              </div>
@@ -4947,6 +5243,21 @@ function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
            </div>
 
            <div className="p-6 sm:p-8 space-y-6 relative z-10">
+             
+             {viewingBroadcast.is_scheduled && (
+                <div className="flex gap-4 p-4 rounded-2xl border border-indigo-200 dark:border-indigo-500/30 bg-indigo-50/50 dark:bg-indigo-500/10">
+                   <div>
+                     <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Initial Trigger</p>
+                     <p className="text-sm font-bold text-indigo-600 dark:text-indigo-300">{new Date(viewingBroadcast.scheduled_time).toLocaleString()}</p>
+                   </div>
+                   <div className="w-px bg-indigo-200 dark:bg-indigo-500/30"></div>
+                   <div>
+                     <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Pattern</p>
+                     <p className="text-sm font-bold text-indigo-600 dark:text-indigo-300 uppercase">{viewingBroadcast.repeat_type !== 'none' ? `${viewingBroadcast.repeat_type} (${viewingBroadcast.repeat_count}x)` : 'One-Time'}</p>
+                   </div>
+                </div>
+             )}
+
              <div className="bg-slate-50 dark:bg-[#0f172a] p-5 rounded-2xl border border-slate-200 dark:border-slate-800/50">
                <p className="text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">{viewingBroadcast.message}</p>
              </div>
@@ -4954,19 +5265,16 @@ function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
              <div>
                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Target Nodes</h4>
                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto custom-scrollbar">
-                 {viewingBroadcast.target_sites.includes('ALL') ? (
-                   <span className="bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border border-indigo-200 dark:border-indigo-500/30">ALL GLOBAL SITES</span>
-                 ) : (
-                   (() => {
-                     let targets = [];
-                     try { targets = typeof viewingBroadcast.target_sites === 'string' ? JSON.parse(viewingBroadcast.target_sites) : viewingBroadcast.target_sites; } catch(e){}
-                     return targets.map(site => (
-                       <span key={site} className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
-                         <MapPin size={10} className="text-slate-400"/> {site}
-                       </span>
-                     ))
-                   })()
-                 )}
+                 {(() => {
+                    let targets = [];
+                    try { targets = typeof viewingBroadcast.target_sites === 'string' ? JSON.parse(viewingBroadcast.target_sites) : viewingBroadcast.target_sites; } catch(e){}
+                    if(targets.includes('ALL')) return <span className="bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border border-indigo-200 dark:border-indigo-500/30">ALL GLOBAL SITES</span>;
+                    return targets.map(site => (
+                      <span key={site} className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
+                        <MapPin size={10} className="text-slate-400"/> {site}
+                      </span>
+                    ))
+                 })()}
                </div>
              </div>
            </div>
@@ -4975,4 +5283,395 @@ function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
      )}
      </>
   )
+}
+
+
+// ==========================================
+// 📱 MOBILE SUPERVISOR LEAVE FORM
+// ==========================================
+function LeaveMobileForm({ userProfile, fillerName, setActiveTab }) {
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [leaveType, setLeaveType] = useState('Casual Leave');
+  const [reason, setReason] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!startDate || !endDate) return alert("Please select your dates! 📅");
+    
+    setIsSubmitting(true);
+    const { error } = await supabase.from('leaves').insert([{
+      site: userProfile.site,
+      supervisor_name: fillerName || userProfile.name,
+      start_date: startDate,
+      end_date: endDate,
+      leave_type: leaveType,
+      reason: reason
+    }]);
+    setIsSubmitting(false);
+
+    if (error) {
+      alert(`Error: ${error.message}`);
+    } else {
+      setActiveTab('history');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="p-4 space-y-5 animate-in fade-in slide-in-from-right-4 duration-300 max-w-md mx-auto">
+      <div className="bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div className="w-10 h-10 bg-purple-50 dark:bg-purple-500/10 text-purple-600 rounded-xl flex items-center justify-center shadow-sm">
+            <Calendar size={20} />
+          </div>
+          <div>
+            <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-lg leading-tight">Request Leave</h3>
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Official Channel</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">From Date</label>
+              <input type="date" required value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-3 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-purple-500 shadow-inner" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">To Date</label>
+              <input type="date" required value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-3 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-purple-500 shadow-inner" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Leave Category</label>
+            <select value={leaveType} onChange={e => setLeaveType(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-xs font-bold text-slate-900 dark:text-white uppercase focus:border-purple-500 outline-none shadow-inner cursor-pointer">
+              <option value="Casual Leave">Casual Leave (Planned)</option>
+              <option value="Sick Leave">Medical / Sick Leave</option>
+              <option value="Emergency Leave">Emergency / Urgent</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1 flex items-center gap-1.5">Reason for Absence</label>
+            <textarea required value={reason} onChange={e => setReason(e.target.value)} placeholder="Provide brief details for control room review..." className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-xs font-medium text-slate-900 dark:text-white focus:border-purple-500 outline-none min-h-[100px] resize-y shadow-inner"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-purple-500/30 flex justify-center items-center gap-2 active:scale-95 transition-all">
+        {isSubmitting ? 'Sending Request...' : 'Submit to Command'}
+      </button>
+    </form>
+  );
+}
+
+// ==========================================
+// 🌴 ADMIN LEAVE COMMAND CENTER
+// ==========================================
+function AdminLeaveView() {
+  const [leaves, setLeaves] = useState([]);
+  const [filterStatus, setFilterStatus] = useState('Pending');
+  const [searchTerm, setSearchTerm] = useState(''); 
+  
+  // ✨ Native Date Ranges!
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLeaves = async () => {
+      setIsLoading(true);
+      const { data, error } = await supabase.from('leaves').select('*').order('created_at', { ascending: false });
+      if (!error && data) setLeaves(data);
+      setIsLoading(false);
+    };
+    fetchLeaves();
+  }, []);
+
+  const updateLeaveStatus = async (id, newStatus) => {
+    const { error } = await supabase.from('leaves').update({ status: newStatus }).eq('id', id);
+    if (!error) setLeaves(leaves.map(l => l.id === id ? { ...l, status: newStatus } : l));
+    else alert(`Vault Error: ${error.message}`);
+  };
+
+  const filteredLeaves = leaves.filter(l => {
+    const matchStatus = filterStatus === 'All' || l.status === filterStatus;
+    const matchSearch = searchTerm === '' || (l.supervisor_name || '').toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // ✨ MAGIC: Now filtering by the EXACT date they pressed 'Submit'!
+    const lDate = getISTDateString(l.created_at);
+    let matchDate = true;
+    if (startDate && endDate) matchDate = lDate >= startDate && lDate <= endDate;
+    else if (startDate) matchDate = lDate >= startDate;
+    else if (endDate) matchDate = lDate <= endDate;
+
+    return matchStatus && matchSearch && matchDate;
+  });
+
+  const pendingCount = leaves.filter(l => l.status === 'Pending').length;
+
+  return (
+    // ✨ FIXED SCROLLING: Removed h-full and flex-col so it scrolls naturally on mobile!
+    <div className="space-y-6 animate-in fade-in duration-300 pb-10">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="xl:col-span-2 bg-gradient-to-br from-violet-500 to-purple-600 rounded-[2rem] p-8 shadow-lg shadow-purple-500/20 text-white relative overflow-hidden flex items-center justify-between">
+          <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="relative z-10">
+            <h2 className="text-2xl font-black uppercase tracking-tight mb-1">Absence Command</h2>
+            <p className="text-[10px] font-bold text-purple-200 uppercase tracking-widest">Time-Off & Resource Tracking</p>
+          </div>
+          <div className="relative z-10 text-right">
+            <div className="text-4xl font-black">{pendingCount}</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-purple-200">Pending Requests</div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-5 shadow-sm flex flex-col justify-center gap-3">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input type="text" placeholder="Search Name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-purple-500 transition-colors shadow-inner placeholder-slate-400 uppercase h-[42px]" />
+            </div>
+          </div>
+
+          <div className="flex gap-2 items-center">
+             <SmartDateFilter startDate={startDate} setStartDate={setStartDate} endDate={endDate} setEndDate={setEndDate} />
+          </div>
+
+          <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-2xl shadow-inner mt-1 overflow-x-auto custom-scrollbar">
+            <button onClick={() => setFilterStatus('Pending')} className={`flex-1 min-w-[70px] py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'Pending' ? 'bg-white dark:bg-slate-700 text-purple-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>Pending</button>
+            <button onClick={() => setFilterStatus('Approved')} className={`flex-1 min-w-[75px] py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'Approved' ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>Approved</button>
+            
+            {/* ✨ THE NEW REJECTED TAB! */}
+            <button onClick={() => setFilterStatus('Rejected')} className={`flex-1 min-w-[75px] py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'Rejected' ? 'bg-rose-500 text-white shadow-sm shadow-rose-500/30' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>Rejected</button>
+            
+            <button onClick={() => setFilterStatus('All')} className={`flex-1 min-w-[70px] py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filterStatus === 'All' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>All Logs</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        {isLoading ? ( <div className="py-20 text-center text-purple-500 font-bold animate-pulse uppercase tracking-widest text-xs">Scanning Vault...</div> ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+            {filteredLeaves.map(leave => (
+              <div key={leave.id} className="bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-800 rounded-[1.5rem] p-5 shadow-sm hover:shadow-md transition-all group relative overflow-hidden flex flex-col">
+                <div className={`absolute top-0 left-0 w-1.5 h-full ${leave.status === 'Approved' ? 'bg-emerald-500' : leave.status === 'Rejected' ? 'bg-rose-500' : 'bg-amber-400'}`}></div>
+                <div className="ml-2 flex justify-between items-start mb-4">
+                  <div>
+                    <span className="text-[9px] font-black bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-1 rounded uppercase tracking-widest mb-2 inline-block shadow-sm">{leave.site} Node</span>
+                    <h4 className="font-black text-slate-900 dark:text-white uppercase text-base leading-tight">{leave.supervisor_name}</h4>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest">{leave.leave_type}</p>
+                      <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded shadow-inner">Posted: {getISTDateString(leave.created_at)}</span>
+                    </div>
+                  </div>
+                  <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border ${leave.status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30' : leave.status === 'Rejected' ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30' : 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 animate-pulse'}`}>{leave.status}</span>
+                </div>
+                <div className="ml-2 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800/50 mb-4 grid grid-cols-2 gap-2">
+                  <div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5 flex items-center gap-1"><Calendar size={10}/> From</p><p className="text-xs font-bold text-slate-700 dark:text-slate-300">{leave.start_date}</p></div>
+                  <div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5 flex items-center gap-1"><Calendar size={10}/> To</p><p className="text-xs font-bold text-slate-700 dark:text-slate-300">{leave.end_date}</p></div>
+                </div>
+                <div className="ml-2 mb-5 flex-1">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Provided Reason:</p>
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 line-clamp-2 italic">"{leave.reason}"</p>
+                </div>
+                {leave.status === 'Pending' && (
+                  <div className="ml-2 grid grid-cols-2 gap-3 mt-auto pt-4 border-t border-slate-100 dark:border-slate-800/50">
+                    <button onClick={() => updateLeaveStatus(leave.id, 'Approved')} className="bg-emerald-50 hover:bg-emerald-500 text-emerald-600 hover:text-white dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm flex items-center justify-center gap-1.5 active:scale-95"><CheckCircle size={14}/> Approve</button>
+                    <button onClick={() => updateLeaveStatus(leave.id, 'Rejected')} className="bg-rose-50 hover:bg-rose-500 text-rose-600 hover:text-white dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm flex items-center justify-center gap-1.5 active:scale-95"><X size={14}/> Deny</button>
+                  </div>
+                )}
+              </div>
+            ))}
+            {filteredLeaves.length === 0 && <div className="col-span-full py-16 text-center text-slate-500 text-sm font-bold uppercase tracking-widest">No requests found.</div>}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+// ==========================================
+// 📱 MOBILE SUPERVISOR LEAVE HISTORY
+// ==========================================
+function LeaveMobileHistory({ userProfile }) {
+  const [myLeaves, setMyLeaves] = useState([]);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMyLeaves = async () => {
+      const { data } = await supabase.from('leaves').select('*').eq('site', userProfile.site).order('created_at', { ascending: false });
+      if (data) setMyLeaves(data);
+      setIsLoading(false);
+    };
+    fetchMyLeaves();
+  }, [userProfile.site]);
+
+  if (isLoading) return <div className="p-10 text-center text-purple-500 font-bold animate-pulse text-xs uppercase tracking-widest">Loading History...</div>;
+
+  const filteredLeaves = myLeaves.filter(l => {
+    // ✨ MAGIC: Filtering by the exact date the request was logged!
+    const lDate = getISTDateString(l.created_at);
+    if (startDate && endDate) return lDate >= startDate && lDate <= endDate;
+    else if (startDate) return lDate >= startDate;
+    else if (endDate) return lDate <= endDate;
+    return true;
+  });
+
+  return (
+    <div className="p-4 space-y-4 max-w-md mx-auto animate-in fade-in slide-in-from-left-4 duration-300 pb-20 relative z-[100]">
+      
+      {/* ✨ SMART MOBILE DATE FILTER */}
+      {/* ✨ FIXED: Changed to overflow-visible and z-[120] so it pops OVER all the cards below it! */}
+      <div className="bg-white dark:bg-[#0B1120] p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-3 mb-2 relative overflow-visible z-[120]">
+         <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><Calendar size={14} className="text-purple-500"/> Audit Filters</span>
+         <div className="w-full relative">
+            <SmartDateFilter startDate={startDate} setStartDate={setStartDate} endDate={endDate} setEndDate={setEndDate} />
+         </div>
+      </div>
+
+      {filteredLeaves.length === 0 ? (
+        <div className="bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-800 rounded-3xl p-10 text-center flex flex-col items-center shadow-sm">
+          <Calendar size={32} className="text-slate-300 dark:text-slate-600 mb-4"/>
+          <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest">{(startDate || endDate) ? "No Logs" : "Perfect Attendance"}</h3>
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{(startDate || endDate) ? "No requests match dates." : "No past requests found."}</p>
+        </div>
+      ) : (
+        filteredLeaves.map(leave => (
+          <div key={leave.id} className="bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden flex flex-col active:scale-[0.98] transition-transform">
+            <div className={`absolute top-0 left-0 w-1.5 h-full ${leave.status === 'Approved' ? 'bg-emerald-500' : leave.status === 'Rejected' ? 'bg-rose-500' : 'bg-amber-400'}`}></div>
+            <div className="ml-2 flex justify-between items-start mb-3">
+              <div>
+                <h4 className="font-black text-slate-900 dark:text-white uppercase text-sm leading-tight mb-1">{leave.leave_type}</h4>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Posted: {getISTDateString(leave.created_at)}</p>
+              </div>
+              <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded border shadow-sm ${leave.status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30' : leave.status === 'Rejected' ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30' : 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30'}`}>{leave.status}</span>
+            </div>
+            <div className="ml-2 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-100 dark:border-slate-800/50 flex justify-between items-center text-xs font-bold text-slate-700 dark:text-slate-300">
+              <span className="flex items-center gap-1.5"><Calendar size={12} className="text-slate-400"/> {leave.start_date}</span>
+              <span className="text-slate-300 dark:text-slate-600">➔</span>
+              <span>{leave.end_date}</span>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+// ==========================================
+// 📅 FAANG SMART DATE FILTER (PRESETS + CUSTOM)
+// ==========================================
+function SmartDateFilter({ startDate, setStartDate, endDate, setEndDate }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const applyPreset = (type) => {
+    const getIST = (d) => new Date(d.toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+    let start = getIST(new Date());
+    let end = getIST(new Date());
+
+    if (type === 'today') {
+       // already set
+    } else if (type === 'yesterday') {
+      start.setDate(start.getDate() - 1);
+      end.setDate(end.getDate() - 1);
+    } else if (type === 'last7') {
+      start.setDate(start.getDate() - 7);
+    } else if (type === 'thisMonth') {
+      start.setDate(1);
+      end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+    } else if (type === 'last90') {
+      start.setDate(start.getDate() - 90);
+    } else if (type === 'all') {
+      setStartDate(''); setEndDate(''); setIsOpen(false); return;
+    }
+
+    const fmt = (d) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+
+    setStartDate(fmt(start));
+    setEndDate(fmt(end));
+    setIsOpen(false);
+  };
+
+  let displayText = "All Time";
+  if (startDate && endDate) {
+    if (startDate === endDate) displayText = startDate;
+    else displayText = `${startDate} to ${endDate}`;
+  } else if (startDate) displayText = `From ${startDate}`;
+  else if (endDate) displayText = `Until ${endDate}`;
+
+  return (
+    <div className="relative w-full sm:w-auto z-[60]">
+      <button type="button" onClick={() => setIsOpen(!isOpen)} className="flex items-center justify-between gap-3 w-full sm:w-auto bg-white dark:bg-[#0B1120] border-2 border-slate-200 dark:border-slate-700/80 rounded-xl px-4 py-2.5 hover:border-indigo-500 transition-colors shadow-sm text-xs font-bold text-slate-700 dark:text-slate-300 h-[42px]">
+        <span className="flex items-center gap-2 whitespace-nowrap"><Calendar size={14} className="text-indigo-500"/> {displayText}</span>
+        <ChevronDown size={14} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)}></div>
+          {/* ✨ FIXED: Absolute positioning with z-[9999] so it breaks out of ALL containers! */}
+          <div className="absolute top-full mt-2 right-0 sm:left-0 sm:right-auto w-[280px] sm:w-[420px] max-w-[90vw] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-[9999] flex flex-col sm:flex-row overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+             
+             {/* LEFT SIDEBAR (PRESETS) */}
+             <div className="bg-slate-50 dark:bg-slate-800/50 p-2 sm:w-[140px] flex flex-col gap-1 border-b sm:border-b-0 sm:border-r border-slate-200 dark:border-slate-700 shrink-0">
+                <button onClick={() => applyPreset('today')} className="text-[10px] font-black uppercase tracking-widest text-left px-3 py-2.5 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/20 dark:hover:text-indigo-400 text-slate-600 dark:text-slate-300 transition-colors">Today</button>
+                <button onClick={() => applyPreset('yesterday')} className="text-[10px] font-black uppercase tracking-widest text-left px-3 py-2.5 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/20 dark:hover:text-indigo-400 text-slate-600 dark:text-slate-300 transition-colors">Yesterday</button>
+                <button onClick={() => applyPreset('last7')} className="text-[10px] font-black uppercase tracking-widest text-left px-3 py-2.5 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/20 dark:hover:text-indigo-400 text-slate-600 dark:text-slate-300 transition-colors">Last 7 Days</button>
+                <button onClick={() => applyPreset('thisMonth')} className="text-[10px] font-black uppercase tracking-widest text-left px-3 py-2.5 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/20 dark:hover:text-indigo-400 text-slate-600 dark:text-slate-300 transition-colors">This Month</button>
+                <button onClick={() => applyPreset('last90')} className="text-[10px] font-black uppercase tracking-widest text-left px-3 py-2.5 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-500/20 dark:hover:text-indigo-400 text-slate-600 dark:text-slate-300 transition-colors">Last 90 Days</button>
+                <button onClick={() => applyPreset('all')} className="text-[10px] font-black uppercase tracking-widest text-left px-3 py-2.5 rounded-lg hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/20 dark:hover:text-rose-400 text-slate-500 dark:text-slate-400 transition-colors mt-auto">Clear All</button>
+             </div>
+
+             {/* RIGHT SIDEBAR (CUSTOM DATES) */}
+             <div className="p-5 flex-1 flex flex-col gap-4 justify-center">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><Calendar size={12}/> Select Custom Date</span>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1 block">From Date</label>
+                    <input 
+                      type="date" 
+                      value={startDate} 
+                      onChange={e => { 
+                        const newStart = e.target.value;
+                        setStartDate(newStart); 
+                        // ✨ फिक्स: अगर End Date खाली है या Start Date से पहले का है, तभी सिंक करें!
+                        if (!endDate || endDate < newStart) {
+                           setEndDate(newStart); 
+                        }
+                      }} 
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500 [color-scheme:light] dark:[color-scheme:dark] shadow-inner cursor-pointer" 
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1 block">To Date (Optional)</label>
+                    <input 
+                      type="date" 
+                      value={endDate} 
+                      onChange={e => { 
+                        setEndDate(e.target.value); 
+                        if (!startDate || startDate > e.target.value) setStartDate(e.target.value); 
+                      }} 
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500 [color-scheme:light] dark:[color-scheme:dark] shadow-inner cursor-pointer" 
+                    />
+                  </div>
+                </div>
+                <div className="mt-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <button onClick={() => setIsOpen(false)} className="w-full py-3 text-[10px] font-black uppercase tracking-widest bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-500/30 transition-all active:scale-95">Apply Filter</button>
+                </div>
+             </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
