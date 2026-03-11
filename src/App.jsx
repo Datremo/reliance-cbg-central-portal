@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { 
-  Plus, Trash2, Calendar, MapPin, Users, Shield, LogOut, ShieldCheck, Droplet, Wind,Globe2,
+  Plus, Trash2, Calendar, MapPin, Users, Shield, LogOut, ShieldCheck, Droplet, Wind,Globe2, Truck,
   Filter, CheckCircle, Smartphone, Monitor, Activity,  Leaf, Zap,Eye, EyeOff, Clock,BarChart2, PieChart, TrendingUp, Target, Megaphone, Send, Radio, BellRing, CheckCheck, 
   X, Search, ChevronDown, Download, Edit2, Save, Sun, Moon, Sparkles, Lock, Mail,RefreshCw, Copy, BookOpen, Briefcase, Phone, Menu, Unlock, ArrowRight,ArrowLeft, AlertTriangle, Camera, FileText, Image as ImageIcon,Settings, User, PlusCircle
 } from 'lucide-react';
@@ -22,26 +22,30 @@ const formatPhone = (phone) => {
 // ==========================================
 // 🌍 THE MULTI-LINGUAL TRANSLATION BRAIN (UPGRADED FOR V2.0!)
 // ==========================================
+// 🌍 THE MULTI-LINGUAL TRANSLATION BRAIN
+// ==========================================
 const TRANSLATIONS = {
   en: {
-    hub: { title: "Security Dashboard", apps: "Secure Apps", dep: "Daily Deployment", inc: "Incident Report", mis: "MIS Report", misSub: "Submit Ledger", leave: "Leave", leaveSub: "Request Leaves", notice: "Notice", noticeSub: "Directives", overview: "Overview" },
+    hub: { title: "Security Dashboard", apps: "Secure Apps", dep: "Daily Deployment", inc: "Incident Report", mis: "MIS Report", misSub: "Submit Ledger", leave: "Leave", leaveSub: "Request Leaves", notice: "Notice", noticeSub: "Directives", overview: "Overview", nh: "Night Hault", nhSub: "Silent Hour Veh. Log" },
     nav: { back: "Back", newEntry: "New Entry", viewLogs: "View Logs", clear: "CLEAR", dateFilter: "Date Filter" },
     dep: { clone: "Copy Yesterday's Deployment", date: "Deployment Date", shift: "Shift", desig: "Designation", name: "Full Name", phone: "Phone No.", loc: "Location", customLoc: "Specify sector exactly...", addAnother: "Add another", submit: "SUBMIT DEPLOYMENT", encrypting: "ENCRYPTING...", recorded: "RECORDED", noLogs: "No deployment logs found for this date.", secData: "Security Data", day: "Day Shift", night: "Night Shift", off: "Weekly Off" },
     inc: { title: "Incident Report", subtitle: "Direct uplink to Command Center.", type: "Incident Type / Name", occDate: "Occurrence Date & Time", repBy: "Reported By", ep: "EP Number", site: "Site Name", pin: "Pincode", exactLoc: "Location of Incident", details: "Details of Incident", findings: "Findings", action: "Action Taken", reco: "Follow-up & Recommendations", photo: "Photographic Evidence", attach: "Attach", submit: "SUBMIT REPORT", adminSeen: "Admin Acknowledged", pending: "Pending Review", timeOcc: "Time Occurred", timeRep: "Time Reported", copyWA: "COPY FOR WHATSAPP", copyFull: "Copy Full Report", noInc: "No incidents found for this date.", encrypting: "ENCRYPTING UPLINK...", 
       phType: "e.g. Theft, Fire, Breach...", phRepBy: "Officer Name", phEp: "ID Number", phPin: "Code", phLoc: "Specific spot on site...", phDetails: "What exactly happened? Provide full context.", phFindings: "Investigative findings...", phAction: "Immediate response deployed...", phReco: "Suggested protocols to prevent recurrence..."
     },
     mis: { selectDates: "Select MIS Report Dates", dateFrom: "Date From", dateTo: "Date To", register: "Official Register", submit: "SUBMIT Report", syncing: "SYNCING...", decrypting: "Decrypting Ledgers...", viewMaster: "View Master", editResend: "Edit / Resend", noLedgers: "No weekly ledgers found.", delete: "Delete Ledger", download: "Download .CSV" },
-    filter: { today: "Today", yesterday: "Yesterday", last7: "Last 7 Days", thisMonth: "This Month", last90: "Last 90 Days", clearAll: "Clear All", custom: "Custom Date Selection", from: "From Date", to: "To Date (Optional Range)", apply: "Apply Filter" }
+    filter: { today: "Today", yesterday: "Yesterday", last7: "Last 7 Days", thisMonth: "This Month", last90: "Last 90 Days", clearAll: "Clear All", custom: "Custom Date Selection", from: "From Date", to: "To Date (Optional Range)", apply: "Apply Filter" },
+    nh: { date: "Report Date", vehNo: "Vehicle Number", material: "Material", loc: "Location", purpose: "Purpose", addVeh: "Add Another Vehicle", submit: "Submit Report", markNil: "Declare NIL (0 Vehicles)", enc: "Transmitting..." }
   },
   hi: {
-    hub: { title: "सुरक्षा डैशबोर्ड", apps: "सिक्योर ऐप्स", dep: "डेली ड्यूटी (Deployment)", inc: "घटना रिपोर्ट (Incident)", mis: "MIS रिपोर्ट", misSub: "लेजर सबमिट करें", leave: "छुट्टी", leaveSub: "छुट्टी का आवेदन", notice: "सूचना", noticeSub: "कमांड निर्देश", overview: "अवलोकन" },
+    hub: { title: "सुरक्षा डैशबोर्ड", apps: "सिक्योर ऐप्स", dep: "डेली ड्यूटी (Deployment)", inc: "घटना रिपोर्ट (Incident)", mis: "MIS रिपोर्ट", misSub: "लेजर सबमिट करें", leave: "छुट्टी", leaveSub: "छुट्टी का आवेदन", notice: "सूचना", noticeSub: "कमांड निर्देश", overview: "अवलोकन", nh: "नाइट हॉल्ट", nhSub: "साइलेंट ऑवर रिपोर्ट" },
     nav: { back: "पीछे", newEntry: "नई एंट्री", viewLogs: "पुराने लॉग्स", clear: "साफ़ करें", dateFilter: "तारीख चुनें" },
     dep: { clone: "कल की ड्यूटी कॉपी करें", date: "ड्यूटी की तारीख", shift: "शिफ्ट", desig: "पद ", name: "पूरा नाम", phone: "मोबाइल नंबर", loc: "लोकेशन", customLoc: "लोकेशन का नाम लिखें...", addAnother: "एक और जोड़ें", submit: "ड्यूटी सबमिट करें", encrypting: "सबमिट हो रहा है...", recorded: "सेव हो गया", noLogs: "इस तारीख की कोई ड्यूटी नहीं मिली।", secData: "सुरक्षा गार्ड डेटा", day: "डे शिफ्ट (Day)", night: "नाईट शिफ्ट (Night)", off: "वीकली ऑफ (Off)" },
     inc: { title: "घटना रिपोर्ट", subtitle: "कमांड सेंटर को डायरेक्ट रिपोर्ट।", type: "घटना का प्रकार / नाम", occDate: "घटना की तारीख और समय", repBy: "रिपोर्ट करने वाले का नाम", ep: "EP नंबर", site: "साइट का नाम", pin: "पिनकोड", exactLoc: "घटना की सटीक लोकेशन", details: "घटना की पूरी जानकारी", findings: "जांच के नतीजे (Findings)", action: "क्या एक्शन लिया गया", reco: "सुझाव (Recommendations)", photo: "फोटो / सबूत", attach: "फोटो जोड़ें", submit: "रिपोर्ट सबमिट करें", adminSeen: "एडमिन ने देख लिया", pending: "अभी पेंडिंग है", timeOcc: "घटना का समय", timeRep: "रिपोर्ट करने का समय", copyWA: "WA कॉपी", copyFull: "पूरी रिपोर्ट कॉपी करें", noInc: "इस तारीख की कोई घटना नहीं मिली।", encrypting: "रिपोर्ट जा रही है...",
       phType: "जैसे: चोरी, आग, लड़ाई...", phRepBy: "ऑफिसर का नाम", phEp: "आईडी नंबर", phPin: "पिनकोड", phLoc: "साइट पर किस जगह...", phDetails: "क्या हुआ था? पूरी जानकारी दें।", phFindings: "जांच में क्या पता चला...", phAction: "तुरंत क्या कदम उठाए गए...", phReco: "आगे से रोकने के सुझाव..."
     },
     mis: { selectDates: "MIS रिपोर्ट की तारीख चुनें", dateFrom: "कब से (From)", dateTo: "कब तक (To)", register: "ऑफिशियल रजिस्टर", submit: "रिपोर्ट सबमिट करें", syncing: "सिंक हो रहा है...", decrypting: "लेजर लोड हो रहा है...", viewMaster: "मास्टर देखें", editResend: "एडिट / रीसेंड", noLedgers: "कोई MIS लेजर नहीं मिला।", delete: "डिलीट करें", download: "CSV डाउनलोड करें" },
-    filter: { today: "आज", yesterday: "कल (बीता हुआ)", last7: "पिछले 7 दिन", thisMonth: "इस महीने", last90: "पिछले 90 दिन", clearAll: "सब साफ़ करें", custom: "तारीख चुनें", from: "कब से", to: "कब तक (वैकल्पिक)", apply: "फ़िल्टर लगाएं" }
+    filter: { today: "आज", yesterday: "कल (बीता हुआ)", last7: "पिछले 7 दिन", thisMonth: "इस महीने", last90: "पिछले 90 दिन", clearAll: "सब साफ़ करें", custom: "तारीख चुनें", from: "कब से", to: "कब तक (वैकल्पिक)", apply: "फ़िल्टर लगाएं" },
+    nh: { date: "रिपोर्ट की तारीख", vehNo: "गाड़ी नंबर", material: "मटेरियल", loc: "लोकेशन", purpose: "उद्देश्य", addVeh: "एक और गाड़ी जोड़ें", submit: "रिपोर्ट सबमिट करें", markNil: "NIL घोषित करें (0 गाड़ियां)", enc: "सबमिट हो रहा है..." }
   },
   mr: {
     hub: { title: "सुरक्षा डॅशबोर्ड", apps: "सिक्योर ॲप्स", dep: "डेली ड्युटी (Deployment)", inc: "घटना रिपोर्ट (Incident)", mis: "MIS रिपोर्ट", misSub: "लेजर सबमिट करा", leave: "सुट्टी", leaveSub: "सुट्टीचा अर्ज", notice: "सूचना", noticeSub: "कमांड निर्देश", overview: "आढावा" },
@@ -73,6 +77,23 @@ const TRANSLATIONS = {
     mis: { selectDates: "MIS ਰਿਪੋਰਟ ਦੀ ਤਾਰੀਖ ਚੁਣੋ", dateFrom: "ਕਦੋਂ ਤੋਂ (From)", dateTo: "ਕਦੋਂ ਤੱਕ (To)", register: "ਅਧਿਕਾਰਤ ਰਜਿਸਟਰ", submit: "ਰਿਪੋਰਟ ਜਮ੍ਹਾਂ ਕਰੋ", syncing: "ਸਿੰਕ ਹੋ ਰਿਹਾ ਹੈ...", decrypting: "ਲੇਜਰ ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...", viewMaster: "ਮਾਸਟਰ ਦੇਖੋ", editResend: "ਐਡਿਟ / ਰੀਸੈਂਡ", noLedgers: "ਕੋਈ MIS ਲੇਜਰ ਨਹੀਂ ਮਿਲਿਆ।", delete: "ਮਿਟਾਓ", download: "CSV ਡਾਊਨਲੋਡ" },
     filter: { today: "ਅੱਜ", yesterday: "ਕੱਲ੍ਹ", last7: "ਪਿਛਲੇ 7 ਦਿਨ", thisMonth: "ਇਸ ਮਹੀਨੇ", last90: "ਪਿਛਲੇ 90 ਦਿਨ", clearAll: "ਸਭ ਸਾਫ਼ ਕਰੋ", custom: "ਤਾਰੀਖ ਚੁਣੋ", from: "ਕਦੋਂ ਤੋਂ", to: "ਕਦੋਂ ਤੱਕ (ਵਿਕਲਪਿਕ)", apply: "ਫਿਲਟਰ ਲਗਾਓ" }
   }
+};
+
+// 🌙 ✨ SMART NIGHT SHIFT DATE FIXER! (Handles the Midnight to 5 AM overlap!)
+const getNightShiftDate = () => {
+  const d = new Date();
+  const istString = d.toLocaleString("en-US", {timeZone: "Asia/Kolkata"});
+  const istDate = new Date(istString);
+  
+  // ✨ THE MAGIC: If the current time is between Midnight (0) and 5:59 AM (5), subtract 1 day!
+  if (istDate.getHours() < 6) {
+    istDate.setDate(istDate.getDate() - 1);
+  }
+  
+  const year = istDate.getFullYear();
+  const month = String(istDate.getMonth() + 1).padStart(2, '0');
+  const day = String(istDate.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 // 🇮🇳 ✨ THE BULLETPROOF IST TIMEZONE FIXER!
 const getISTDate = (offsetDays = 0) => {
@@ -107,7 +128,7 @@ export default function App() {
   // 🧠 OUR NEW DYNAMIC SITES BRAIN
   const [globalSites, setGlobalSites] = useState([]);
 
-  // ✨ THE VIP LISTS: These MUST sit right here so the whole app can see them!
+  // ✨ THE OPERATIONAL LISTS: These MUST sit right here so the whole app can see them!
   const SITES = globalSites.map(site => site.name);
   
   const SITES_BY_STATE = globalSites.reduce((acc, site) => {
@@ -185,7 +206,31 @@ export default function App() {
   const [weeklyReports, setWeeklyReports] = useState([]);
   const [broadcasts, setBroadcasts] = useState([]); // 📢 The Directives
   const [acks, setAcks] = useState([]); // 🧾 The Receipts
-  
+  const [nightHaults, setNightHaults] = useState([]); // 🚛 The Silent Hour App
+  // ✨ NIGHT HAULT GOD-MODE CONTROLS
+  const [editingNightHault, setEditingNightHault] = useState(null);
+  const [deletingNightHault, setDeletingNightHault] = useState(null);
+
+  const saveNightHaultEdit = async (updatedRecord) => {
+    const { id, created_at, ...updateData } = updatedRecord;
+    const { error } = await supabase.from('night_haults').update(updateData).eq('id', id);
+    if (error) alert(`Vault Rejection: ${error.message}`);
+    else {
+      fetchNightHaults();
+      setEditingNightHault(null);
+    }
+  };
+
+  const confirmDeleteNightHault = async () => {
+    if (!deletingNightHault) return;
+    const { error } = await supabase.from('night_haults').delete().eq('id', deletingNightHault.id);
+    if (error) alert(`Vault Error: ${error.message}`);
+    else {
+      fetchNightHaults();
+      setDeletingNightHault(null);
+    }
+  };
+
   const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light');
 
   
@@ -254,7 +299,7 @@ export default function App() {
   const handleGlobalSync = async () => {
     setIsLoadingData(true); 
     await Promise.all([
-      fetchDeployments(), fetchIncidents(), fetchWeeklyReports(), fetchSites(), fetchBroadcasts(),
+      fetchDeployments(), fetchIncidents(), fetchWeeklyReports(), fetchSites(), fetchBroadcasts(),fetchNightHaults(),
       userProfile?.role === 'admin' ? fetchContacts() : Promise.resolve()
     ]);
     setIsLoadingData(false); 
@@ -263,7 +308,7 @@ export default function App() {
   // Also make sure fetchBroadcasts runs on boot!
   useEffect(() => {
     if (userProfile) {
-      fetchDeployments(); fetchIncidents(); fetchWeeklyReports(); fetchBroadcasts();
+      fetchDeployments(); fetchIncidents(); fetchWeeklyReports(); fetchBroadcasts(); fetchNightHaults();
       if (userProfile.role === 'admin') fetchContacts();
     }
   }, [userProfile]);
@@ -303,6 +348,14 @@ const toggleIncidentStatus = async (inc) => {
     } else {
       fetchIncidents();
     }
+  };
+
+  // ✨ NEW: FETCH NIGHT HAULT ENGINE
+  const fetchNightHaults = async () => {
+    let query = supabase.from('night_haults').select('*').order('created_at', { ascending: false });
+    if (userProfile.role === 'supervisor') query = query.eq('site', userProfile.site);
+    const { data } = await query;
+    if (data) setNightHaults(data);
   };
 
 // ✨ NEW: WEEKLY LEDGER GOD-MODE CONTROLS
@@ -516,6 +569,9 @@ const toggleIncidentStatus = async (inc) => {
               contacts={contacts} 
               incidents={incidents} 
               weeklyReports={weeklyReports}
+              nightHaults={nightHaults} // 👈 ADD THIS!
+              onEditNightHault={setEditingNightHault}
+              onDeleteNightHault={setDeletingNightHault}
               onDeleteSite={handleDeleteSite}
               onDeleteWeekly={deleteWeeklyReport}
               isLoading={isLoadingData} 
@@ -546,7 +602,7 @@ const toggleIncidentStatus = async (inc) => {
               fetchBroadcasts={fetchBroadcasts}
             />
           ) : (
-        <SupervisorMobileView userProfile={userProfile} deployments={deployments} incidents={incidents} weeklyReports={weeklyReports} isLoading={isLoadingData} fetchDeployments={fetchDeployments} fetchIncidents={fetchIncidents} fetchWeeklyReports={fetchWeeklyReports} onEditWeekly={setEditingWeekly} onLogout={handleInstantLogout} onEdit={setEditingRecord} onDelete={setDeletingRecord} onView={setViewingRecord} onToggleAck={toggleIncidentStatus} onDeleteIncident={deleteIncident} onAddContact={() => setEditingContact({ name: '', phone: '', designation: 'SS - Security Supervisor', state_name: '', site: '', email: '', company: '' })} onEditContact={setEditingContact} onDeleteContact={setDeletingContact} theme={theme} toggleTheme={toggleTheme} broadcasts={broadcasts} acks={acks} fetchBroadcasts={fetchBroadcasts} />          )}
+        <SupervisorMobileView userProfile={userProfile} deployments={deployments} incidents={incidents} weeklyReports={weeklyReports} nightHaults={nightHaults} isLoading={isLoadingData} fetchDeployments={fetchDeployments} fetchIncidents={fetchIncidents} fetchWeeklyReports={fetchWeeklyReports} fetchNightHaults={fetchNightHaults} onEditWeekly={setEditingWeekly} onEditNightHault={setEditingNightHault} onDeleteNightHault={setDeletingNightHault} onLogout={handleInstantLogout} onEdit={setEditingRecord} onDelete={setDeletingRecord} onView={setViewingRecord} onToggleAck={toggleIncidentStatus} onDeleteIncident={deleteIncident} onAddContact={() => setEditingContact({ name: '', phone: '', designation: 'SS - Security Supervisor', state_name: '', site: '', email: '', company: '' })} onEditContact={setEditingContact} onDeleteContact={setDeletingContact} theme={theme} toggleTheme={toggleTheme} broadcasts={broadcasts} acks={acks} fetchBroadcasts={fetchBroadcasts} />          )}
         </div>
           {/* Modals for Deployments */}
         {editingRecord && <EditModal record={editingRecord} onClose={() => setEditingRecord(null)} onSave={saveEdit} />}
@@ -558,7 +614,10 @@ const toggleIncidentStatus = async (inc) => {
         {viewingContact && <ContactViewModal record={viewingContact} onClose={() => setViewingContact(null)} />}
       
         {editingWeekly && <WeeklyEditModal record={editingWeekly} onClose={() => setEditingWeekly(null)} onSave={updateWeeklyReport} />}
-      
+            {/* ✨ NEW: Night Hault Admin Modals! */}
+        {editingNightHault && <NightHaultEditModal record={editingNightHault} onClose={() => setEditingNightHault(null)} onSave={saveNightHaultEdit} />}
+        {deletingNightHault && <DeleteModal record={deletingNightHault} onClose={() => setDeletingNightHault(null)} onConfirm={confirmDeleteNightHault} type="night hault" />}
+
       </div>
     </div>
   );
@@ -844,7 +903,7 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
 // 📱 SUPERVISOR iOS-STYLE COMMAND HUB + CINEMATIC INTRO
 // ==========================================
 
-function SupervisorMobileView({ userProfile, deployments, incidents, weeklyReports, isLoading, fetchDeployments, fetchIncidents, fetchWeeklyReports, onEditWeekly, onLogout, onEdit, onDelete, onView, onDeleteIncident, theme, toggleTheme, broadcasts, acks, fetchBroadcasts }) {
+function SupervisorMobileView({ userProfile, deployments, incidents, weeklyReports, nightHaults, isLoading, fetchDeployments, fetchIncidents, fetchWeeklyReports, fetchNightHaults, onEditWeekly, onLogout, onEdit, onDelete, onView, onDeleteIncident, onEditNightHault,onDeleteNightHault, theme, toggleTheme, broadcasts, acks, fetchBroadcasts }) {
   const [currentApp, setCurrentApp] = useState('hub'); 
   const [appTab, setAppTab] = useState('form'); 
 
@@ -1027,12 +1086,19 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
           </button>
 
           {/* ✨ NEW TIME-OFF APP (Spans 2 columns at the bottom!) */}
-          <button onClick={() => { setCurrentApp('leave'); setAppTab('form'); }} className="col-span-2 py-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] border border-white/60 dark:border-slate-700/50 flex flex-row items-center justify-center gap-5 transition-all active:scale-[0.96] hover:shadow-lg group">
+          <button onClick={() => { setCurrentApp('leave'); setAppTab('form'); }} className="aspect-square bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] border border-white/60 dark:border-slate-700/50 flex flex-col items-center justify-center gap-4 transition-all active:scale-[0.96] hover:shadow-lg group">
             <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-violet-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform duration-300"><Calendar size={28} className="stroke-[1.5]"/></div>
             <div className="text-left">
               <span className="block font-bold text-slate-900 dark:text-white text-base tracking-wide leading-tight">{t.hub?.leave || 'Leave'}</span>
               <span className="block text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">{t.hub?.leaveSub || 'Request Leaves'}</span>
             </div>
+          </button>
+
+          {/* ✨ NEW NIGHT HAULT APP! */}
+          <button onClick={() => { setCurrentApp('nighthault'); setAppTab('form'); }} className="aspect-square bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] border border-white/60 dark:border-slate-700/50 flex flex-col items-center justify-center gap-4 transition-all active:scale-[0.96] hover:shadow-lg group relative overflow-hidden">
+            <div className="absolute -top-6 -right-6 w-24 h-24 bg-slate-800/5 dark:bg-slate-500/10 rounded-full blur-2xl group-hover:bg-slate-800/10 transition-all"></div>
+            <div className="w-14 h-14 bg-gradient-to-br from-slate-700 to-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-slate-900/30 group-hover:scale-110 transition-transform duration-300"><Truck size={28} className="stroke-[1.5]"/></div>
+            <span className="block font-bold text-slate-700 dark:text-white text-sm sm:text-base tracking-wide leading-tight px-2 text-center">{t.hub.nh || "Night Hault"}</span>
           </button>
         </div>
       </div>
@@ -1047,7 +1113,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
         </button>
         <div className="flex-1">
           <h2 className="font-black text-slate-900 dark:text-white tracking-tight text-lg leading-tight">
-            {currentApp === 'deployment' ? t.hub.dep : currentApp === 'incident' ? t.hub.inc : currentApp === 'broadcasts' ? 'Command Directives' : currentApp === 'leave' ? (t.hub?.leave || 'Leave') : t.hub.mis}
+            {currentApp === 'deployment' ? t.hub.dep : currentApp === 'incident' ? t.hub.inc : currentApp === 'broadcasts' ? 'Command Directives' : currentApp === 'leave' ? (t.hub?.leave || 'Leave') : currentApp === 'nighthault' ? (t.hub?.nh || 'Night Hault') : t.hub.mis}
           </h2>
           <p className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5 flex items-center gap-1">
             <MapPin size={12} /> {userProfile.site}
@@ -1080,6 +1146,12 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
         {/* ✨ NEW LEAVE ROUTERS */}
         {currentApp === 'leave' && appTab === 'form' && <LeaveMobileForm userProfile={userProfile} fillerName={fillerName} setActiveTab={setAppTab} />}
         {currentApp === 'leave' && appTab === 'history' && <LeaveMobileHistory userProfile={userProfile} />}
+
+        {/* ✨ NIGHT HAULT ROUTERS */}
+        {currentApp === 'nighthault' && appTab === 'form' && <NightHaultMobileForm userProfile={userProfile} fetchNightHaults={fetchNightHaults} setActiveTab={setAppTab} fillerName={fillerName} language={language} />}
+        {/* ✨ फिक्स: Supervisor को सही NightHault Edit/Delete प्रॉप्स दे दिए! */}
+        {currentApp === 'nighthault' && appTab === 'history' && <NightHaultMobileHistory nightHaults={nightHaults} isLoading={isLoading} language={language} onEdit={onEditNightHault} onDelete={onDeleteNightHault} />}
+
 
       {/* ✨ THE NEW DIRECTIVES INBOX LIST */}
         {currentApp === 'broadcasts' && (
@@ -1510,8 +1582,7 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
 // ==========================================
 // ADMIN VIEW (MASTER PORTAL + COMMAND CENTER)
 // ==========================================
-function AdminDesktopView({ userProfile, deployments, contacts, incidents, weeklyReports, isLoading, onToggleAck, onDeleteIncident, onLogout, onEdit, onView, onDelete, onAddContact, onEditContact, onDeleteContact, onViewContact, onImportCSV, theme, toggleTheme, globalSites = [], SITES = [], COMMISSIONED_SITES = [], SITES_BY_STATE = {}, STATE_NAMES = [], onAddSite, onToggleSite, onDeleteSite, onDeleteWeekly, onSync, onQuickUpdateContact }) { 
-  const [activeTab, setActiveTab] = useState('deployments'); 
+function AdminDesktopView({ userProfile, deployments, contacts, incidents, weeklyReports, nightHaults, isLoading, onToggleAck, onDeleteIncident, onLogout, onEdit, onView, onDelete, onAddContact, onEditContact, onDeleteContact, onViewContact, onImportCSV, theme, toggleTheme, globalSites = [], SITES = [], COMMISSIONED_SITES = [], SITES_BY_STATE = {}, STATE_NAMES = [], onAddSite, onToggleSite, onDeleteSite, onDeleteWeekly, onSync, onQuickUpdateContact, onEditNightHault, onDeleteNightHault }) {   const [activeTab, setActiveTab] = useState('deployments'); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false); 
   const [movingContact, setMovingContact] = useState(null); // 👈 THE NEW FILE EXPLORER STATE!
@@ -1533,7 +1604,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
   const [filterDesignation, setFilterDesignation] = useState("All");
   const [filterLocation, setFilterLocation] = useState("All"); //   NEW: Location Filter
   const [searchTerm, setSearchTerm] = useState(""); 
-  const [siteTier, setSiteTier] = useState("All"); //   NEW: VIP Toggle
+  const [siteTier, setSiteTier] = useState("All"); //   NEW: OPERATIONAL Toggle
 
   // Contact Omni-Search & Folder Brain 🧠
   const [contactSearchTerm, setContactSearchTerm] = useState("");
@@ -1740,6 +1811,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
                   activeTab === 'contacts' ? '56px' : 
                   activeTab === 'incidents' ? '112px' : 
                   activeTab === 'weekly' ? '168px' :
+                  activeTab === 'nighthault' ? '224px' :
                   activeTab === 'broadcasts' ? '224px' :
                   '280px' /* The exact pixel drop for the 6th tab! */
                 })` 
@@ -1750,6 +1822,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
             <button onClick={() => { setActiveTab('contacts'); setIsMobileMenuOpen(false); }} className={`relative z-10 h-12 w-full flex items-center gap-3 px-4 rounded-xl text-sm font-bold transition-colors duration-300 ${activeTab === 'contacts' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}><BookOpen size={18} /> Directory</button>
             <button onClick={() => { setActiveTab('incidents'); setIsMobileMenuOpen(false); }} className={`relative z-10 h-12 w-full flex items-center gap-3 px-4 rounded-xl text-sm font-bold transition-colors duration-300 ${activeTab === 'incidents' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}><AlertTriangle size={18} /> Incident Report</button>
             <button onClick={() => { setActiveTab('weekly'); setIsMobileMenuOpen(false); }} className={`relative z-10 h-12 w-full flex items-center gap-3 px-4 rounded-xl text-sm font-bold transition-colors duration-300 ${activeTab === 'weekly' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}><FileText size={18} /> MIS Reports</button>
+            <button onClick={() => { setActiveTab('nighthault'); setIsMobileMenuOpen(false); }} className={`relative z-10 h-12 w-full flex items-center gap-3 px-4 rounded-xl text-sm font-bold transition-colors duration-300 ${activeTab === 'nighthault' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}><Truck size={18} /> Night Hault</button>
             <button onClick={() => { setActiveTab('broadcasts'); setIsMobileMenuOpen(false); }} className={`relative z-10 h-12 w-full flex items-center gap-3 px-4 rounded-xl text-sm font-bold transition-colors duration-300 ${activeTab === 'broadcasts' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}><Megaphone size={18} /> Directives</button>
             <button onClick={() => { setActiveTab('leave'); setIsMobileMenuOpen(false); }} className={`relative z-10 h-12 w-full flex items-center gap-3 px-4 rounded-xl text-sm font-bold transition-colors duration-300 ${activeTab === 'leave' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}><Calendar size={18} /> Absence Command</button>
           </div>
@@ -1795,6 +1868,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
             {activeTab === 'incidents' && 'Incident Report'}
             {activeTab === 'contacts' && 'Directory'}
             {activeTab === 'weekly' && 'MIS Report'}
+            {activeTab === 'nighthault' && 'Silent Hour Report'} {/* 👈 NEW */}
             {activeTab === 'broadcasts' && 'Command Broadcasts'}
             {activeTab === 'leave' && 'Absence Command'}
           </h1>
@@ -1866,7 +1940,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
           {/* ===================================== */}
           {activeTab === 'deployments' && (
             <>
-              {/* ✨ DYNAMIC VIP SWITCH (FAANG SLIDING PILL EDITION!) */}
+              {/* ✨ DYNAMIC OPERATIONAL SWITCH (FAANG SLIDING PILL EDITION!) */}
               <div className="mb-6 flex justify-center sm:justify-start">
                 <div className="relative flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner w-full sm:w-[420px]">
                   
@@ -2300,13 +2374,15 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
           );})()}
         {activeTab === 'incidents' && <AdminIncidentView incidents={incidents} isLoading={isLoading} onAcknowledge={onToggleAck} onDelete={onDeleteIncident} SITES={SITES} STATE_NAMES={STATE_NAMES} SITES_BY_STATE={SITES_BY_STATE} />}
         {activeTab === 'weekly' && <AdminWeeklyView weeklyReports={weeklyReports} isLoading={isLoading} COMMISSIONED_SITES={COMMISSIONED_SITES} SITES={SITES} STATE_NAMES={STATE_NAMES} SITES_BY_STATE={SITES_BY_STATE} onDeleteWeekly={onDeleteWeekly} />}
+        {/* ✨ फिक्स: Admin पैनल को Edit और Delete के प्रॉप्स पास कर दिए! */}
+        {activeTab === 'nighthault' && <AdminNightHaultView nightHaults={nightHaults} isLoading={isLoading} SITES={SITES} STATE_NAMES={STATE_NAMES} SITES_BY_STATE={SITES_BY_STATE} COMMISSIONED_SITES={COMMISSIONED_SITES} onEdit={onEditNightHault} onDelete={onDeleteNightHault} />}
         {activeTab === 'broadcasts' && <AdminBroadcastView SITES={SITES} globalSites={globalSites} userProfile={userProfile} />}
         {/* ✨ NEW: ROUTE FOR THE LEAVE MODULE */}
         {activeTab === 'leave' && <AdminLeaveView />}
             </div>
           )}
         </div>
-        
+
         {/* 📁 FAANG FILE EXPLORER: MOVE MODAL */}
         {movingContact && (
           <MoveContactModal 
@@ -2686,7 +2762,8 @@ function DeleteModal({ record, onClose, onConfirm, type }) {
         <Trash2 size={32} className="mx-auto text-red-500 mb-4" />
         {/*   DYNAMIC HEADER! */}
         <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-2">Delete {type === 'contact' ? 'Contact' : 'Entry'}?</h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Are you sure you want to completely remove {record.name}?</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Are you sure you want to completely remove {record.veh_no || record.name || 'this record'}?</p>
+
         <div className="flex gap-3">
           <button onClick={onClose} className="flex-1 py-3 rounded-lg font-bold text-sm bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200">Cancel</button>
           <button onClick={onConfirm} className="flex-1 py-3 rounded-lg font-bold text-sm bg-red-500 text-white hover:bg-red-600">Delete</button>
@@ -3788,7 +3865,7 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
   );
 }
 // ==========================================
-// 📈 VIP OPERATIONS & THREAT MATRIX (CSO DASHBOARD)
+// 📈 OPERATIONAL OPERATIONS & THREAT MATRIX (CSO DASHBOARD)
 // ==========================================
 function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SITES = [], STATE_NAMES = [], SITES_BY_STATE = {}, onDeleteWeekly }) {
   const [filterStartDate, setFilterStartDate] = useState(getISTDate());
@@ -3809,11 +3886,11 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
     return () => { document.body.style.overflow = 'auto'; }; // Safety cleanup
   }, [viewingRep]);
 
-  // ✨ VIP FILTER MAGIC: We ONLY want operational/commissioned sites in this dropdown!
+  // ✨ OPERATIONAL FILTER MAGIC: We ONLY want operational/commissioned sites in this dropdown!
   const baseSites = filterState === "All" ? SITES : SITES_BY_STATE[filterState] || [];
   const availableSites = baseSites.filter(site => (COMMISSIONED_SITES || []).includes(site));
 
-  // ✨ VIP STATE MAGIC: Only show states that actually have commissioned sites!
+  // ✨ OPERATIONAL STATE MAGIC: Only show states that actually have commissioned sites!
   const operationalStates = STATE_NAMES.filter(st => 
     (SITES_BY_STATE[st] || []).some(site => (COMMISSIONED_SITES || []).includes(site))
   );
@@ -3947,7 +4024,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
         <div className="flex flex-wrap gap-3 relative z-10">
           <SmartDateFilter startDate={filterStartDate} setStartDate={setFilterStartDate} endDate={filterEndDate} setEndDate={setFilterEndDate} />
           <FilterSelect label="State" value={filterState} onChange={e => {setFilterState(e); setFilterSite("All");}} options={operationalStates} />
-          <FilterSelect label="VIP Site" value={filterSite} onChange={setFilterSite} options={[...availableSites].sort()} />
+          <FilterSelect label="OPERATIONAL Site" value={filterSite} onChange={setFilterSite} options={[...availableSites].sort()} />
           
           {/* ✨ FIXED: CLEAR button now correctly resets the new date states! */}
           <button onClick={() => { setFilterStartDate(getISTDate()); setFilterEndDate(getISTDate()); setFilterState('All'); setFilterSite('All'); }} className="text-[10px] font-black tracking-widest text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors h-max mb-0.5">CLEAR</button>
@@ -5672,6 +5749,497 @@ function SmartDateFilter({ startDate, setStartDate, endDate, setEndDate }) {
           </div>
         </>
       )}
+    </div>
+  );
+}
+// ==========================================
+// 🚛 NIGHT HAULT MOBILE FORM (SUPERVISOR)
+// ==========================================
+function NightHaultMobileForm({ userProfile, fetchNightHaults, setActiveTab, fillerName, language }) {
+  const t = TRANSLATIONS[language]?.nh || TRANSLATIONS['en'].nh;
+  
+  // ✨ FIXED: Uses the new Night Shift brain! If it's 2 AM, it automatically writes yesterday's date!
+  const [date, setDate] = useState(getNightShiftDate());
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMsg, setSuccessMsg] = useState(false);
+  
+  const [vehicles, setVehicles] = useState([
+    { id: Date.now(), vehNo: "", material: "", location: "", purpose: "" }
+  ]);
+
+  // ✨ MAGIC: Auto-fills material, loc, purpose from previous row, leaves vehNo blank!
+  const addVehicle = () => {
+    const last = vehicles[vehicles.length - 1];
+    setVehicles([...vehicles, { 
+      id: Date.now(), 
+      vehNo: "", 
+      material: last ? last.material : "", 
+      location: last ? last.location : "", 
+      purpose: last ? last.purpose : "" 
+    }]);
+  };
+
+  const updateVeh = (id, field, value) => {
+    setVehicles(vehicles.map(v => v.id === id ? { ...v, [field]: value } : v));
+  };
+
+  const executeSubmit = async (records) => {
+    setIsSubmitting(true);
+    const { error } = await supabase.from('night_haults').insert(records);
+    setIsSubmitting(false);
+    if (error) { alert(`Vault Error: ${error.message}`); } 
+    else {
+      setSuccessMsg(true); fetchNightHaults();
+      setTimeout(() => { 
+        setSuccessMsg(false); 
+        setVehicles([{ id: Date.now(), vehNo: "", material: "", location: "", purpose: "" }]); 
+        setActiveTab('history'); 
+      }, 1200);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const newRecords = vehicles.map(v => ({
+      date, site: userProfile.site, veh_no: v.vehNo.toUpperCase(), material: v.material, location: v.location, purpose: v.purpose, submitted_by: fillerName || userProfile.name
+    }));
+    executeSubmit(newRecords);
+  };
+
+  const handleMarkNil = () => {
+    if(window.confirm("Declare 0 vehicles in plant tonight?")) {
+      const nilRecord = [{
+        date, site: userProfile.site, veh_no: "NIL", material: "-", location: "-", purpose: "NO VEHICLES IN PLANT", submitted_by: fillerName || userProfile.name
+      }];
+      executeSubmit(nilRecord);
+    }
+  };
+
+  const inputClass = "w-full bg-white dark:bg-[#0B1120] border-2 border-slate-300 dark:border-slate-600 rounded-2xl py-3 px-4 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-slate-800 dark:focus:border-slate-400 transition-all shadow-inner";
+
+  return (
+    <div className="p-4 space-y-6">
+      <div className="bg-slate-900 dark:bg-slate-800 p-6 rounded-3xl shadow-lg text-white relative overflow-hidden group">
+        <Truck size={40} className="absolute -right-2 -top-2 text-slate-700/50 group-hover:scale-110 transition-transform"/>
+        <h2 className="font-black uppercase tracking-widest text-lg relative z-10">{t.nh || "Night Hault"}</h2>
+        <p className="text-xs font-bold text-slate-400 mt-1 relative z-10">{t.nhSub || "Silent Hour Report (11 PM - 5 AM)"}</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{t.date}</label>
+          <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className={`${inputClass} [color-scheme:light] dark:[color-scheme:dark]`} />
+        </div>
+
+        <div className="space-y-5">
+          {vehicles.map((v, index) => (
+            <div key={v.id} className="bg-white dark:bg-slate-900 rounded-[2rem] border-2 border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden relative">
+              <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Vehicle {index + 1}</span>
+                {vehicles.length > 1 && <button type="button" onClick={() => setVehicles(vehicles.filter(x => x.id !== v.id))} className="text-slate-400 hover:text-rose-500"><X size={14} /></button>}
+              </div>
+              <div className="p-5 space-y-4">
+                <div><label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{t.vehNo}</label><input type="text" required placeholder="e.g. MH 04 AB 1234" value={v.vehNo} onChange={(e) => updateVeh(v.id, 'vehNo', e.target.value)} className={`${inputClass} uppercase`} /></div>
+                <div><label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{t.material}</label><input type="text" required value={v.material} onChange={(e) => updateVeh(v.id, 'material', e.target.value)} className={inputClass} /></div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{t.loc}</label><input type="text" required value={v.location} onChange={(e) => updateVeh(v.id, 'location', e.target.value)} className={inputClass} /></div>
+                  <div><label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{t.purpose}</label><input type="text" required value={v.purpose} onChange={(e) => updateVeh(v.id, 'purpose', e.target.value)} className={inputClass} /></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <button type="button" onClick={addVehicle} className="w-full py-4 rounded-[1.5rem] border-2 border-dashed border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 active:scale-95 transition-all">
+          <Plus size={16} /> {t.addVeh}
+        </button>
+
+        <div className="flex gap-3">
+          <button type="button" onClick={handleMarkNil} className="flex-1 py-4 bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-sm border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 active:scale-95 transition-all">
+            {t.markNil}
+          </button>
+          <button type="submit" disabled={isSubmitting} className={`flex-1 py-4 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 ${successMsg ? 'bg-emerald-500 shadow-emerald-500/30' : 'bg-slate-800 hover:bg-slate-900 dark:bg-slate-600 shadow-slate-900/30'}`}>
+            {isSubmitting ? <RefreshCw size={14} className="animate-spin" /> : successMsg ? <CheckCircle size={14} /> : <Save size={14} />} {successMsg ? 'SAVED' : t.submit}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+// ==========================================
+// 🚛 NIGHT HAULT HISTORY (SUPERVISOR)
+// ==========================================
+function NightHaultMobileHistory({ nightHaults, isLoading, language }) {
+  const [filterStartDate, setFilterStartDate] = useState(getISTDate());
+  const [filterEndDate, setFilterEndDate] = useState(getISTDate());
+  
+  if (isLoading) return <div className="p-10 text-center font-bold text-slate-500 animate-pulse text-[10px] uppercase tracking-widest">Loading...</div>;
+
+  const filtered = nightHaults.filter(n => {
+    const dMatch = (!filterStartDate || n.date >= filterStartDate) && (!filterEndDate || n.date <= filterEndDate);
+    return dMatch;
+  });
+
+  return (
+    <div className="p-4 space-y-4 pb-24 relative z-[100]">
+      <div className="bg-white dark:bg-[#0B1120] p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-3 mb-2 relative overflow-visible z-[100]">
+         <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><Calendar size={14} className="text-slate-500"/> Audit Filters</span>
+         <div className="w-full relative">
+            <SmartDateFilter startDate={filterStartDate} setStartDate={setFilterStartDate} endDate={filterEndDate} setEndDate={setFilterEndDate} />
+         </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-800 rounded-3xl p-10 text-center shadow-sm text-slate-500 font-bold text-xs uppercase tracking-widest">No reports found.</div>
+      ) : (
+        filtered.map((log, i) => (
+          <div key={log.id} className="bg-white dark:bg-[#0f172a] rounded-[1.5rem] p-5 shadow-sm border border-slate-200 dark:border-slate-800 relative">
+             <div className={`absolute top-0 left-0 w-1.5 h-full ${log.veh_no === 'NIL' ? 'bg-emerald-500' : 'bg-slate-800 dark:bg-slate-500'}`}></div>
+             <div className="ml-2 flex justify-between items-start mb-3">
+               <h4 className={`font-black text-lg uppercase tracking-tight leading-tight ${log.veh_no === 'NIL' ? 'text-emerald-500' : 'text-slate-900 dark:text-white'}`}>{log.veh_no}</h4>
+               <span className="text-[9px] font-bold text-slate-400">{log.date}</span>
+             </div>
+             {log.veh_no !== 'NIL' && (
+               <div className="ml-2 grid grid-cols-2 gap-2 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                 <p className="bg-slate-50 dark:bg-slate-900/50 p-2 rounded-lg border border-slate-100 dark:border-slate-800">📦 {log.material}</p>
+                 <p className="bg-slate-50 dark:bg-slate-900/50 p-2 rounded-lg border border-slate-100 dark:border-slate-800">📍 {log.location}</p>
+                 <p className="col-span-2 bg-slate-50 dark:bg-slate-900/50 p-2 rounded-lg border border-slate-100 dark:border-slate-800">🎯 {log.purpose}</p>
+               </div>
+             )}
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+// ==========================================
+// 🚛 ADMIN NIGHT HAULT VIEW (MASTER SHEET EXPORT + EDIT/DELETE)
+// ==========================================
+function AdminNightHaultView({ nightHaults, isLoading, onEdit, onDelete, SITES = [], STATE_NAMES = [], SITES_BY_STATE = {}, COMMISSIONED_SITES = [] }) {
+  const [filterStartDate, setFilterStartDate] = useState(getISTDate());
+  const [filterEndDate, setFilterEndDate] = useState(getISTDate());
+  const [filterState, setFilterState] = useState("All"); 
+  const [filterSite, setFilterSite] = useState("All");
+
+  const baseSites = filterState === "All" ? SITES : SITES_BY_STATE[filterState] || [];
+  const availableSites = baseSites.filter(site => (COMMISSIONED_SITES || []).includes(site));
+  const operationalStates = STATE_NAMES.filter(st => (SITES_BY_STATE[st] || []).some(site => (COMMISSIONED_SITES || []).includes(site)));
+
+  // ✨ THE SMART FILTER & SORTER BRAIN!
+  const filtered = nightHaults.filter(r => {
+    const rDate = r.date || "";
+    const dMatch = (!filterStartDate || rDate >= filterStartDate) && (!filterEndDate || rDate <= filterEndDate);
+    const safeSiteName = (r.site || "").toUpperCase();
+    const stMatch = filterState === "All" || (SITES_BY_STATE[filterState] && SITES_BY_STATE[filterState].includes(safeSiteName));
+    const sMatch = filterSite === "All" || safeSiteName === filterSite;
+    return dMatch && stMatch && sMatch;
+  }).sort((a, b) => {
+    // 1. Sort by Date (Newest dates at the top)
+    const dateA = new Date(a.date || 0);
+    const dateB = new Date(b.date || 0);
+    if (dateA > dateB) return -1;
+    if (dateA < dateB) return 1;
+    
+    // 2. If same date, sort by Site Name (A-Z)
+    const siteA = (a.site || "").toUpperCase().trim();
+    const siteB = (b.site || "").toUpperCase().trim();
+    if (siteA < siteB) return -1;
+    if (siteA > siteB) return 1;
+    
+    // 3. If same site, put 'NIL' records above actual vehicles for neatness
+    if (a.veh_no === 'NIL' && b.veh_no !== 'NIL') return -1;
+    if (a.veh_no !== 'NIL' && b.veh_no === 'NIL') return 1;
+    
+    return 0;
+  });
+
+  // ✨ VIP MATH MAGIC (Ghost Bug Proofed!)
+  const expectedSites = filterSite === "All" ? availableSites : [filterSite];
+  const totalVehicles = filtered.filter(f => f.veh_no !== 'NIL').length;
+  
+  // ✨ फिक्स: Force everything to UPPERCASE so 'Prayagraj 1' and 'prayagraj 1' merge perfectly!
+  const activeVehicleSites = [...new Set(filtered.filter(f => f.veh_no !== 'NIL').map(f => (f.site || "").toUpperCase().trim()))];
+  const nilSitesList = [...new Set(filtered.filter(f => f.veh_no === 'NIL').map(f => (f.site || "").toUpperCase().trim()))];
+  const submittedSitesList = [...new Set(filtered.map(f => (f.site || "").toUpperCase().trim()))];
+  
+  // Ensure the expected list also uses uppercase to check against the submissions!
+  const pendingSitesList = expectedSites.map(s => (s || "").toUpperCase().trim()).filter(s => !submittedSitesList.includes(s));
+// ✨ GOD-MODE EXPORT: Clean Rows + Bottom Summary Section!
+  const exportMasterCSV = () => {
+    if (filtered.length === 0 && expectedSites.length === 0) return alert("No data to export!");
+    
+    const headers = ['Date', 'Site', 'Vehicle No', 'Material', 'Location', 'Purpose', 'Submitted By', 'Status'];
+    const csvRows = [];
+    let grandTotalVehicles = 0;
+    const siteSummaries = []; 
+
+    // 1. Group all actual logs by an uppercase, trimmed site name to avoid JS string ghost bugs!
+    const groupedLogs = {};
+    filtered.forEach(log => {
+      const sName = (log.site || "UNKNOWN").toUpperCase().trim();
+      if (!groupedLogs[sName]) groupedLogs[sName] = [];
+      groupedLogs[sName].push(log);
+    });
+
+    // 2. Combine the expected sites and the actual logged sites into one unified, clean list!
+    const allTargetSites = new Set([
+      ...expectedSites.map(s => (s || "").toUpperCase().trim()),
+      ...Object.keys(groupedLogs)
+    ]);
+
+    // 3. Sort them alphabetically (Now they will all sort perfectly since they are uppercase!)
+    const sortedTargets = [...allTargetSites].sort();
+
+    sortedTargets.forEach(siteName => {
+      const siteLogs = groupedLogs[siteName] || [];
+      let siteVehicleCount = 0;
+      
+      if (siteLogs.length === 0) {
+         csvRows.push(`"${filterEndDate || 'N/A'}","${siteName}","---","---","---","---","---","PENDING SUBMISSION"`);
+      } else {
+         siteLogs.forEach(log => {
+           if (log.veh_no === 'NIL') {
+             csvRows.push(`"${log.date}","${log.site}","NIL","NIL","NIL","NIL","${log.submitted_by}","CLEARED (0 VEHICLES)"`);
+           } else {
+             siteVehicleCount++;
+             grandTotalVehicles++;
+             const clean = (t) => `"${(t||'').replace(/"/g, '""')}"`;
+             csvRows.push([log.date, log.site, log.veh_no, log.material, log.location, log.purpose, log.submitted_by, "REPORTED"].map(clean).join(','));
+           }
+         });
+         
+         // Save the total for the bottom summary block!
+         if (siteVehicleCount > 0) {
+            siteSummaries.push({ siteName: siteName, count: siteVehicleCount });
+         }
+      }
+    });
+
+    // ✨ THE NEW SUMMARY BLOCK AT THE BOTTOM!
+    if (siteSummaries.length > 0) {
+      csvRows.push(`"","","","","","","",""`); // Blank spacing row
+      csvRows.push(`"","*** SITE SUMMARIES ***","","","","","",""`);
+      
+      siteSummaries.forEach(summary => {
+        csvRows.push(`"","${summary.siteName}","${summary.count} Vehicles","","","","",""`);
+      });
+    }
+
+    // ✨ ADD GRAND TOTAL ROW AT THE VERY BOTTOM
+    csvRows.push(`"","","","","","","",""`); 
+    csvRows.push(`"","** GRAND TOTAL ALL SITES **","** ${grandTotalVehicles} VEHICLES **","","","","",""`);
+
+    const csvContent = [headers.join(','), ...csvRows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
+    link.download = `CBG_NightHault_Master_${filterStartDate}_to_${filterEndDate}.csv`;
+    link.click();
+  };
+
+  return (
+    <div className="space-y-6 relative pb-10">
+      {/* COMMAND BAR */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 flex flex-wrap justify-between items-end gap-4 relative overflow-visible z-[100]">
+        <div className="flex flex-wrap gap-3 relative z-10">
+          <SmartDateFilter startDate={filterStartDate} setStartDate={setFilterStartDate} endDate={filterEndDate} setEndDate={setFilterEndDate} />
+          <FilterSelect label="State" value={filterState} onChange={e => {setFilterState(e); setFilterSite("All");}} options={operationalStates} />
+          <FilterSelect label="VIP Site" value={filterSite} onChange={setFilterSite} options={[...availableSites].sort()} />
+          <button onClick={() => { setFilterStartDate(getISTDate()); setFilterEndDate(getISTDate()); setFilterState('All'); setFilterSite('All'); }} className="text-[10px] font-black tracking-widest text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors h-max mb-0.5">CLEAR</button>
+        </div>
+        <button onClick={exportMasterCSV} className="relative z-10 px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg transition-all flex items-center gap-2 active:scale-95">
+          <Download size={16} /> Export Master Sheet
+        </button>
+      </div>
+
+      {/* 🚀 GOD-MODE HOVER STATS */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 relative z-[50]">
+         
+         {/* CARD 1: ACTIVE VEHICLES */}
+         <div className="bg-white dark:bg-[#0B1120] p-6 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-visible group cursor-help z-30">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><Truck size={14}/> Total Vehicles Logged</p>
+            <h3 className="text-3xl font-black text-slate-900 dark:text-white">{totalVehicles} <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded align-middle ml-2">From {activeVehicleSites.length} Sites</span></h3>
+            
+            {/* HOVER REVEAL */}
+            {activeVehicleSites.length > 0 && (
+              <div className="absolute top-[80%] left-0 mt-2 w-full min-w-[200px] bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 text-[10px] font-black p-4 rounded-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 shadow-2xl border border-slate-700 flex flex-col gap-2 transform translate-y-2 group-hover:translate-y-0 max-h-48 overflow-y-auto custom-scrollbar">
+                <span className="text-blue-400 dark:text-blue-600 border-b border-slate-600 dark:border-slate-300 pb-1.5 mb-1 uppercase tracking-widest">Active Sites ({activeVehicleSites.length})</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {activeVehicleSites.map(s => <span key={s} className="bg-slate-700 dark:bg-slate-200 px-2 py-1 rounded shadow-sm">{s}</span>)}
+                </div>
+              </div>
+            )}
+         </div>
+
+         {/* CARD 2: NIL SITES */}
+         <div className="bg-white dark:bg-[#0B1120] p-6 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-visible group cursor-help z-20">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><CheckCircle size={14} className="text-emerald-500"/> Zero Vehicle Sites (NIL)</p>
+            <h3 className="text-3xl font-black text-emerald-600 dark:text-emerald-400">{nilSitesList.length} <span className="text-[10px] font-bold text-emerald-500/50 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded align-middle ml-2">Cleared</span></h3>
+            
+            {/* HOVER REVEAL */}
+            {nilSitesList.length > 0 && (
+              <div className="absolute top-[80%] left-0 mt-2 w-full min-w-[200px] bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 text-[10px] font-black p-4 rounded-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 shadow-2xl border border-slate-700 flex flex-col gap-2 transform translate-y-2 group-hover:translate-y-0 max-h-48 overflow-y-auto custom-scrollbar">
+                <span className="text-emerald-400 dark:text-emerald-600 border-b border-slate-600 dark:border-slate-300 pb-1.5 mb-1 uppercase tracking-widest">Cleared Sites ({nilSitesList.length})</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {nilSitesList.map(s => <span key={s} className="bg-slate-700 dark:bg-slate-200 px-2 py-1 rounded shadow-sm">{s}</span>)}
+                </div>
+              </div>
+            )}
+         </div>
+
+         {/* CARD 3: COMPLIANCE ROLLCALL */}
+         <div className="bg-white dark:bg-[#0B1120] p-6 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-visible group cursor-help z-10">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2"><Activity size={14} className="text-indigo-500"/> Submission Rollcall</p>
+            <h3 className="text-3xl font-black text-indigo-600 dark:text-indigo-400">{submittedSitesList.length} <span className="text-sm text-slate-400">/ {expectedSites.length}</span></h3>
+            
+            {/* HOVER REVEAL */}
+            <div className="absolute top-[80%] right-0 mt-2 w-72 bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 p-4 rounded-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 shadow-2xl border border-slate-700 flex flex-col gap-4 transform translate-y-2 group-hover:translate-y-0 max-h-64 overflow-y-auto custom-scrollbar">
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[10px] font-black text-emerald-400 dark:text-emerald-600 border-b border-slate-600 dark:border-slate-300 pb-1.5 uppercase tracking-widest">Submitted ({submittedSitesList.length})</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {submittedSitesList.length === 0 ? <span className="text-[9px] text-slate-400">None</span> : submittedSitesList.map(s => <span key={s} className="text-[8.5px] font-bold uppercase tracking-wider bg-slate-700 dark:bg-slate-200 px-2 py-1 rounded shadow-sm">{s}</span>)}
+                </div>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[10px] font-black text-rose-400 dark:text-rose-600 border-b border-slate-600 dark:border-slate-300 pb-1.5 uppercase tracking-widest">Pending ({pendingSitesList.length})</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {pendingSitesList.length === 0 ? <span className="text-[9px] text-slate-400">All Clear!</span> : pendingSitesList.map(s => <span key={s} className="text-[8.5px] font-bold uppercase tracking-wider bg-slate-700 dark:bg-slate-200 px-2 py-1 rounded shadow-sm">{s}</span>)}
+                </div>
+              </div>
+            </div>
+         </div>
+      </div>
+
+      {/* TABLE */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[1.5rem] shadow-sm overflow-hidden z-10 relative">
+        {isLoading ? (
+          <div className="p-16 text-center font-bold text-slate-500 animate-pulse uppercase tracking-widest text-[10px]">Scanning Vault...</div>
+        ) : (
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left border-collapse whitespace-nowrap">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-slate-950/50 border-b border-slate-200 dark:border-slate-800">
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Sr. No</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Date</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Site</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Vehicle No.</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Material</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Location</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Purpose</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Submitted By</th>
+                  <th className="px-4 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
+                {filtered.map((log, idx) => (
+                  <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+                    <td className="px-6 py-4 text-xs font-black text-slate-400 dark:text-slate-500">{idx + 1}</td>
+                    <td className="px-6 py-4 text-xs font-bold text-slate-700 dark:text-slate-300">{log.date}</td>
+                    <td className="px-6 py-4"><span className="px-2.5 py-1 rounded-md text-[10px] font-black bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700 uppercase tracking-widest">{log.site}</span></td>
+                    <td className="px-6 py-4">
+                       {log.veh_no === 'NIL' 
+                          ? <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-2 py-1 rounded shadow-sm">NIL - CLEAR</span>
+                          : <span className="text-xs font-black text-slate-900 dark:text-white uppercase">{log.veh_no}</span>
+                       }
+                    </td>
+                    <td className="px-6 py-4 text-xs font-bold text-slate-600 dark:text-slate-400">{log.material}</td>
+                    <td className="px-6 py-4 text-xs font-bold text-slate-600 dark:text-slate-400">{log.location}</td>
+                    <td className="px-6 py-4 text-xs font-bold text-slate-600 dark:text-slate-400">{log.purpose}</td>
+                    <td className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{log.submitted_by}</td>
+                    
+                    {/* ✨ NEW ADMIN ACTIONS */}
+                    <td className="px-4 py-4 text-center">
+                       <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                         <button onClick={(e) => { e.stopPropagation(); onEdit(log); }} className="p-1.5 text-slate-400 hover:text-indigo-600 bg-white dark:bg-slate-950 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm" title="Edit Record"><Edit2 size={14} /></button>
+                         <button onClick={(e) => { e.stopPropagation(); onDelete(log); }} className="p-1.5 text-slate-400 hover:text-rose-600 bg-white dark:bg-slate-950 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm" title="Delete Record"><Trash2 size={14} /></button>
+                       </div>
+                    </td>
+                  </tr>
+                ))}
+                {filtered.length === 0 && <tr><td colSpan="9" className="px-6 py-16 text-center text-slate-500 font-bold italic">No records found.</td></tr>}
+              </tbody>
+              {/* ✨ STICKY TOTAL ROW */}
+              {filtered.length > 0 && (
+                <tfoot className="bg-slate-100 dark:bg-slate-800/80 border-t-2 border-slate-200 dark:border-slate-700 sticky bottom-0">
+                  <tr>
+                    <td colSpan="3" className="px-6 py-4 text-right text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">Global Vehicle Count:</td>
+                    <td className="px-6 py-4 text-sm font-black text-indigo-600 dark:text-indigo-400">{totalVehicles} <span className="text-[10px] text-slate-500 ml-1">Vehicles</span></td>
+                    <td colSpan="5"></td>
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+// ==========================================
+// ✏️ NIGHT HAULT EDIT MODAL (ADMIN ONLY)
+// ==========================================
+function NightHaultEditModal({ record, onClose, onSave }) {
+  const [fd, setFd] = useState({ ...record });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const dataToSave = { ...fd };
+    dataToSave.veh_no = (dataToSave.veh_no || '').toUpperCase();
+    onSave(dataToSave);
+  };
+
+  const inputClass = "w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-inner placeholder-slate-400";
+  const labelClass = "block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5 ml-1";
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-800 rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-[0.95] duration-300">
+        
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 shrink-0 relative overflow-hidden">
+          <div className="absolute -right-10 -top-10 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl"></div>
+          <div>
+            <h3 className="font-black text-slate-900 dark:text-white flex items-center gap-2 text-lg uppercase tracking-tight relative z-10">
+              <Edit2 size={16} className="text-indigo-500" /> Modify Log
+            </h3>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Site: <span className="text-indigo-500">{record.site}</span></p>
+          </div>
+          <button onClick={onClose} className="p-2.5 text-slate-400 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 rounded-full shadow-sm transition-all active:scale-95 border border-slate-200 dark:border-slate-700 relative z-10"><X size={16} /></button>
+        </div>
+
+        <form id="edit-nighthault-form" onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto custom-scrollbar flex-1">
+          <div>
+            <label className={labelClass}>Vehicle Number</label>
+            <input type="text" required placeholder="e.g. MH 04 AB 1234" value={fd.veh_no} onChange={(e) => setFd({...fd, veh_no: e.target.value})} className={`${inputClass} uppercase`} />
+          </div>
+          <div>
+            <label className={labelClass}>Material</label>
+            <input type="text" required value={fd.material} onChange={(e) => setFd({...fd, material: e.target.value})} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>Location</label>
+            <input type="text" required value={fd.location} onChange={(e) => setFd({...fd, location: e.target.value})} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>Purpose</label>
+            <input type="text" required value={fd.purpose} onChange={(e) => setFd({...fd, purpose: e.target.value})} className={inputClass} />
+          </div>
+          <div className="bg-amber-50 dark:bg-amber-500/10 p-4 rounded-xl border border-amber-200 dark:border-amber-500/30 mt-2">
+            <label className={`${labelClass} !text-amber-600 dark:!text-amber-500 flex items-center gap-1.5`}><Calendar size={12}/> Reported Date</label>
+            <input type="date" required value={fd.date} onChange={(e) => setFd({...fd, date: e.target.value})} className="w-full bg-transparent text-sm font-black text-amber-900 dark:text-amber-100 outline-none [color-scheme:light] dark:[color-scheme:dark]" />
+          </div>
+        </form>
+
+        <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 flex gap-3 shrink-0">
+          <button type="button" onClick={onClose} className="flex-1 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-sm border border-slate-200 dark:border-slate-700">Cancel</button>
+          
+          <button type="submit" form="edit-nighthault-form" className="flex-[2] py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest bg-indigo-600 text-white flex items-center justify-center gap-2 hover:bg-indigo-500 shadow-lg shadow-indigo-500/30 active:scale-95 transition-all">
+            <Save size={16} /> Save Changes
+          </button>
+        </div>
+        
+      </div>
     </div>
   );
 }
