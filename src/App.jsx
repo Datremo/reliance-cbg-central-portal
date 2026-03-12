@@ -79,22 +79,6 @@ const TRANSLATIONS = {
   }
 };
 
-// 🌙 ✨ SMART NIGHT SHIFT DATE FIXER! (Handles the Midnight to 5 AM overlap!)
-const getNightShiftDate = () => {
-  const d = new Date();
-  const istString = d.toLocaleString("en-US", {timeZone: "Asia/Kolkata"});
-  const istDate = new Date(istString);
-  
-  // ✨ THE MAGIC: If the current time is between Midnight (0) and 5:59 AM (5), subtract 1 day!
-  if (istDate.getHours() < 6) {
-    istDate.setDate(istDate.getDate() - 1);
-  }
-  
-  const year = istDate.getFullYear();
-  const month = String(istDate.getMonth() + 1).padStart(2, '0');
-  const day = String(istDate.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
 // 🇮🇳 ✨ THE BULLETPROOF IST TIMEZONE FIXER!
 const getISTDate = (offsetDays = 0) => {
   const d = new Date();
@@ -1795,13 +1779,14 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
           {/* ✨ THE SLIDING MENU CONTAINER */}
           <div className="relative flex flex-col gap-2">
             
-            {/* ✨ THE MAGICAL SLIDING BACKGROUND PILL (NOW 6 TABS!) */}
+            {/* ✨ THE MAGICAL SLIDING BACKGROUND PILL (NOW 7 TABS!) */}
             <div 
               className={`absolute left-0 w-full h-12 rounded-xl shadow-lg transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] z-0 will-change-transform ${
                 activeTab === 'deployments' ? 'bg-indigo-600 shadow-indigo-900/20' : 
                 activeTab === 'contacts' ? 'bg-blue-600 shadow-blue-900/20' : 
                 activeTab === 'incidents' ? 'bg-rose-600 shadow-rose-900/20' : 
                 activeTab === 'weekly' ? 'bg-emerald-600 shadow-emerald-900/20' :
+                activeTab === 'nighthault' ? 'bg-slate-700 shadow-slate-900/40' : /* Night Hault Color! */
                 activeTab === 'broadcasts' ? 'bg-amber-500 shadow-amber-900/20' :
                 'bg-purple-600 shadow-purple-900/20' /* The Leave Color! */
               }`}
@@ -1812,8 +1797,8 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
                   activeTab === 'incidents' ? '112px' : 
                   activeTab === 'weekly' ? '168px' :
                   activeTab === 'nighthault' ? '224px' :
-                  activeTab === 'broadcasts' ? '224px' :
-                  '280px' /* The exact pixel drop for the 6th tab! */
+                  activeTab === 'broadcasts' ? '280px' : /* Bumped down 56px! */
+                  '336px' /* Bumped down 56px for the 7th tab! */
                 })` 
               }}
             ></div>
@@ -5758,8 +5743,8 @@ function SmartDateFilter({ startDate, setStartDate, endDate, setEndDate }) {
 function NightHaultMobileForm({ userProfile, fetchNightHaults, setActiveTab, fillerName, language }) {
   const t = TRANSLATIONS[language]?.nh || TRANSLATIONS['en'].nh;
   
-  // ✨ FIXED: Uses the new Night Shift brain! If it's 2 AM, it automatically writes yesterday's date!
-  const [date, setDate] = useState(getNightShiftDate());
+  // ✨ BACK TO BASICS: Uses the literal, exact present day so supervisors never get confused!
+  const [date, setDate] = useState(getISTDate());
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState(false);
