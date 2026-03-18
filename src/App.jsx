@@ -568,37 +568,49 @@ const toggleIncidentStatus = async (inc) => {
     }
   };
 
- // --- LOGIN SCREEN ---
+ // ✨ THE SPLASH SCREEN CONSTANT (Now it sits above the Bouncer!)
+  const cinematicSplashScreen = isSplashing && (
+    <div className={`fixed inset-0 z-[99999] bg-[#020806] flex flex-col items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${splashFadeOut ? 'opacity-0 scale-110 pointer-events-none' : 'opacity-100 scale-100'}`}>
+      {/* Ambient Background Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-emerald-500/20 rounded-full blur-[80px] animate-pulse"></div>
+      
+      {/* The Breathing Logo */}
+      <div className="relative z-10 flex flex-col items-center animate-in zoom-in-95 duration-1000">
+        {/* ✨ FIXED: Added p-3 here so the logo shrinks slightly and doesn't get its edges chopped off! */}
+        <div className="relative p-3"> 
+          <div className="absolute inset-0 border border-emerald-500/30 rounded-3xl animate-ping" style={{ animationDuration: '2s' }}></div>
+          {/* ✨ FIXED: Updated to greenlogo.png */}
+          <img src="/greenlogo.png" alt="CBG Logo" className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-[0_0_30px_rgba(16,185,129,0.5)] transform animate-bounce" style={{ animationDuration: '3s' }} onError={(e) => { e.target.style.display = 'none'; }} />
+        </div>
+        
+        <h1 className="mt-8 text-3xl font-black text-white tracking-[0.2em] uppercase drop-shadow-lg">CBG <span className="text-emerald-400">Command</span></h1>
+        
+        {/* The Loading Laser */}
+        <div className="mt-8 w-48 h-1 bg-slate-800 rounded-full overflow-hidden shadow-inner relative">
+          <div className="absolute top-0 left-0 h-full bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.8)] transition-all ease-out" style={{ width: splashFadeOut ? '100%' : '30%', transitionDuration: '2.2s' }}></div>
+        </div>
+        <p className="mt-4 text-[9px] font-black text-emerald-500 uppercase tracking-widest animate-pulse">Securing Uplink...</p>
+      </div>
+    </div>
+  );
+
+  // --- LOGIN SCREEN ---
   if (!session || !userProfile || isUnlocking) {
-    return <AuthScreen theme={theme} toggleTheme={toggleTheme} setIsUnlocking={setIsUnlocking} />;
+    return (
+      <>
+        {/* 🎬 Now it covers the login screen perfectly! */}
+        {cinematicSplashScreen}
+        <AuthScreen theme={theme} toggleTheme={toggleTheme} setIsUnlocking={setIsUnlocking} />
+      </>
+    );
   }
 
   return (
     <div className={theme === 'dark' ? 'dark' : ''}>
+      {/* 🎬 And it covers the dashboard perfectly if you are already logged in! */}
+      {cinematicSplashScreen}
 
-      {/* 🎬 THE YOUTUBE-STYLE ANIMATED SPLASH SCREEN */}
-      {isSplashing && (
-        <div className={`fixed inset-0 z-[99999] bg-[#020806] flex flex-col items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${splashFadeOut ? 'opacity-0 scale-110 pointer-events-none' : 'opacity-100 scale-100'}`}>
-          {/* Ambient Background Glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-emerald-500/20 rounded-full blur-[80px] animate-pulse"></div>
-          
-          {/* The Breathing Logo */}
-          <div className="relative z-10 flex flex-col items-center animate-in zoom-in-95 duration-1000">
-            <div className="relative">
-              <div className="absolute inset-0 border border-emerald-500/30 rounded-full animate-ping" style={{ animationDuration: '2s' }}></div>
-              <img src="/logo.webp" alt="CBG Logo" className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-[0_0_30px_rgba(16,185,129,0.5)] transform animate-bounce" style={{ animationDuration: '3s' }} onError={(e) => { e.target.style.display = 'none'; }} />
-            </div>
-            
-            <h1 className="mt-8 text-3xl font-black text-white tracking-[0.2em] uppercase drop-shadow-lg">CBG <span className="text-emerald-400">Command</span></h1>
-            
-            {/* The Loading Laser */}
-            <div className="mt-8 w-48 h-1 bg-slate-800 rounded-full overflow-hidden shadow-inner relative">
-              <div className="absolute top-0 left-0 h-full bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.8)] transition-all ease-out" style={{ width: splashFadeOut ? '100%' : '30%', transitionDuration: '2.2s' }}></div>
-            </div>
-            <p className="mt-4 text-[9px] font-black text-emerald-500 uppercase tracking-widest animate-pulse">Securing Uplink...</p>
-          </div>
-        </div>
-      )}
+     
 
       {/* ✨ GPU-ACCELERATED ANIMATION ENGINE (120FPS) ✨ */}
       <style>{`
@@ -796,8 +808,7 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
         {/* Top Vibrant Gradient Header */}
         <div className="bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-800 h-[40vh] flex flex-col items-center justify-center relative pt-8 pb-12 shrink-0 overflow-hidden">
            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl mix-blend-overlay"></div>
-                    <img src="/logo.webp" alt="Test Logo" className="h-10 sm:h-20 w-auto object-contain drop-shadow-xl transition-transform hover:scale-150" onError={(e) => e.target.style.display='none'} />
-
+          <img src="/greenlogo.png" alt="Test Logo" className="h-12 sm:h-24 w-auto object-contain drop-shadow-xl transition-transform hover:scale-150 p-2" onError={(e) => e.target.style.display='none'} />
            <div className="absolute top-0 w-full p-6 flex justify-between items-center z-10">
               <div className="bg-white/20 backdrop-blur-md p-2 rounded-xl">
                  <ShieldCheck size={20} className="text-white" />
