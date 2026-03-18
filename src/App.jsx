@@ -562,9 +562,6 @@ const toggleIncidentStatus = async (inc) => {
 
   return (
     <div className={theme === 'dark' ? 'dark' : ''}>
-      {/* 🎬 And it covers the dashboard perfectly if you are already logged in! */}
-      {cinematicSplashScreen}
-
      
 
       {/* ✨ GPU-ACCELERATED ANIMATION ENGINE (120FPS) ✨ */}
