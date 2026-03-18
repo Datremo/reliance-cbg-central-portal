@@ -270,10 +270,14 @@ export default function App() {
     
     if (data) {
       setUserProfile(data);
-    } else {
-      // If someone logs in but the Admin hasn't given them a role in the database, kick them out!
+    } else if (error && error.code === 'PGRST116') {
+      // ✨ THE FIX: ONLY kick them out if the database explicitly confirms they don't exist!
       alert("Security Protocol: Your account has not been assigned a role by the System Administrator.");
       supabase.auth.signOut(); // Instantly logs them back out!
+    } else {
+      // ✨ THE FIX: If it's a network drop or lag spike, DON'T log them out! Just retry in the background!
+      console.warn("Vault connection unstable. Retrying profile sync...");
+      setTimeout(() => fetchProfile(userId), 2000); 
     }
   };
 
@@ -542,10 +546,10 @@ const toggleIncidentStatus = async (inc) => {
         /* 🍎 THE iPHONE ILLUSION ENGINE 🍎 */
         
         /* 1. Kills the Android "Pull to Refresh" reload and adds the Apple Bounce! */
-        body { 
+        html, body { 
            overscroll-behavior-y: none; 
            -webkit-tap-highlight-color: transparent; 
-           background-color: #0B1120; /* Prevents white flashes on dark mode swipe */
+           background-color: #0B1120; /* Prevents white flashes on darkx mode swipe */
         }
         
         /* 2. Makes scrolling feel heavy and fluid like iOS */
