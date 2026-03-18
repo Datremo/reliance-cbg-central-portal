@@ -142,6 +142,23 @@ export default function App() {
     }
   };
 
+  // 📇 ✨ GLOBAL APPLE HAPTIC ENGINE
+  // This watches the whole app. If they touch a button, it gives a tiny physical "tick"!
+  useEffect(() => {
+    const handleTouch = (e) => {
+      // Find out if what they touched was a button (or inside a button)
+      const isButton = e.target.closest('button') || e.target.closest('.group');
+      if (isButton && navigator.vibrate) {
+        // A super fast 10 millisecond vibration feels like a physical click!
+        navigator.vibrate(10); 
+      }
+    };
+    
+    // Listen for every tap on the screen!
+    document.addEventListener('touchstart', handleTouch, { passive: true });
+    return () => document.removeEventListener('touchstart', handleTouch);
+  }, []);
+
   // 🚀 Trigger the fetch when the app boots up!
   useEffect(() => {
     fetchSites();
@@ -521,6 +538,46 @@ const toggleIncidentStatus = async (inc) => {
       <style>{`
         /* ✨ GLOBAL APPLE-STYLE SCROLLBAR ✨ */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
+
+        /* 🍎 THE iPHONE ILLUSION ENGINE 🍎 */
+        
+        /* 1. Kills the Android "Pull to Refresh" reload and adds the Apple Bounce! */
+        body { 
+           overscroll-behavior-y: none; 
+           -webkit-tap-highlight-color: transparent; 
+           background-color: #0B1120; /* Prevents white flashes on dark mode swipe */
+        }
+        
+        /* 2. Makes scrolling feel heavy and fluid like iOS */
+        .custom-scrollbar { 
+           -webkit-overflow-scrolling: touch; 
+           scroll-behavior: smooth; 
+        }
+
+        /* 3. Stops users from accidentally highlighting text when they tap too fast! */
+        * {
+           -webkit-touch-callout: none; /* iOS Safari */
+           -webkit-user-select: none; /* Safari */
+           -khtml-user-select: none; /* Konqueror HTML */
+           -moz-user-select: none; /* Old versions of Firefox */
+           -ms-user-select: none; /* Internet Explorer/Edge */
+           user-select: none; /* Non-prefixed version */
+        }
+        
+        /* Allow typing in inputs! */
+        input, textarea, select {
+           -webkit-user-select: auto !important;
+           user-select: auto !important;
+           touch-action: manipulation; /* Kills the 300ms tap delay on mobile! */
+        }
+
+        /* 4. Hardware Acceleration for buttery animations */
+        .animate-in {
+           transform: translateZ(0);
+           will-change: transform, opacity;
+           backface-visibility: hidden;
+        }
+
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.4); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.8); }
