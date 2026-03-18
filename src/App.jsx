@@ -111,19 +111,6 @@ const getISTDateString = (utcTimestamp) => {
 export default function App() {
   // 🧠 OUR NEW DYNAMIC SITES BRAIN
   const [globalSites, setGlobalSites] = useState([]);
-  
-  // 🎬 THE CINEMATIC SPLASH SCREEN ENGINE
-  const [isSplashing, setIsSplashing] = useState(true);
-  const [splashFadeOut, setSplashFadeOut] = useState(false);
-
-  useEffect(() => {
-    // Hold the beautiful animation for 2.2 seconds, then trigger the smooth fade out
-    const fadeTimer = setTimeout(() => setSplashFadeOut(true), 2200);
-    // Completely vaporize it from the DOM after 2.8 seconds so it doesn't block clicks!
-    const unmountTimer = setTimeout(() => setIsSplashing(false), 2800);
-    return () => { clearTimeout(fadeTimer); clearTimeout(unmountTimer); };
-  }, []);
-
   // ✨ THE OPERATIONAL LISTS: These MUST sit right here so the whole app can see them!
   const SITES = globalSites.map(site => site.name);
   
@@ -568,41 +555,9 @@ const toggleIncidentStatus = async (inc) => {
     }
   };
 
- // ✨ THE SPLASH SCREEN CONSTANT (Now it sits above the Bouncer!)
-  const cinematicSplashScreen = isSplashing && (
-    <div className={`fixed inset-0 z-[99999] bg-[#020806] flex flex-col items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${splashFadeOut ? 'opacity-0 scale-110 pointer-events-none' : 'opacity-100 scale-100'}`}>
-      {/* Ambient Background Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-emerald-500/20 rounded-full blur-[80px] animate-pulse"></div>
-      
-      {/* The Breathing Logo */}
-      <div className="relative z-10 flex flex-col items-center animate-in zoom-in-95 duration-1000">
-        {/* ✨ FIXED: Added p-3 here so the logo shrinks slightly and doesn't get its edges chopped off! */}
-        <div className="relative p-3"> 
-          <div className="absolute inset-0 border border-emerald-500/30 rounded-3xl animate-ping" style={{ animationDuration: '2s' }}></div>
-          {/* ✨ FIXED: Updated to greenlogo.png */}
-          <img src="/greenlogo.png" alt="CBG Logo" className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-[0_0_30px_rgba(16,185,129,0.5)] transform animate-bounce" style={{ animationDuration: '3s' }} onError={(e) => { e.target.style.display = 'none'; }} />
-        </div>
-        
-        <h1 className="mt-8 text-3xl font-black text-white tracking-[0.2em] uppercase drop-shadow-lg">CBG <span className="text-emerald-400">Command</span></h1>
-        
-        {/* The Loading Laser */}
-        <div className="mt-8 w-48 h-1 bg-slate-800 rounded-full overflow-hidden shadow-inner relative">
-          <div className="absolute top-0 left-0 h-full bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.8)] transition-all ease-out" style={{ width: splashFadeOut ? '100%' : '30%', transitionDuration: '2.2s' }}></div>
-        </div>
-        <p className="mt-4 text-[9px] font-black text-emerald-500 uppercase tracking-widest animate-pulse">Securing Uplink...</p>
-      </div>
-    </div>
-  );
-
-  // --- LOGIN SCREEN ---
+// --- LOGIN SCREEN ---
   if (!session || !userProfile || isUnlocking) {
-    return (
-      <>
-        {/* 🎬 Now it covers the login screen perfectly! */}
-        {cinematicSplashScreen}
-        <AuthScreen theme={theme} toggleTheme={toggleTheme} setIsUnlocking={setIsUnlocking} />
-      </>
-    );
+    return <AuthScreen theme={theme} toggleTheme={toggleTheme} setIsUnlocking={setIsUnlocking} />;
   }
 
   return (
