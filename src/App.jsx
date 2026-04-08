@@ -5,6 +5,7 @@ import {
   Filter, CheckCircle, Smartphone, Monitor, Activity,  Leaf, Zap,Eye, EyeOff, Clock,BarChart2, PieChart, TrendingUp, Target, Megaphone, Send, Radio, BellRing, CheckCheck, 
   X, Search, ChevronDown, Download, Edit2, Save, Sun, Moon, Sparkles, Lock, Mail,RefreshCw, Copy, BookOpen, Briefcase, Phone, Menu, Unlock, ArrowRight,ArrowLeft, AlertTriangle, Camera, FileText, Image as ImageIcon,Settings, User, PlusCircle
 } from 'lucide-react';
+import ExcelJS from 'exceljs';
 
 // ✨ THESE CONSTANTS STAY OUTSIDE (Because they are just normal text, no hooks!)
 const LOCATIONS = ["Main Gate", "Weigh Bridge", "MTCC", "Patrolling", "SAP Operator", "Other"];
@@ -18,7 +19,14 @@ const formatPhone = (phone) => {
   if (cleaned.length === 10) return `${cleaned.slice(0, 5)} ${cleaned.slice(5)}`;
   return phone;
 };
-
+// 📅 HELPER: Calculate Leave Duration
+const calculateLeaveDays = (startDate, endDate) => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const diffTime = Math.abs(end - start);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 includes the start day
+  return diffDays;
+};
 // ==========================================
 // 🌍 THE MULTI-LINGUAL TRANSLATION BRAIN (UPGRADED FOR V2.0!)
 // ==========================================
@@ -32,7 +40,7 @@ const TRANSLATIONS = {
     inc: { title: "Incident Report", subtitle: "Direct uplink to Command Center.", type: "Incident Type / Name", occDate: "Occurrence Date & Time", repBy: "Reported By", ep: "EP Number", site: "Site Name", pin: "Pincode", exactLoc: "Location of Incident", details: "Details of Incident", findings: "Findings", action: "Action Taken", reco: "Follow-up & Recommendations", photo: "Photographic Evidence", attach: "Attach", submit: "SUBMIT REPORT", adminSeen: "Admin Acknowledged", pending: "Pending Review", timeOcc: "Time Occurred", timeRep: "Time Reported", copyWA: "COPY FOR WHATSAPP", copyFull: "Copy Full Report", noInc: "No incidents found for this date.", encrypting: "ENCRYPTING UPLINK...", 
       phType: "e.g. Theft, Fire, Breach...", phRepBy: "Officer Name", phEp: "ID Number", phPin: "Code", phLoc: "Specific spot on site...", phDetails: "What exactly happened? Provide full context.", phFindings: "Investigative findings...", phAction: "Immediate response deployed...", phReco: "Suggested protocols to prevent recurrence..."
     },
-    mis: { selectDates: "Select MIS Report Dates", dateFrom: "Date From", dateTo: "Date To", register: "Official Register", submit: "SUBMIT Report", syncing: "SYNCING...", decrypting: "Decrypting Ledgers...", viewMaster: "View Master", editResend: "Edit / Resend", noLedgers: "No weekly ledgers found.", delete: "Delete Ledger", download: "Download .CSV" },
+    mis: { selectDates: "Select Daily MIS Date", dateFrom: "Report Date", dateTo: "To Date (Leave Blank for Daily)", register: "Official Register", submit: "SUBMIT Daily Report", syncing: "SYNCING...", decrypting: "Decrypting Ledgers...", viewMaster: "View Master", editResend: "Edit / Resend", noLedgers: "No daily ledgers found.", delete: "Delete Ledger", download: "Download .CSV" },
     filter: { today: "Today", yesterday: "Yesterday", last7: "Last 7 Days", thisMonth: "This Month", last90: "Last 90 Days", clearAll: "Clear All", custom: "Custom Date Selection", from: "From Date", to: "To Date (Optional Range)", apply: "Apply Filter" },
     nh: { date: "Report Date", vehNo: "Vehicle Number", material: "Material", loc: "Location", purpose: "Purpose", addVeh: "Add Another Vehicle", submit: "Submit Report", markNil: "Declare NIL (0 Vehicles)", enc: "Transmitting..." }
   },
@@ -197,6 +205,7 @@ export default function App() {
   const [deletingRecord, setDeletingRecord] = useState(null); 
   const [viewingRecord, setViewingRecord] = useState(null); 
   const [contacts, setContacts] = useState([]); 
+  const [emergencyContacts, setEmergencyContacts] = useState([]); // ✨ NEW: Emergency Contacts Vault!
   const [editingContact, setEditingContact] = useState(null);
   const [deletingContact, setDeletingContact] = useState(null);
   const [viewingContact, setViewingContact] = useState(null); 
@@ -325,20 +334,19 @@ export default function App() {
       supabase.removeChannel(realtimeChannel);
     };
   }, [userProfile]);
-  const handleGlobalSync = async () => {
+ const handleGlobalSync = async () => {
     setIsLoadingData(true); 
     await Promise.all([
-      fetchDeployments(), fetchIncidents(), fetchWeeklyReports(), fetchSites(), fetchBroadcasts(),fetchNightHaults(),
-      userProfile?.role === 'admin' ? fetchContacts() : Promise.resolve()
+      // ✨ NO MORE GATEKEEPING! RLS handles the security. Everyone fetches!
+      fetchDeployments(), fetchIncidents(), fetchWeeklyReports(), fetchSites(), fetchBroadcasts(), fetchNightHaults(), fetchEmergencyContacts(), 
     ]);
     setIsLoadingData(false); 
   };
 
-  // Also make sure fetchBroadcasts runs on boot!
   useEffect(() => {
     if (userProfile) {
-      fetchDeployments(); fetchIncidents(); fetchWeeklyReports(); fetchBroadcasts(); fetchNightHaults();
-      if (userProfile.role === 'admin') fetchContacts();
+      // ✨ Supabase is the bouncer now! The frontend just asks for data.
+      fetchDeployments(); fetchIncidents(); fetchWeeklyReports(); fetchBroadcasts(); fetchNightHaults(); fetchEmergencyContacts();
     }
   }, [userProfile]);
 
@@ -450,6 +458,14 @@ const toggleIncidentStatus = async (inc) => {
   const fetchContacts = async () => {
     const { data, error } = await supabase.from('contacts').select('*').order('name', { ascending: true });
     if (!error) setContacts(data || []);
+  };
+
+  // ✨ NEW: FETCH EMERGENCY CONTACTS (BROADCAST STYLE)
+  const fetchEmergencyContacts = async () => {
+    // We just ask for the data. Supabase RLS is the bouncer and will filter it for us!
+    const { data, error } = await supabase.from('emergency_contacts').select('*').order('name', { ascending: true });
+    if (!error) setEmergencyContacts(data || []);
+    else console.error("Vault Rejection (Emergency):", error);
   };
 
   //   3. CSV IMPORT (Zero Cloud Storage Used!
@@ -638,6 +654,8 @@ const toggleIncidentStatus = async (inc) => {
               userProfile={userProfile} 
               deployments={deployments} 
               contacts={contacts} 
+              emergencyContacts={emergencyContacts}
+              fetchEmergencyContacts={fetchEmergencyContacts}
               incidents={incidents} 
               weeklyReports={weeklyReports}
               nightHaults={nightHaults} // 👈 ADD THIS!
@@ -673,7 +691,7 @@ const toggleIncidentStatus = async (inc) => {
               fetchBroadcasts={fetchBroadcasts}
             />
           ) : (
-        <SupervisorMobileView userProfile={userProfile} deployments={deployments} incidents={incidents} weeklyReports={weeklyReports} nightHaults={nightHaults} isLoading={isLoadingData} fetchDeployments={fetchDeployments} fetchIncidents={fetchIncidents} fetchWeeklyReports={fetchWeeklyReports} fetchNightHaults={fetchNightHaults} onEditWeekly={setEditingWeekly} onEditNightHault={setEditingNightHault} onDeleteNightHault={setDeletingNightHault} onLogout={handleInstantLogout} onEdit={setEditingRecord} onDelete={setDeletingRecord} onView={setViewingRecord} onToggleAck={toggleIncidentStatus} onDeleteIncident={deleteIncident} onAddContact={() => setEditingContact({ name: '', phone: '', designation: 'SS - Security Supervisor', state_name: '', site: '', email: '', company: '' })} onEditContact={setEditingContact} onDeleteContact={setDeletingContact} theme={theme} toggleTheme={toggleTheme} broadcasts={broadcasts} acks={acks} fetchBroadcasts={fetchBroadcasts} />          )}
+        <SupervisorMobileView userProfile={userProfile} deployments={deployments} incidents={incidents} weeklyReports={weeklyReports} nightHaults={nightHaults} emergencyContacts={emergencyContacts} isLoading={isLoadingData} fetchDeployments={fetchDeployments} fetchIncidents={fetchIncidents} fetchWeeklyReports={fetchWeeklyReports} fetchNightHaults={fetchNightHaults} fetchEmergencyContacts={fetchEmergencyContacts} onEditWeekly={setEditingWeekly} onEditNightHault={setEditingNightHault} onDeleteNightHault={setDeletingNightHault} onLogout={handleInstantLogout} onEdit={setEditingRecord} onDelete={setDeletingRecord} onView={setViewingRecord} onToggleAck={toggleIncidentStatus} onDeleteIncident={deleteIncident} onAddContact={() => setEditingContact({ name: '', phone: '', designation: 'SS - Security Supervisor', state_name: '', site: '', email: '', company: '' })} onEditContact={setEditingContact} onDeleteContact={setDeletingContact} theme={theme} toggleTheme={toggleTheme} broadcasts={broadcasts} acks={acks} fetchBroadcasts={fetchBroadcasts} />          )}
         </div>
           {/* Modals for Deployments */}
         {editingRecord && <EditModal record={editingRecord} onClose={() => setEditingRecord(null)} onSave={saveEdit} />}
@@ -694,12 +712,7 @@ const toggleIncidentStatus = async (inc) => {
   );
 }
 
-// ==========================================
-// 🔐 AUTHENTICATION SCREEN (RESPONSIVE FAANG EDITION 📱/💻)
-// ==========================================
-// ==========================================
-// 🔐 AUTHENTICATION SCREEN (RESPONSIVE FAANG EDITION 📱/💻)
-// ==========================================
+
 // ==========================================
 // 🔐 AUTHENTICATION SCREEN (RESPONSIVE FAANG EDITION 📱/💻)
 // ==========================================
@@ -973,14 +986,10 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
 // 📱 SUPERVISOR iOS-STYLE COMMAND HUB + CINEMATIC INTRO
 // ==========================================
 
-function SupervisorMobileView({ userProfile, deployments, incidents, weeklyReports, nightHaults, isLoading, fetchDeployments, fetchIncidents, fetchWeeklyReports, fetchNightHaults, onEditWeekly, onLogout, onEdit, onDelete, onView, onDeleteIncident, onEditNightHault,onDeleteNightHault, theme, toggleTheme, broadcasts, acks, fetchBroadcasts, onSync }) {
+function SupervisorMobileView({ userProfile, deployments, incidents, weeklyReports, nightHaults, emergencyContacts, isLoading, fetchDeployments, fetchIncidents, fetchWeeklyReports, fetchNightHaults, onEditWeekly, onLogout, onEdit, onDelete, onView, onDeleteIncident, onEditNightHault,onDeleteNightHault, theme, toggleTheme, broadcasts, acks, fetchBroadcasts, onSync }) {
   const [currentApp, setCurrentApp] = useState('hub'); 
   const [appTab, setAppTab] = useState('form'); 
-
-  // ✨ THE FIX: We start at Stage 2 (The Identity Scan) because the global splash screen already handled the boot-up!
-  const [introStage, setIntroStage] = useState(2);
-  const [customName, setCustomName] = useState('');
-  const [fillerName, setFillerName] = useState('');
+   
 // 🚨 ✨ THE BROADCAST GATEKEEPER BRAIN ✨ 🚨
   const [unreadBroadcasts, setUnreadBroadcasts] = useState([]);
   const [isAcking, setIsAcking] = useState(false);
@@ -1042,7 +1051,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
     await supabase.from('broadcast_acknowledgments').insert([{
       broadcast_id: broadcastId,
       site: userProfile.site,
-      acknowledged_by: fillerName || userProfile.name
+      acknowledged_by: userProfile.name
     }]);
     setIsAcking(false);
     // ✨ MAGIC: Slice the top card off the deck! The next one instantly appears!
@@ -1074,23 +1083,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
     return () => window.removeEventListener('popstate', handlePopState);
   }, [currentApp]);
 
-  const handleCustomSubmit = (e) => {
-    e.preventDefault();
-    if(customName.trim().length > 0) selectName(customName.trim());
-  };
-
-  useEffect(() => {
-    if (introStage === 1) {
-      const timer = setTimeout(() => setIntroStage(2), 2500);
-      return () => clearTimeout(timer);
-    }
-  }, [introStage]);
-
-  const selectName = (name) => {
-    setFillerName(name.toUpperCase());
-    setIntroStage(3); 
-    setTimeout(() => setIntroStage(0), 2000); 
-  };
+  const [introStage, setIntroStage] = useState(0);
 
   const renderHub = () => (
     <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#F2F2F7] dark:bg-black p-5 sm:p-8 space-y-8 animate-in fade-in duration-300 relative">
@@ -1099,7 +1092,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
       <div className="flex justify-between items-start pt-2 relative z-[999]">
         <div>
           <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">{t.hub.overview}</p>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-3">{fillerName || userProfile.name}</h1>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-3">{ userProfile.name}</h1>
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 dark:bg-slate-800/60 backdrop-blur-md text-indigo-700 dark:text-indigo-300 rounded-full text-base sm:text-base font-black uppercase tracking-wider shadow-md border border-white/40 dark:border-slate-600/50">
             <MapPin size={16} className="text-indigo-500"/> {userProfile.site}
           </div>
@@ -1144,7 +1137,8 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
             <span className="block font-bold text-slate-700 dark:text-white text-sm sm:text-base tracking-wide leading-tight px-2 text-center">{t.hub.inc}</span>
           </button>
 
-          {/* ✨ Fixed Weekly App to be a square! */}
+         
+          {/* ✨ Fixed Daily MIS App to be a square! */}
           <button onClick={() => { setCurrentApp('weekly'); setAppTab('form'); }} className="aspect-square bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] border border-white/60 dark:border-slate-700/50 flex flex-col items-center justify-center gap-4 transition-all active:scale-[0.96] hover:shadow-lg group">
             <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 to-teal-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:scale-110 transition-transform duration-300"><BookOpen size={28} className="stroke-[1.5]"/></div>
             <span className="block font-bold text-slate-700 dark:text-white text-sm sm:text-base tracking-wide leading-tight px-2 text-center">{t.hub.mis}</span>
@@ -1171,6 +1165,13 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
             <div className="w-14 h-14 bg-gradient-to-br from-slate-700 to-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-slate-900/30 group-hover:scale-110 transition-transform duration-300"><Truck size={28} className="stroke-[1.5]"/></div>
             <span className="block font-bold text-slate-700 dark:text-white text-sm sm:text-base tracking-wide leading-tight px-2 text-center">{t.hub.nh || "Night Hault"}</span>
           </button>
+
+          {/* ✨ NEW EMERGENCY VAULT APP! */}
+          <button onClick={() => { setCurrentApp('emergency'); setAppTab('history'); }} className="aspect-square bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] border border-white/60 dark:border-slate-700/50 flex flex-col items-center justify-center gap-4 transition-all active:scale-[0.96] hover:shadow-lg group relative overflow-hidden">
+            <div className="absolute -top-6 -right-6 w-24 h-24 bg-rose-500/10 rounded-full blur-2xl group-hover:bg-rose-500/20 transition-all"></div>
+            <div className="w-14 h-14 bg-gradient-to-br from-rose-500 to-red-700 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-rose-600/30 group-hover:scale-110 transition-transform duration-300"><Phone size={28} className="stroke-[1.5]"/></div>
+            <span className="block font-bold text-slate-700 dark:text-white text-sm sm:text-base tracking-wide leading-tight px-2 text-center">SOS Vault</span>
+          </button>
         </div>
       </div>
     </div>
@@ -1184,7 +1185,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
         </button>
         <div className="flex-1">
           <h2 className="font-black text-slate-900 dark:text-white tracking-tight text-lg leading-tight">
-            {currentApp === 'deployment' ? t.hub.dep : currentApp === 'incident' ? t.hub.inc : currentApp === 'broadcasts' ? 'Command Directives' : currentApp === 'leave' ? (t.hub?.leave || 'Leave') : currentApp === 'nighthault' ? (t.hub?.nh || 'Night Hault') : t.hub.mis}
+            {currentApp === 'deployment' ? t.hub.dep : currentApp === 'incident' ? t.hub.inc : currentApp === 'broadcasts' ? 'Command Directives' : currentApp === 'emergency' ? 'Emergency Vault' : currentApp === 'leave' ? (t.hub?.leave || 'Leave') : currentApp === 'nighthault' ? (t.hub?.nh || 'Night Hault') : t.hub.mis}
           </h2>
           <p className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5 flex items-center gap-1">
             <MapPin size={12} /> {userProfile.site}
@@ -1192,8 +1193,8 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
         </div>
       </div>
 
-      {/* Only show New Entry/Logs toggle if it's NOT the Directives app! */}
-      {currentApp !== 'broadcasts' && (
+      {/* Only show New Entry/Logs toggle if it's NOT Directives or Emergency! */}
+      {currentApp !== 'broadcasts' && currentApp !== 'emergency' && (
         <div className="px-4 pt-5 pb-2 shrink-0 z-40 bg-[#F2F2F7] dark:bg-black">
           <div className="bg-slate-200/60 dark:bg-slate-800/60 backdrop-blur-md p-1 rounded-[14px] flex relative shadow-inner border border-black/5 dark:border-white/5">
             <div className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-slate-600 rounded-[10px] shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" style={{ transform: appTab === 'form' ? 'translateX(0)' : 'translateX(100%)' }}></div>
@@ -1205,7 +1206,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
 
       {/* ✨ FIXED: Changed overflow-x-hidden to overflow-visible so the dropdown can escape the mobile frame! */}
       <div key={currentApp + appTab + language} className="flex-1 overflow-y-auto overflow-visible custom-scrollbar pb-10 animate-android-swipe">
-        {currentApp === 'deployment' && appTab === 'form' && <DeploymentMobileForm userProfile={userProfile} fetchDeployments={fetchDeployments} setActiveTab={setAppTab} fillerName={fillerName} deployments={deployments} language={language}/>}
+        {currentApp === 'deployment' && appTab === 'form' && <DeploymentMobileForm userProfile={userProfile} fetchDeployments={fetchDeployments} setActiveTab={setAppTab}    deployments={deployments} language={language}/>}
         {currentApp === 'deployment' && appTab === 'history' && <SupervisorMobileHistory deployments={deployments} isLoading={isLoading} onEdit={onEdit} onDelete={onDelete} onView={onView} language={language}/>}
         
         {currentApp === 'incident' && appTab === 'form' && <IncidentMobileForm userProfile={userProfile} fetchIncidents={fetchIncidents} setActiveTab={setAppTab} language={language}/>}
@@ -1215,14 +1216,15 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
         {currentApp === 'weekly' && appTab === 'history' && <WeeklyMobileHistory weeklyReports={weeklyReports} isLoading={isLoading} onEditWeekly={onEditWeekly} language={language}/>}
       
         {/* ✨ NEW LEAVE ROUTERS */}
-        {currentApp === 'leave' && appTab === 'form' && <LeaveMobileForm userProfile={userProfile} fillerName={fillerName} setActiveTab={setAppTab} />}
+        {currentApp === 'leave' && appTab === 'form' && <LeaveMobileForm userProfile={userProfile}    setActiveTab={setAppTab} />}
         {currentApp === 'leave' && appTab === 'history' && <LeaveMobileHistory userProfile={userProfile} />}
 
         {/* ✨ NIGHT HAULT ROUTERS */}
-        {currentApp === 'nighthault' && appTab === 'form' && <NightHaultMobileForm userProfile={userProfile} fetchNightHaults={fetchNightHaults} setActiveTab={setAppTab} fillerName={fillerName} language={language} />}
+        {currentApp === 'nighthault' && appTab === 'form' && <NightHaultMobileForm userProfile={userProfile} fetchNightHaults={fetchNightHaults} setActiveTab={setAppTab}    language={language} />}
         {/* ✨ फिक्स: Supervisor को सही NightHault Edit/Delete प्रॉप्स दे दिए! */}
         {currentApp === 'nighthault' && appTab === 'history' && <NightHaultMobileHistory nightHaults={nightHaults} isLoading={isLoading} language={language} onEdit={onEditNightHault} onDelete={onDeleteNightHault} />}
-
+        {/* ✨ EMERGENCY ROUTER */}
+        {currentApp === 'emergency' && <SupervisorEmergencyView emergencyContacts={emergencyContacts} userProfile={userProfile} />}
 
       {/* ✨ THE NEW DIRECTIVES INBOX LIST */}
         {currentApp === 'broadcasts' && (
@@ -1278,7 +1280,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
                         {hasAck ? 'Acknowledged' : 'Pending Action'}
                       </span>
                       <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-base mb-1 truncate">{broadcast.title || "Security Alert"}</h3>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{new Date(broadcast.created_at).toLocaleString()}</p>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{new Date(broadcast.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
                     </div>
                   </div>
                 )
@@ -1294,39 +1296,10 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
   return (
     <div className="w-full flex-1 min-h-screen bg-slate-50 dark:bg-slate-950 sm:bg-slate-200 sm:dark:bg-slate-900 sm:py-10 flex justify-center items-center">
       <div className="w-full sm:max-w-md bg-white dark:bg-slate-950 sm:rounded-[2.5rem] sm:border-[8px] border-slate-800 dark:border-slate-800 sm:shadow-2xl overflow-hidden relative flex flex-col h-screen sm:h-[850px] sm:max-h-[90vh]">
-        <style>{`@keyframes fade-zoom { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } } .animate-fade-zoom { animation: fade-zoom 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }`}</style>
-        {introStage > 0 ? (
-          <div className={`absolute inset-0 z-[100] flex items-center justify-center p-6 transition-colors duration-1000 ${introStage === 3 ? 'bg-white dark:bg-slate-950' : 'bg-slate-950'}`}>
-            {introStage === 1 && (
-              <div className="text-center animate-fade-zoom relative">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl animate-pulse z-0"></div>
-                <div className="relative mb-8 z-10">
-                   <img src="/logo.webp" alt="Test Logo" className="w-28 h-28 mx-auto object-contain drop-shadow-[0_10px_20px_rgba(16,185,129,0.3)] transition-all hover:scale-105" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-                   <div className="hidden w-24 h-24 mx-auto bg-gradient-to-br from-emerald-400 to-green-600 rounded-3xl flex-col items-center justify-center shadow-[0_10px_30px_rgba(16,185,129,0.4)] border border-white/20"><Shield size={48} className="text-white drop-shadow-md" /></div>
-                </div>
-                <h1 className="text-4xl font-black text-white tracking-widest uppercase mb-2 drop-shadow-lg relative z-10">Test <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-300">CBG</span></h1>
-                <h2 className="text-[11px] font-bold text-slate-400 tracking-[0.4em] uppercase mb-12 relative z-10">Secure Deployment Network</h2>
-                <div className="flex justify-center items-center gap-3 relative z-10"><div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div><span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Establishing Secure Uplink...</span></div>
-              </div>
-            )}
-            {introStage === 2 && (
-              <div className="w-full max-w-sm animate-fade-zoom">
-                <div className="text-center mb-8"><div className="w-16 h-16 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4 mx-auto border border-indigo-500/30 shadow-[0_0_30px_rgba(99,102,241,0.2)]"><Users size={32} /></div><h2 className="text-2xl font-black text-white tracking-wide mb-1">IDENTITY SCAN</h2><p className="text-xs text-indigo-300 uppercase tracking-widest font-semibold">Select Authorized Officer</p></div>
-                <div className="w-full max-w-sm flex flex-col gap-4 relative z-10 mt-6">{allowedSupervisors.map((supName, index) => (<button key={index} onClick={() => selectName(supName)} className="w-full bg-slate-900/80 backdrop-blur-md border border-slate-800 hover:bg-slate-700 text-white font-black uppercase tracking-widest py-4 rounded-2xl transition-all shadow-lg shadow-black/20 active:scale-95">{supName}</button>))}</div>
-                <div className="mt-6 pt-5 border-t border-indigo-500/20"><p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest text-center mb-3">Not on the list?</p><form onSubmit={handleCustomSubmit} className="flex gap-2"><input type="text" placeholder="Enter Full Name..." value={customName} onChange={(e) => setCustomName(e.target.value)} className="flex-1 bg-black/20 border border-indigo-500/30 rounded-xl py-3 px-4 text-xs font-bold text-white outline-none focus:border-indigo-400 uppercase placeholder:text-indigo-300/50 shadow-inner" /><button type="submit" className="bg-indigo-500 text-white px-5 rounded-xl font-black text-xs hover:bg-indigo-400 transition-colors shadow-lg shadow-indigo-500/25">GO</button></form></div>
-              </div>
-            )}
-            {introStage === 3 && (
-              <div className="text-center animate-fade-zoom">
-                <div className="w-24 h-24 mx-auto bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mb-6 shadow-xl border border-emerald-200 dark:border-emerald-800"><CheckCircle size={48} className="text-emerald-500" /></div>
-                <h1 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Welcome,</h1>
-                <h2 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">{fillerName}</h2>
-                <p className="mt-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest animate-pulse">Accessing Secure Dashboard...</p>
-              </div>
-            )}
-          </div>
-    
-      ) : ( currentApp === 'hub' ? renderHub() : renderModule() )}
+        
+        {/* ✨ INSTANT LAUNCH: No more identity scan! They are securely authenticated! */}
+        {currentApp === 'hub' ? renderHub() : renderModule()}
+
       </div>
 
       {/* 🚨 THE ZERO-ESCAPE GATEKEEPER MODAL 🚨 */}
@@ -1377,7 +1350,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
               <div>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400 mb-2 border border-orange-200 dark:border-orange-500/30"><Megaphone size={10}/> Directive Details</span>
                 <h3 className="font-black text-slate-900 dark:text-white text-lg uppercase tracking-tight leading-tight pr-4">{viewingBroadcast.title || "Security Alert"}</h3>
-                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Sent: {new Date(viewingBroadcast.created_at).toLocaleString()}</p>
+                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Sent: {new Date(viewingBroadcast.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
               </div>
               <button onClick={() => setViewingBroadcast(null)} className="p-2 bg-white dark:bg-slate-800 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-full shadow-sm active:scale-95 transition-all border border-slate-200 dark:border-slate-700 shrink-0"><X size={14} /></button>
             </div>
@@ -1397,15 +1370,15 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
 }
 
 
-function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fillerName, deployments, language}) {
+function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, deployments, language}) {
   const t = TRANSLATIONS[language] || TRANSLATIONS['en'];
   const today = getISTDate();
   const [date, setDate] = useState(today);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState(false);
-  const [personnel, setPersonnel] = useState([{ id: Date.now(), shift: "Day Shift", designation: "SS - Security Supervisor", name: "", phone: "", location: "Main Gate", customLocation: "" }]);
+  const [personnel, setPersonnel] = useState([{ id: Date.now(), shift: "Day Shift", designation: "SS - Security Supervisor", name: "", phone: "", location: "Main Gate", customLocation: "", category: "ESM" }]);
 
-  const addPerson = () => setPersonnel([...personnel, { id: Date.now(), shift: "Day Shift", designation: "SG - Security Guard", name: "", phone: "", location: "Main Gate", customLocation: "" }]);
+  const addPerson = () => setPersonnel([...personnel, { id: Date.now(), shift: "Day Shift", designation: "SG - Security Guard", name: "", phone: "", location: "Main Gate", customLocation: "", category: "ESM" }]);
   const updatePerson = (id, field, value) => setPersonnel(personnel.map(p => p.id === id ? { ...p, [field]: value } : p));
   
   const handleAutoFill = () => {
@@ -1424,7 +1397,8 @@ function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fil
     setIsSubmitting(true);
     const newRecords = personnel.map(p => ({
       date, site: userProfile.site, shift: p.shift, designation: p.designation,
-      name: p.name.toUpperCase(), phone: p.phone, location: p.location === 'Other' ? p.customLocation : p.location, submittedBy: fillerName || userProfile.name
+      name: p.name.toUpperCase(), phone: p.phone, location: p.location === 'Other' ? p.customLocation : p.location,
+      category: p.category || 'ESM', submittedBy: userProfile.name
     }));
     const { error } = await supabase.from('deployments').insert(newRecords);
     setIsSubmitting(false);
@@ -1504,6 +1478,16 @@ function DeploymentMobileForm({ userProfile, fetchDeployments, setActiveTab, fil
                     {LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
                   </select>
                 </div>
+              </div>
+
+              {/* ✨ THE NEW CATEGORY DROPDOWN! */}
+              <div>
+                <label className={labelClass}>Category</label>
+                <select value={person.category || 'ESM'} onChange={(e) => updatePerson(person.id, 'category', e.target.value)} className={`${inputClass} cursor-pointer`}>
+                  <option value="ESM">ESM</option>
+                  <option value="CIVIL">CIVIL</option>
+                  <option value="RCSA">RCSA</option>
+                </select>
               </div>
 
               {person.location === 'Other' && (
@@ -1650,21 +1634,53 @@ function SupervisorMobileHistory({ deployments, isLoading, onEdit, onDelete, onV
     </div>
   );
 }
+
+// ✨ CSV TEMPLATE GENERATORS
+const downloadEmergencyTemplate = () => {
+  const headers = "site,category,name,phone,address,notes\n";
+  const dummyData = "MUMBAI HQ,Bomb Squad,HQ Elite Team,9876543210,Colaba Main Gate,24/7 Standby\n";
+  const blob = new Blob([headers + dummyData], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.setAttribute('hidden', '');
+  a.setAttribute('href', url);
+  a.setAttribute('download', 'CBG_Emergency_Template.csv');
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+};
+
+const downloadContactsTemplate = () => {
+  // ✨ Flawlessly aligned with the PostgreSQL Schema!
+  const headers = "name,phone,designation,state_name,site,email,company,notes\n";
+  const dummyData = "Person 1,9888888888,Assistant Console Officer,Maharashtra,MUMBAI HQ,boss@cbg.com,CBG Command,God Mode Admin\n";
+  const blob = new Blob([headers + dummyData], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.setAttribute('hidden', '');
+  a.setAttribute('href', url);
+  a.setAttribute('download', 'CBG_Contacts_Template.csv');
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+};
 // ==========================================
 // ADMIN VIEW (MASTER PORTAL + COMMAND CENTER)
 // ==========================================
-function AdminDesktopView({ userProfile, deployments, contacts, incidents, weeklyReports, nightHaults, isLoading, onToggleAck, onDeleteIncident, onLogout, onEdit, onView, onDelete, onAddContact, onEditContact, onDeleteContact, onViewContact, onImportCSV, theme, toggleTheme, globalSites = [], SITES = [], COMMISSIONED_SITES = [], SITES_BY_STATE = {}, STATE_NAMES = [], onAddSite, onToggleSite, onDeleteSite, onDeleteWeekly, onSync, onQuickUpdateContact, onEditNightHault, onDeleteNightHault }) {   const [activeTab, setActiveTab] = useState('deployments'); 
+function AdminDesktopView({ userProfile, deployments, contacts, emergencyContacts, fetchEmergencyContacts, incidents, weeklyReports, nightHaults, isLoading, onToggleAck, onDeleteIncident, onLogout, onEdit, onView, onDelete, onAddContact, onEditContact, onDeleteContact, onViewContact, onImportCSV, theme, toggleTheme, globalSites = [], SITES = [], COMMISSIONED_SITES = [], SITES_BY_STATE = {}, STATE_NAMES = [], onAddSite, onToggleSite, onDeleteSite, onDeleteWeekly, onSync, onQuickUpdateContact, onEditNightHault, onDeleteNightHault }) {   const [activeTab, setActiveTab] = useState('deployments'); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false); 
   const [movingContact, setMovingContact] = useState(null); // 👈 THE NEW FILE EXPLORER STATE!
-  // ✨ NEW: TODAY'S INCIDENT TRACKER LOGIC
-  const todayStr = getISTDate();
-  const todaysIncidents = incidents ? incidents.filter(i => (i.created_at || '').startsWith(todayStr)) : [];
+  const [contactMode, setContactMode] = useState('general'); // ✨ NEW: Toggles Directory Modes
+    // ✨ UPGRADED: ACTIVE INCIDENT TRACKER (SOS NEVER SLEEPS!)
+  // We completely removed the date filter! Now it only looks at the STATUS!
+  const activeIncidents = incidents ? incidents.filter(i => i.status === 'Pending') : [];
+  
   const siteIncidentCounts = {};
-  todaysIncidents.forEach(inc => {
+  activeIncidents.forEach(inc => {
     siteIncidentCounts[inc.site] = (siteIncidentCounts[inc.site] || 0) + 1;
   });
-  const totalTodaysIncidents = todaysIncidents.length;
+  const totalActiveIncidents = activeIncidents.length;
 
   // Deployment Filters
   const [filterState, setFilterState] = useState("All");
@@ -1674,6 +1690,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
   const [filterShift, setFilterShift] = useState("All");
   const [filterDesignation, setFilterDesignation] = useState("All");
   const [filterLocation, setFilterLocation] = useState("All"); //   NEW: Location Filter
+  const [filterCategory, setFilterCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState(""); 
   const [siteTier, setSiteTier] = useState("All"); //   NEW: OPERATIONAL Toggle
 
@@ -1696,6 +1713,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
     const shiftMatch = filterShift === "All" || d.shift === filterShift;
     const designationMatch = filterDesignation === "All" || (d.designation && d.designation.startsWith(filterDesignation));
     const locationMatch = filterLocation === "All" || d.location === filterLocation;
+    const categoryMatch = filterCategory === "All" || d.category === filterCategory;
     
     const safeName = d.name || ""; 
     const searchMatch = searchTerm === "" || safeName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -1706,7 +1724,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
     
     const tierMatch = siteTier === "All" || (siteTier === "Commissioned" ? isCommissioned : !isCommissioned);
 
-    return stateMatch && siteMatch && dateMatch && shiftMatch && designationMatch && locationMatch && searchMatch && tierMatch;
+    return stateMatch && siteMatch && dateMatch && shiftMatch && designationMatch && locationMatch && categoryMatch && searchMatch && tierMatch;
   });
 
 // 🫀 2. THE LIVE HEARTBEAT STATS
@@ -1806,19 +1824,97 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
   const top5Sites = Object.entries(sitePopulation).sort((a, b) => b[1] - a[1]).slice(0, 5);
   
   //  4. THE EXCEL EXPORT MAGIC WAND
-  const exportToCSV = () => {
-    if (filteredData.length === 0) { alert("Oops! 🥺 No data to export with these filters!"); return; }
-    const headers = ['Date', 'Facility', 'Shift', 'Role', 'Employee Name', 'Phone', 'Location', 'Submitted By'];
-    const csvRows = filteredData.map(row => {
-      const safeLocation = row.location === 'Other' ? row.customLocation : row.location || 'N/A';
-      return `"${row.date || ''}","${row.site || ''}","${row.shift || ''}","${(row.designation||'').split(' - ')[0]}","${row.name || ''}","${row.phone || ''}","${safeLocation}","${row.submittedBy || ''}"`;
+  // ✨ THE PREMIUM DEPLOYMENTS EXPORTER 📊
+  const exportToExcel = async () => {
+    if (filteredData.length === 0) { 
+      alert("Oops! 🥺 No data to export with these filters!"); 
+      return; 
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Deployments Log');
+
+    // 1. Setup Perfect Column Widths
+    sheet.columns = [
+      { header: 'DATE', key: 'date', width: 15 },
+      { header: 'FACILITY', key: 'site', width: 20 },
+      { header: 'SHIFT', key: 'shift', width: 14 },
+      { header: 'ROLE', key: 'role', width: 12 },
+      { header: 'CATEGORY', key: 'category', width: 16 },
+      { header: 'EMPLOYEE NAME', key: 'name', width: 28 },
+      { header: 'PHONE', key: 'phone', width: 18 },
+      { header: 'LOCATION', key: 'location', width: 30 },
+      { header: 'SUBMITTED BY', key: 'submittedBy', width: 22 }
+    ];
+
+    // 2. Style the Header Row (Dark Mode Slate!)
+    const headerRow = sheet.getRow(1);
+    headerRow.height = 25;
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10 };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }; // Slate 900
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
     });
-    const csvContent = [headers.join(','), ...csvRows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `CBG_Deployments_${siteTier}_${filterDate || 'All-Time'}.csv`;
+
+    // 3. Inject and Style the Data
+    filteredData.forEach(row => {
+      const safeLocation = row.location === 'Other' ? (row.customLocation || 'Other') : (row.location || 'N/A');
+      const roleShort = (row.designation || '').split(' - ')[0];
+      const cat = (row.category || 'ESM').toUpperCase();
+      const shiftType = (row.shift || '').toUpperCase();
+
+      const dataRow = sheet.addRow({
+        date: row.date || '',
+        site: (row.site || '').toUpperCase(),
+        shift: shiftType,
+        role: roleShort,
+        category: cat,
+        name: row.name || '',
+        phone: row.phone || '',
+        location: safeLocation,
+        submittedBy: row.submittedBy || ''
+      });
+
+      // Align everything perfectly
+      dataRow.alignment = { vertical: 'middle', horizontal: 'center' };
+      dataRow.getCell('name').alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+      dataRow.getCell('location').alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+
+      // Faint separator lines
+      dataRow.eachCell((cell) => {
+        cell.border = { bottom: { style: 'thin', color: { argb: 'FFF1F5F9' } } }; 
+      });
+
+      // ✨ THE MAGIC: Conditional Formatting directly in Excel!
+      
+      // Highlight Category (ESM = Blue, CIVIL = Amber, RCSA = Emerald)
+      const catCell = dataRow.getCell('category');
+      catCell.font = { bold: true };
+      if (cat === 'ESM') catCell.font.color = { argb: 'FF3B82F6' }; // Blue
+      else if (cat === 'CIVIL') catCell.font.color = { argb: 'FFD97706' }; // Amber
+      else if (cat === 'RCSA') catCell.font.color = { argb: 'FF059669' }; // Emerald
+      
+      // Highlight Shift (Night = Dark Indigo, Day = Orange Sun)
+      const shiftCell = dataRow.getCell('shift');
+      shiftCell.font = { bold: true };
+      if (shiftType === 'NIGHT') {
+        shiftCell.font.color = { argb: 'FF6366F1' }; // Indigo
+      } else {
+        shiftCell.font.color = { argb: 'FFEA580C' }; // Orange
+      }
+    });
+
+    // 4. Generate and Download!
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `CBG_Deployments_${siteTier}_${filterStartDate || 'All'}_to_${filterEndDate || 'All'}.xlsx`; // ✨ Now .xlsx!
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
   };
 
   //   OMNI-SEARCH LOGIC FOR CONTACTS
@@ -1954,21 +2050,21 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
             </span>
 
             {/* ✨ THE NEW GOD-MODE SOS PILL */}
-            <div className="relative group cursor-pointer">
-              <div className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full flex items-center gap-2 text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-sm transition-all duration-300 ${totalTodaysIncidents > 0 ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30'}`}>
-                {totalTodaysIncidents > 0 ? (
-                  <><AlertTriangle size={14} className="animate-pulse" /> <span className="hidden sm:inline">{totalTodaysIncidents} SOS Today</span><span className="sm:hidden">{totalTodaysIncidents}</span></>
+            <div className="relative group cursor-pointer" onClick={() => setActiveTab('incidents')}>
+              <div className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full flex items-center gap-2 text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-sm transition-all duration-300 ${totalActiveIncidents > 0 ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30'}`}>
+                {totalActiveIncidents > 0 ? (
+                  <><AlertTriangle size={14} className="animate-pulse" /> <span className="hidden sm:inline">{totalActiveIncidents} SOS Active</span><span className="sm:hidden">{totalActiveIncidents}</span></>
                 ) : (
-                  <><CheckCircle size={14} /> <span className="hidden sm:inline">All Clear Today</span></>
+                  <><CheckCircle size={14} /> <span className="hidden sm:inline">All Clear</span></>
                 )}
               </div>
 
               {/* ✨ THE HOVER DROPDOWN MENU */}
-              {totalTodaysIncidents > 0 && (
+              {totalActiveIncidents > 0 && (
                 <div className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden transform origin-top-right scale-95 group-hover:scale-100">
                   <div className="bg-rose-500 dark:bg-rose-600 text-white text-[9px] font-black uppercase tracking-widest px-3 py-2 flex justify-between items-center">
                     <span>Live Incidents</span>
-                    <span className="bg-white/20 px-1.5 py-0.5 rounded">{totalTodaysIncidents}</span>
+                    <span className="bg-white/20 px-1.5 py-0.5 rounded">{totalActiveIncidents}</span>
                   </div>
                   <div className="p-2 space-y-1 max-h-48 overflow-y-auto custom-scrollbar">
                     {Object.entries(siteIncidentCounts).map(([site, count]) => (
@@ -2153,7 +2249,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
                            </div>
                            
                            {/*   THE HORIZONTAL TEXT! */}
-                           <span className="absolute -bottom-10 w-16 sm:w-20 text-center text-[9px] sm:text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-[1.1] drop-shadow-sm flex flex-col items-center justify-start">
+                           <span className="absolute -bottom-10 flex-1 min-w-0 sm:w-20 text-center text-[9px] sm:text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-[1.1] drop-shadow-sm flex flex-col items-center justify-start">
                              {loc.name}
                            </span>
                          </div>
@@ -2245,9 +2341,10 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
                   <FilterSelect label="Shift" value={filterShift} onChange={setFilterShift} options={["Day Shift", "Night Shift", "Weekly Off"]} />
                   <FilterSelect label="Role" value={filterDesignation} onChange={setFilterDesignation} options={["SS", "SG"]} />
                   <FilterSelect label="Loc" value={filterLocation} onChange={setFilterLocation} options={LOCATIONS} />
-                  
+                  <FilterSelect label="Cat" value={filterCategory} onChange={setFilterCategory} options={["ESM", "CIVIL", "RCSA"]} />
+
                   <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0 ml-auto">
-                    <button onClick={exportToCSV} className="text-xs font-black tracking-widest text-white bg-emerald-600 hover:bg-emerald-500 px-4 py-2.5 rounded-xl transition-all shadow-md shadow-emerald-600/20 flex items-center gap-2 transform hover:-translate-y-0.5">
+                    <button onClick={exportToExcel}className="text-xs font-black tracking-widest text-white bg-emerald-600 hover:bg-emerald-500 px-4 py-2.5 rounded-xl transition-all shadow-md shadow-emerald-600/20 flex items-center gap-2 transform hover:-translate-y-0.5">
                       <Download size={14} /> EXPORT
                     </button>
                     {/* ✨ FIXED: CLEAR button now correctly targets the new Start/End date states! */}
@@ -2268,6 +2365,7 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
                           <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Facility</th>
                           <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Shift</th>
                           <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Role</th>
+                          <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Category</th>
                           <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Personnel</th>
                           <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Location</th>
                           <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Action</th>
@@ -2289,6 +2387,15 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
                               <td className="px-6 py-4"><span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">{row.site || "N/A"}</span></td>
                               <td className="px-6 py-4"><span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${badgeClass}`}>{shiftType || "N/A"}</span></td>
                               <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400 font-semibold">{(row.designation || "N/A").split(' - ')[0]}</td>
+                             <td className="px-6 py-4">
+                                <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase border shadow-sm ${
+                                  row.category === 'CIVIL' ? 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-500/10 dark:border-amber-500/30' :
+                                  row.category === 'RCSA' ? 'text-teal-700 bg-teal-50 border-teal-200 dark:text-teal-400 dark:bg-teal-500/10 dark:border-teal-500/30' :
+                                  'text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-500/10 dark:border-blue-500/30'
+                                }`}>
+                                  {row.category || "ESM"}
+                                </span>
+                              </td>
                               <td className="px-6 py-4"><div className="text-sm font-bold uppercase text-slate-900 dark:text-white">{row.name || "Unknown"}</div><div className="text-[10px] text-slate-500 uppercase font-mono mt-0.5">{formatPhone(row.phone)}</div></td>
                               <td className="px-6 py-4">
                                 <span className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold ${isMTCC ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-400' : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'}`}>
@@ -2327,122 +2434,149 @@ function AdminDesktopView({ userProfile, deployments, contacts, incidents, weekl
             }
 
             return (
-            <>
-              {/* Contacts Header & Action Buttons */}
-              <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
-                <div className="relative w-full md:w-96">
-                  <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input 
-                    type="text" 
-                    placeholder={selectedFolder ? `Search in ${selectedFolder}...` : "Omni-Search All Contacts..."} 
-                    value={contactSearchTerm} 
-                    onChange={(e) => setContactSearchTerm(e.target.value)} 
-                    className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold text-slate-800 dark:text-slate-300 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all shadow-sm"
-                  />
-                </div>
-                <div className="flex gap-2 w-full md:w-auto">
-                  <button onClick={onAddContact} className="flex-1 md:flex-none py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-900/20 transition-all shrink-0">
-                    <Plus size={16} /> ADD CONTACT
+            <div className="flex flex-col h-full">
+              {/* ✨ NEW: DIRECTORY TOGGLE (GENERAL VS EMERGENCY) */}
+              <div className="flex justify-center mb-6 shrink-0">
+                <div className="relative flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner w-full sm:w-[420px]">
+                  <div 
+                    className={`absolute top-1.5 bottom-1.5 w-[calc(50%-4px)] rounded-lg shadow-md transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] z-0 ${
+                      contactMode === 'general' ? 'bg-blue-600 shadow-blue-500/30' : 'bg-rose-600 shadow-rose-500/30'
+                    }`}
+                    style={{ transform: `translateX(${contactMode === 'general' ? '0%' : 'calc(100% + 8px)'})` }}
+                  ></div>
+                  <button onClick={() => setContactMode('general')} className={`flex-1 relative z-10 px-2 py-2.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-widest transition-colors duration-300 ${contactMode === 'general' ? 'text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>
+                    General Directory
                   </button>
-                  <input type="file" accept=".csv" id="csv-upload" className="hidden" onChange={(e) => { onImportCSV(e.target.files[0]); e.target.value = null; }} />
-                  <label htmlFor="csv-upload" className="flex-1 md:flex-none py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/20 transition-all cursor-pointer">
-                    <Download size={16} className="rotate-180" /> IMPORT CSV
-                  </label>
+                  <button onClick={() => setContactMode('emergency')} className={`flex-1 relative z-10 px-2 py-2.5 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-widest transition-colors duration-300 ${contactMode === 'emergency' ? 'text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>
+                    Emergency Facilities
+                  </button>
                 </div>
               </div>
 
-              {/* ✨ THE FOLDER NAVIGATION BREADCRUMB */}
-              {selectedFolder && (
-                <div className="mb-6 flex items-center gap-3 animate-in fade-in slide-in-from-left-4">
-                  <button onClick={() => {setSelectedFolder(null); setContactSearchTerm('');}} className="flex items-center gap-1.5 px-4 py-2 text-[10px] font-black uppercase tracking-widest bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-indigo-100 hover:text-indigo-600 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400 rounded-xl transition-all shadow-sm">
-                    <ArrowLeft size={14} /> Folders
-                  </button>
-                  <span className="text-sm font-black text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                     <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div> {selectedFolder}
-                  </span>
-                </div>
-              )}
-
-              {/* ✨ VIEW SWITCHER: Folders vs Contacts */}
-              {!selectedFolder && contactSearchTerm === "" ? (
-                /* 📁 GRID OF FOLDERS */
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-in fade-in zoom-in-95 duration-300">
-                  {folders.map(folder => {
-                    const count = (contacts || []).filter(c => (c.designation || 'Uncategorized') === folder).length;
-                    return (
-                      <div key={folder} onClick={() => setSelectedFolder(folder)} className="bg-white dark:bg-[#0f172a] p-5 sm:p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-xl hover:-translate-y-1 hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all cursor-pointer group relative overflow-hidden">
-                        <div className="absolute -right-4 -top-4 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl group-hover:bg-indigo-500/20 transition-all"></div>
-                        <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-indigo-500 group-hover:text-white transition-all shadow-sm">
-                          <BookOpen size={24} />
-                        </div>
-                        <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-sm mb-1 truncate">{folder}</h3>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{count} {count === 1 ? 'Contact' : 'Contacts'}</p>
-                      </div>
-                    )
-                  })}
-                </div>
+              {contactMode === 'emergency' ? (
+                <AdminEmergencyView emergencyContacts={emergencyContacts} fetchEmergencyContacts={fetchEmergencyContacts} SITES={SITES} SITES_BY_STATE={SITES_BY_STATE} STATE_NAMES={STATE_NAMES} />
               ) : (
-                /* 📇 GRID OF ACTUAL CONTACTS */
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                  {displayedContacts.map(contact => (
-                    <div key={contact.id} onClick={() => onViewContact(contact)} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md transition-shadow relative group cursor-pointer">                   
-                      {/* FAANG Actions Menu */}
-                      <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={(e) => { e.stopPropagation(); setMovingContact(contact); }} className="p-1.5 text-slate-400 hover:text-emerald-600 bg-slate-50 dark:bg-slate-800 rounded-md shadow-sm border border-transparent hover:border-emerald-200 dark:hover:border-emerald-500/30 transition-all" title="Move to Folder"><ArrowRight size={14} /></button>
-                        <button onClick={(e) => { e.stopPropagation(); onEditContact(contact); }} className="p-1.5 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded-md shadow-sm border border-transparent hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all" title="Edit Contact"><Edit2 size={14} /></button>
-                        <button onClick={(e) => { e.stopPropagation(); onDeleteContact(contact); }} className="p-1.5 text-slate-400 hover:text-rose-600 bg-slate-50 dark:bg-slate-800 rounded-md shadow-sm border border-transparent hover:border-rose-200 dark:hover:border-rose-500/30 transition-all" title="Delete Contact"><Trash2 size={14} /></button>
-                      </div>
-
-                      <div className="flex items-start gap-4 mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-lg font-black text-indigo-600 shrink-0">
-                          {(contact.name || "?")[0]}
-                        </div>
-                        <div className="pr-10">
-                          <h3 className="font-bold text-slate-900 dark:text-white uppercase text-sm leading-tight">{contact.name}</h3>
-                          <p className="text-[10px] font-bold text-indigo-500 uppercase mt-0.5">{contact.designation}</p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2.5">
-                        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-950/50 p-2 rounded-lg border border-slate-100 dark:border-slate-800/50">
-                          <div className="flex items-center gap-2 text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
-                            <Phone size={12} className="text-slate-400" /> {formatPhone(contact.phone)}
-                          </div>
-                          <button onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(contact.phone); alert('Copied!'); }} className="text-slate-400 hover:text-indigo-500"><Copy size={14} /></button>                      
-                        </div>
-                        
-                        {(contact.site || contact.state_name) && (
-                          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 px-1">
-                            <MapPin size={14} className="text-emerald-500 shrink-0" /> 
-                            <span className="truncate">{contact.site ? contact.site : 'Various Sites'} {contact.state_name ? `(${contact.state_name})` : ''}</span>
-                          </div>
-                        )}
-
-                        {contact.email && (
-                          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 px-1">
-                            <Mail size={14} className="text-blue-500 shrink-0" /> <span className="truncate">{contact.email}</span>
-                          </div>
-                        )}
-
-                        {contact.company && (
-                          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 px-1">
-                            <Briefcase size={14} className="text-orange-500 shrink-0" /> <span className="truncate">{contact.company}</span>
-                          </div>
-                        )}
-                      </div>
+                <>
+                  {/* Contacts Header & Action Buttons */}
+                  <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
+                    <div className="relative w-full md:w-96">
+                      <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input 
+                        type="text" 
+                        placeholder={selectedFolder ? `Search in ${selectedFolder}...` : "Omni-Search All Contacts..."} 
+                        value={contactSearchTerm} 
+                        onChange={(e) => setContactSearchTerm(e.target.value)} 
+                        className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold text-slate-800 dark:text-slate-300 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all shadow-sm"
+                      />
                     </div>
-                  ))}
-                  
-                  {displayedContacts.length === 0 && (
-                    <div className="col-span-full py-20 text-center flex flex-col items-center">
-                      <BookOpen size={48} className="text-slate-300 dark:text-slate-700 mb-4" />
-                      <h3 className="text-lg font-bold text-slate-500 dark:text-slate-400">No contacts found</h3>
-                      <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Try adjusting your search terms</p>
+                    <div className="flex gap-2 w-full md:w-auto">
+                      <button onClick={downloadContactsTemplate} className="py-2 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold shadow-sm active:scale-95 transition-all flex items-center gap-2">
+                        <FileText size={16}/> FORMAT
+                      </button>
+                      <button onClick={onAddContact} className="flex-1 md:flex-none py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-900/20 transition-all shrink-0">
+                        <Plus size={16} /> ADD CONTACT
+                      </button>
+                      <input type="file" accept=".csv" id="csv-upload" className="hidden" onChange={(e) => { onImportCSV(e.target.files[0]); e.target.value = null; }} />
+                      <label htmlFor="csv-upload" className="flex-1 md:flex-none py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/20 transition-all cursor-pointer">
+                        <Download size={16} className="rotate-180" /> IMPORT CSV
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* ✨ THE FOLDER NAVIGATION BREADCRUMB */}
+                  {selectedFolder && (
+                    <div className="mb-6 flex items-center gap-3 animate-in fade-in slide-in-from-left-4">
+                      <button onClick={() => {setSelectedFolder(null); setContactSearchTerm('');}} className="flex items-center gap-1.5 px-4 py-2 text-[10px] font-black uppercase tracking-widest bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-indigo-100 hover:text-indigo-600 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400 rounded-xl transition-all shadow-sm">
+                        <ArrowLeft size={14} /> Folders
+                      </button>
+                      <span className="text-sm font-black text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div> {selectedFolder}
+                      </span>
                     </div>
                   )}
-                </div>
+
+                  {/* ✨ VIEW SWITCHER: Folders vs Contacts */}
+                  {!selectedFolder && contactSearchTerm === "" ? (
+                    /* 📁 GRID OF FOLDERS */
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-in fade-in zoom-in-95 duration-300">
+                      {folders.map(folder => {
+                        const count = (contacts || []).filter(c => (c.designation || 'Uncategorized') === folder).length;
+                        return (
+                          <div key={folder} onClick={() => setSelectedFolder(folder)} className="bg-white dark:bg-[#0f172a] p-5 sm:p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-xl hover:-translate-y-1 hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all cursor-pointer group relative overflow-hidden">
+                            <div className="absolute -right-4 -top-4 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl group-hover:bg-indigo-500/20 transition-all"></div>
+                            <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-indigo-500 group-hover:text-white transition-all shadow-sm">
+                              <BookOpen size={24} />
+                            </div>
+                            <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-sm mb-1 truncate">{folder}</h3>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{count} {count === 1 ? 'Contact' : 'Contacts'}</p>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    /* 📇 GRID OF ACTUAL CONTACTS */
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                      {displayedContacts.map(contact => (
+                        <div key={contact.id} onClick={() => onViewContact(contact)} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md transition-shadow relative group cursor-pointer">
+                          {/* FAANG Actions Menu */}
+                          <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={(e) => { e.stopPropagation(); setMovingContact(contact); }} className="p-1.5 text-slate-400 hover:text-emerald-600 bg-slate-50 dark:bg-slate-800 rounded-md shadow-sm border border-transparent hover:border-emerald-200 dark:hover:border-emerald-500/30 transition-all" title="Move to Folder"><ArrowRight size={14} /></button>
+                            <button onClick={(e) => { e.stopPropagation(); onEditContact(contact); }} className="p-1.5 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-800 rounded-md shadow-sm border border-transparent hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all" title="Edit Contact"><Edit2 size={14} /></button>
+                            <button onClick={(e) => { e.stopPropagation(); onDeleteContact(contact); }} className="p-1.5 text-slate-400 hover:text-rose-600 bg-slate-50 dark:bg-slate-800 rounded-md shadow-sm border border-transparent hover:border-rose-200 dark:hover:border-rose-500/30 transition-all" title="Delete Contact"><Trash2 size={14} /></button>
+                          </div>
+
+                          <div className="flex items-start gap-4 mb-4">
+                            <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-lg font-black text-indigo-600 shrink-0">
+                              {(contact.name || "?")[0]}
+                            </div>
+                            <div className="pr-10">
+                              <h3 className="font-bold text-slate-900 dark:text-white uppercase text-sm leading-tight">{contact.name}</h3>
+                              <p className="text-[10px] font-bold text-indigo-500 uppercase mt-0.5">{contact.designation}</p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2.5">
+                            <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-950/50 p-2 rounded-lg border border-slate-100 dark:border-slate-800/50">
+                              <div className="flex items-center gap-2 text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
+                                <Phone size={12} className="text-slate-400" /> {formatPhone(contact.phone)}
+                              </div>
+                              <button onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(contact.phone); alert('Copied!'); }} className="text-slate-400 hover:text-indigo-500"><Copy size={14} /></button>
+                            </div>
+                            
+                            {(contact.site || contact.state_name) && (
+                              <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 px-1">
+                                <MapPin size={14} className="text-emerald-500 shrink-0" /> 
+                                <span className="truncate">{contact.site ? contact.site : 'Various Sites'} {contact.state_name ? `(${contact.state_name})` : ''}</span>
+                              </div>
+                            )}
+
+                            {contact.email && (
+                              <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 px-1">
+                                <Mail size={14} className="text-blue-500 shrink-0" /> <span className="truncate">{contact.email}</span>
+                              </div>
+                            )}
+
+                            {contact.company && (
+                              <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 px-1">
+                                <Briefcase size={14} className="text-orange-500 shrink-0" /> <span className="truncate">{contact.company}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {displayedContacts.length === 0 && (
+                        <div className="col-span-full py-20 text-center flex flex-col items-center">
+                          <BookOpen size={48} className="text-slate-300 dark:text-slate-700 mb-4" />
+                          <h3 className="text-lg font-bold text-slate-500 dark:text-slate-400">No contacts found</h3>
+                          <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Try adjusting your search terms</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
-            </>
+            </div>
           );})()}
         {activeTab === 'incidents' && <AdminIncidentView incidents={incidents} isLoading={isLoading} onAcknowledge={onToggleAck} onDelete={onDeleteIncident} SITES={SITES} STATE_NAMES={STATE_NAMES} SITES_BY_STATE={SITES_BY_STATE} />}
         {activeTab === 'weekly' && <AdminWeeklyView weeklyReports={weeklyReports} isLoading={isLoading} COMMISSIONED_SITES={COMMISSIONED_SITES} SITES={SITES} STATE_NAMES={STATE_NAMES} SITES_BY_STATE={SITES_BY_STATE} onDeleteWeekly={onDeleteWeekly} />}
@@ -2787,7 +2921,17 @@ function ViewModal({ record, onClose }) {
 
           <div className="pt-12 mb-6">
             <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none mb-1">{record.name}</h2>
-            <p className={`text-xs font-bold text-${themeColor}-500 dark:text-${themeColor}-400 uppercase tracking-widest`}>{record.designation}</p>
+            <div className="flex items-center gap-2 mt-1.5">
+              <p className={`text-xs font-bold text-${themeColor}-500 dark:text-${themeColor}-400 uppercase tracking-widest`}>{record.designation}</p>
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+              <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest border ${
+                  record.category === 'CIVIL' ? 'text-amber-600 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-500/10 dark:border-amber-500/30' :
+                  record.category === 'RCSA' ? 'text-teal-600 bg-teal-50 border-teal-200 dark:text-teal-400 dark:bg-teal-500/10 dark:border-teal-500/30' :
+                  'text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-500/10 dark:border-blue-500/30'
+                }`}>
+                {record.category || "ESM"}
+              </span>
+            </div>
           </div>
 
           {/* ✨ Apple Wallet Style Data Pills */}
@@ -2923,7 +3067,7 @@ function ContactFormModal({ record, onClose, onSave, SITES = [], SITES_BY_STATE 
                 <label className={labelClass}>Phone No.</label>
                 <div className="relative group">
                   <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-indigo-500 transition-colors" />
-                  <input type="tel" required pattern="[0-9]{10}" maxLength="10" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/\D/g, '')})} className={`${inputClass} pl-11 font-mono tracking-wider`} placeholder="10 Digits" />
+                  <input type="tel" required minLength="3" maxLength="15" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/\D/g, '')})} className={`${inputClass} pl-11 font-mono tracking-wider`} placeholder="Phone or Helpline" />
                 </div>
               </div>
               <div>
@@ -3178,7 +3322,7 @@ function IncidentMobileForm({ userProfile, fetchIncidents, setActiveTab, languag
     setIsSubmitting(true);
     const newIncident = {
       site: userProfile.site, incident_name: formData.incidentName, time_of_incident: formData.timeOfIncident.replace('T', ' '),
-      time_of_reporting: new Date().toLocaleString('en-IN'), reported_by: formData.reportedBy, ep_number: formData.epNumber,
+      time_of_reporting: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }), reported_by: formData.reportedBy, ep_number: formData.epNumber,
       pincode: formData.pincode, incident_location: formData.incidentLocation, details: formData.details, findings: formData.findings,
       actions_taken: formData.actionsTaken, recommendations: formData.recommendations, photos: formData.photos, status: 'Pending'
     };
@@ -3478,26 +3622,97 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete, SITE
   };
 
   // ✨ FAANG BULK EXPORT ENGINE!
-  const exportIncidentsCSV = () => {
+ // ✨ THE PREMIUM INCIDENTS EXPORTER 📊 (Fixes the "long line" problem!)
+  const exportIncidentsExcel = async () => {
     if (filtered.length === 0) return alert("Oops! 🥺 No incidents to export with these filters!");
-    
-    const headers = ['Date Occurred', 'Date Reported', 'Site', 'Pincode', 'Incident Type', 'Exact Location', 'Reported By', 'EP Number', 'Status', 'Details', 'Findings', 'Action Taken', 'Recommendations'];
-    
-    const csvRows = filtered.map(i => {
-      const clean = (text) => `"${(text || '').replace(/"/g, '""').replace(/\n/g, ' ')}"`;
-      return [
-        clean(i.time_of_incident), clean(i.time_of_reporting), clean(i.site), clean(i.pincode),
-        clean(i.incident_name), clean(i.incident_location), clean(i.reported_by), clean(i.ep_number),
-        clean(i.status), clean(i.details), clean(i.findings), clean(i.actions_taken), clean(i.recommendations)
-      ].join(',');
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Incident Reports');
+
+    // 1. Setup Perfect Column Widths (SUPER wide for the long text columns!)
+    sheet.columns = [
+      { header: 'DATE OCCURRED', key: 'time_of_incident', width: 18 },
+      { header: 'DATE REPORTED', key: 'time_of_reporting', width: 18 },
+      { header: 'SITE', key: 'site', width: 22 },
+      { header: 'PINCODE', key: 'pincode', width: 12 },
+      { header: 'INCIDENT TYPE', key: 'incident_name', width: 25 },
+      { header: 'EXACT LOCATION', key: 'incident_location', width: 30 },
+      { header: 'REPORTED BY', key: 'reported_by', width: 22 },
+      { header: 'EP NUMBER', key: 'ep_number', width: 15 },
+      { header: 'STATUS', key: 'status', width: 15 },
+      { header: 'DETAILS', key: 'details', width: 45 },         // ✨ BIG width!
+      { header: 'FINDINGS', key: 'findings', width: 45 },       // ✨ BIG width!
+      { header: 'ACTION TAKEN', key: 'actions_taken', width: 45 }, // ✨ BIG width!
+      { header: 'RECOMMENDATIONS', key: 'recommendations', width: 45 } // ✨ BIG width!
+    ];
+
+    // 2. Style the Header Row (Dark Mode Slate!)
+    const headerRow = sheet.getRow(1);
+    headerRow.height = 35;
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10 };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }; // Slate 900
+      cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+      cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
     });
 
-    const csvContent = [headers.join(','), ...csvRows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `CBG_Bulk_Incidents_${filterSite}_RangeExport.csv`;
+    // 3. Inject and Style the Data
+    filtered.forEach(i => {
+      const statusType = (i.status || '').toUpperCase();
+
+      const dataRow = sheet.addRow({
+        time_of_incident: i.time_of_incident || 'N/A',
+        time_of_reporting: i.time_of_reporting || 'N/A',
+        site: (i.site || '').toUpperCase(),
+        pincode: i.pincode || '',
+        incident_name: (i.incident_name || '').toUpperCase(),
+        incident_location: i.incident_location || '',
+        reported_by: i.reported_by || '',
+        ep_number: i.ep_number || '',
+        status: statusType,
+        details: i.details || 'None',
+        findings: i.findings || 'None',
+        actions_taken: i.actions_taken || 'None',
+        recommendations: i.recommendations || 'None'
+      });
+
+      // ✨ THE TEXT WRAP MAGIC: This fixes the "one long line" issue!
+      dataRow.eachCell((cell) => {
+        // Align to the 'top' and 'left' so paragraphs read naturally!
+        cell.alignment = { vertical: 'top', horizontal: 'left', wrapText: true, indent: 1 };
+        // Add a faint separator line between rows
+        cell.border = { bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } } }; 
+      });
+
+      // Re-center specific short columns
+      dataRow.getCell('status').alignment = { vertical: 'top', horizontal: 'center', wrapText: true };
+      dataRow.getCell('time_of_incident').alignment = { vertical: 'top', horizontal: 'center', wrapText: true };
+      dataRow.getCell('time_of_reporting').alignment = { vertical: 'top', horizontal: 'center', wrapText: true };
+
+      // ✨ COLOR CODE THE EMERGENCY STATUS!
+      const statusCell = dataRow.getCell('status');
+      statusCell.font = { bold: true };
+      if (statusType === 'PENDING' || statusType === 'ACTIVE' || statusType === 'OPEN') {
+        statusCell.font.color = { argb: 'FFE11D48' }; // 🚨 Alert Rose
+      } else if (statusType === 'RESOLVED' || statusType === 'CLOSED') {
+        statusCell.font.color = { argb: 'FF059669' }; // ✅ Safe Emerald
+      }
+    });
+
+    // 4. Generate and Download!
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    
+    // Safely get the site name for the file, falling back to 'Global' if filterSite isn't defined here
+    const siteName = typeof filterSite !== 'undefined' ? filterSite : 'Global';
+    link.download = `CBG_Incidents_${siteName}_RangeExport.xlsx`; // ✨ .xlsx output!
+    
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
   };
 
   const downloadReport = (inc) => {
@@ -3550,7 +3765,7 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete, SITE
         <FilterSelect label="Site" value={filterSite} onChange={setFilterSite} options={[...availableSites].sort()} />
         
         <div className="flex gap-2 w-full xl:w-auto mt-2 xl:mt-0 ml-auto">
-          <button onClick={exportIncidentsCSV} className="text-[11px] font-black tracking-widest text-white bg-rose-600 hover:bg-rose-500 px-5 py-3 rounded-2xl transition-all shadow-md shadow-rose-600/20 flex items-center justify-center gap-2 transform hover:-translate-y-0.5 active:scale-95 flex-1 sm:flex-none">
+          <button onClick={exportIncidentsExcel} className="text-[11px] font-black tracking-widest text-white bg-rose-600 hover:bg-rose-500 px-5 py-3 rounded-2xl transition-all shadow-md shadow-rose-600/20 flex items-center justify-center gap-2 transform hover:-translate-y-0.5 active:scale-95 flex-1 sm:flex-none">
             <Download size={14} /> BULK EXPORT
           </button>
           
@@ -3689,11 +3904,82 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab, langu
     depDaySS: '', depDaySG: '', depNightSS: '', depNightSG: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // ✨ SURGICAL FIX: The state must be right here, inside the function! 👇
+  const [lockedDate, setLockedDate] = useState(null);
+const [isAllCaughtUp, setIsAllCaughtUp] = useState(false); // 🛡️ The reality-check state!
+
+// ✨ SURGICAL FIX: Define todayMax right here at the top so the entire UI can see it! 
+  const todayMax = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
+
+  // ✨ THE CHRONO-LOCK BRAIN: Forces sequential MIS entries (No Time Travel allowed!)
+  // ✨ THE GAP-SCANNER BRAIN: Finds the exact missing days in the timeline! 🛑
+  React.useEffect(() => {
+    const fetchMissingDates = async () => {
+      // 1. Fetch ALL dates for this site, sorted from OLDEST to NEWEST
+      const { data, error } = await supabase
+        .from('weekly_reports')
+        .select('date_from')
+        .eq('site', userProfile.site)
+        .order('date_from', { ascending: true });
+      
+      // Safely get today's date in YYYY-MM-DD
+      const d = new Date();
+      const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const todayDateObj = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+      if (data && data.length > 0) {
+        // 2. Put all submitted dates into a super-fast Set memory bank
+        const submittedDates = new Set(data.map(r => r.date_from));
+
+        // 3. The clock starts on their VERY FIRST submission! (Day 0)
+        const firstDateStr = data[0].date_from;
+        const [fYear, fMonth, fDay] = firstDateStr.split('-').map(Number);
+        let checkDate = new Date(fYear, fMonth - 1, fDay);
+
+        let firstMissingDateStr = null;
+
+        // 4. Scan forward from Day 0 to Today, looking for any gaps!
+        while (checkDate <= todayDateObj) {
+          const checkStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}-${String(checkDate.getDate()).padStart(2, '0')}`;
+          
+          if (!submittedDates.has(checkStr)) {
+            firstMissingDateStr = checkStr; // 🚨 WE FOUND A GAP!
+            break; // Stop the scanner!
+          }
+          checkDate.setDate(checkDate.getDate() + 1); // Move to the next day
+        }
+
+        if (firstMissingDateStr) {
+          // They missed a day! Lock them to this exact missing date.
+          setLockedDate(firstMissingDateStr);
+          setIsAllCaughtUp(false);
+          setFd(prev => ({ ...prev, dateFrom: firstMissingDateStr, dateTo: firstMissingDateStr }));
+        } else {
+          // No gaps found at all! They are fully caught up! 🥂
+          setLockedDate(todayStr); // Just to keep the UI looking normal
+          setIsAllCaughtUp(true);
+          setFd(prev => ({ ...prev, dateFrom: todayStr, dateTo: todayStr }));
+        }
+      } else {
+        // First time ever submitting! Unlock so they can pick their start date.
+        setLockedDate(null);
+        setIsAllCaughtUp(false);
+        setFd(prev => ({ ...prev, dateFrom: todayStr, dateTo: todayStr }));
+      }
+    };
+    fetchMissingDates();
+  }, [userProfile.site]);
+
+  // Safely calculate today's date for our max attribute below
+  const maxAllowedDate = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
 
   const handleSubmit = async (e) => {
     e.preventDefault(); setIsSubmitting(true);
+    // ✨ ARCHITECTURE TRICK: We force date_to to equal date_from so we don't break your existing Supabase schema!
+    const finalDateTo = fd.dateTo || fd.dateFrom; 
     const newReport = {
-      site: userProfile.site, date_from: fd.dateFrom, date_to: fd.dateTo, sr_no: fd.srNo, disp_solid: fd.dispSolid, disp_gas: fd.dispGas, disp_scrap: fd.dispScrap,
+      site: userProfile.site, date_from: fd.dateFrom, date_to: finalDateTo, sr_no: fd.srNo, disp_solid: fd.dispSolid, disp_gas: fd.dispGas, disp_scrap: fd.dispScrap,
       rec_company: fd.recCompany, rec_contractor: fd.recContractor, ogp_nrgp: fd.ogpNRGP, ogp_rmgp: fd.ogpRmgp, ogp_rmgp_in: fd.ogpRmgpIn,
       veh_contractor: fd.vehContractor, veh_company: fd.vehCompany, foot_contractor: fd.footContractor, foot_ril: fd.footRil, foot_visitor: fd.footVisitor, foot_gov: fd.footGov,
       dep_day_ss: fd.depDaySS, dep_day_sg: fd.depDaySG, dep_night_ss: fd.depNightSS, dep_night_sg: fd.depNightSG
@@ -3714,9 +4000,22 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab, langu
     <form onSubmit={handleSubmit} className="p-4 space-y-6">
       <div className="bg-emerald-50 dark:bg-emerald-500/10 p-5 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 shadow-sm">
         <h3 className="font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest text-xs mb-3 flex items-center gap-2"><Calendar size={16}/> {t.mis.selectDates}</h3>
-        <div className="grid grid-cols-2 gap-3">
-          <div><label className="block text-[9px] font-black text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-widest mb-1">{t.mis.dateFrom}</label><input type="date" required value={fd.dateFrom} onChange={(e) => setFd({...fd, dateFrom: e.target.value})} className="w-full bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-500/30 rounded-lg py-2.5 px-3 text-sm font-bold outline-none text-emerald-800 dark:text-emerald-200 [color-scheme:light] dark:[color-scheme:dark]" /></div>
-          <div><label className="block text-[9px] font-black text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-widest mb-1">{t.mis.dateTo}</label><input type="date" required value={fd.dateTo} onChange={(e) => setFd({...fd, dateTo: e.target.value})} className="w-full bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-500/30 rounded-lg py-2.5 px-3 text-sm font-bold outline-none text-emerald-800 dark:text-emerald-200 [color-scheme:light] dark:[color-scheme:dark]" /></div>
+        {/* ✨ THE SMART CHRONO-LOCK UI: Adapts its message based on their status! */}
+        <div className="w-full relative">
+          <label className="block text-[9px] font-black text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-widest mb-1 flex justify-between">
+            {t.mis.dateFrom} 
+            {!isAllCaughtUp && lockedDate && lockedDate < todayMax && <span className="text-rose-500 dark:text-rose-400 animate-pulse">(PENDING BACKLOG 🔒)</span>}
+            {!isAllCaughtUp && lockedDate === todayMax && <span className="text-emerald-600 dark:text-emerald-400">(TODAY'S REPORT 🔒)</span>}
+          </label>
+          <input 
+            type="date" 
+            required 
+            readOnly={!!lockedDate || isAllCaughtUp} 
+            max={todayMax} 
+            value={fd.dateFrom} 
+            onChange={(e) => { if(!lockedDate && !isAllCaughtUp) setFd({...fd, dateFrom: e.target.value, dateTo: e.target.value}) }} 
+            className={`w-full bg-white dark:bg-slate-900 border rounded-lg py-2.5 px-3 text-sm font-bold outline-none text-emerald-800 dark:text-emerald-200 [color-scheme:light] dark:[color-scheme:dark] transition-all ${lockedDate || isAllCaughtUp ? 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 cursor-not-allowed opacity-80' : 'border-emerald-200 dark:border-emerald-500/30 focus:border-emerald-400'} ${(!isAllCaughtUp && lockedDate && lockedDate < todayMax) ? '!border-rose-200 dark:!border-rose-500/30 !bg-rose-50/50 dark:!bg-rose-900/10' : ''}`} 
+          />
         </div>
       </div>
 
@@ -3775,9 +4074,16 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab, langu
         </div>
       </div>
 
-      <button type="submit" disabled={isSubmitting} className="w-full py-4 rounded-xl font-black text-base bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-900/20 flex justify-center items-center gap-2 uppercase tracking-widest mt-6">
-        {isSubmitting ? t.mis.syncing : <><BookOpen size={18} /> {t.mis.submit}</>}
-      </button>
+      {/* ✨ THE SUCCESS SHIELD: Hides the submit button if they are done for the day! */}
+      {isAllCaughtUp ? (
+        <div className="w-full py-4 rounded-xl font-black text-sm bg-slate-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 flex justify-center items-center gap-2 uppercase tracking-widest mt-6 shadow-sm">
+          <CheckCircle size={18} /> All Caught Up For Today!
+        </div>
+      ) : (
+        <button type="submit" disabled={isSubmitting} className="w-full py-4 rounded-xl font-black text-base bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-900/20 flex justify-center items-center gap-2 uppercase tracking-widest mt-6 active:scale-95 transition-transform">
+          {isSubmitting ? t.mis.syncing : <><BookOpen size={18} /> {t.mis.submit}</>}
+        </button>
+      )}
     </form>
   );
 }
@@ -3786,6 +4092,10 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab, langu
 // ==========================================
 function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
   const [viewingRep, setViewingRep] = useState(null);
+  const [filterDate, setFilterDate] = useState(''); // ✨ THE NEW FILTER STATE
+
+  // Apply the filter dynamically before rendering!
+  const filteredReports = filterDate ? weeklyReports.filter(rep => rep.date_from === filterDate) : weeklyReports;
 
   // ✨ THE TIMELOCK BRAIN: Checks if the report is older than 24 hours! 🧠
   const checkIsEditable = (createdAt) => {
@@ -3800,7 +4110,19 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
   
   return (
     <div className="p-4 space-y-5 pb-24">
-      {weeklyReports.map(rep => {
+      
+      {/* ✨ THE NEW DATE FILTER BAR */}
+      <div className="bg-white dark:bg-[#0f172a] p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex items-end justify-between gap-3">
+        <div className="flex-1">
+          <label className="block text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1.5 flex items-center gap-1"><Search size={10}/> Filter by Date</label>
+          <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg py-2 px-3 text-sm font-bold outline-none text-slate-700 dark:text-slate-300 [color-scheme:light] dark:[color-scheme:dark]" />
+        </div>
+        {filterDate && (
+          <button onClick={() => setFilterDate('')} className="px-4 py-2.5 bg-rose-50 dark:bg-rose-500/10 text-rose-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-rose-200 dark:border-rose-500/30 active:scale-95 transition-transform"><X size={14}/></button>
+        )}
+      </div>
+
+      {filteredReports.map(rep => {
         const canEdit = checkIsEditable(rep.created_at); // 🔒 Check the lock status!
 
         return (
@@ -3814,7 +4136,7 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
             <div className="pl-2">
               <h4 className="font-black text-slate-900 dark:text-white uppercase text-lg mb-1 tracking-tight pr-16">{rep.site}</h4>
               <p className={`text-[10px] font-bold tracking-widest uppercase mb-5 flex items-center gap-1.5 ${canEdit ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}>
-                <Calendar size={12}/> {rep.date_from} ➔ {rep.date_to}
+                <Calendar size={12}/> Date: {rep.date_from}
               </p>
               
               {/* Sleek Data Grid */}
@@ -3843,7 +4165,7 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
           </div>
         );
       })}
-      {weeklyReports.length === 0 && <p className="text-center text-slate-500 text-sm mt-10 font-bold italic">No weekly ledgers found.</p>}
+      {filteredReports.length === 0 && <p className="text-center text-slate-500 text-sm mt-10 font-bold italic">No daily ledgers found for this selection.</p>}
 
       {/* ✨ CYBER-GLASS MOBILE MODAL FOR SUPERVISORS */}
       {viewingRep && (
@@ -3860,7 +4182,7 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
                <div>
                  <span className="text-[9px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 backdrop-blur-md shadow-sm">Sr No. {viewingRep.sr_no}</span>
                  <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-3 uppercase tracking-tight leading-none drop-shadow-sm">{viewingRep.site}</h2>
-                 <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1.5 flex items-center gap-1.5"><Calendar size={12}/> {viewingRep.date_from} to {viewingRep.date_to}</p>
+                 <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1.5 flex items-center gap-1.5"><Calendar size={12}/> Reported: {viewingRep.date_from}</p>
                </div>
                <button onClick={() => setViewingRep(null)} className="p-2.5 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 bg-white/50 dark:bg-black/40 backdrop-blur-md rounded-full shadow-sm border border-white/50 dark:border-slate-700/50 transition-colors active:scale-95"><X size={18} /></button>
             </div>
@@ -3936,6 +4258,260 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
     </div>
   );
 }
+
+// ✨ THE FAANG-LEVEL SPLIT-NODE COMPARATOR MATRIX 📊
+function MisComparatorModal({ reports, availableSites, onClose }) {
+  const [siteA, setSiteA] = useState('');
+  const [dateA, setDateA] = useState('');
+  const [siteB, setSiteB] = useState('');
+  const [dateB, setDateB] = useState('');
+
+  // ✨ THE FIX: We MUST use .toUpperCase() because Supabase profiles might have mixed-casing!
+  const datesA = [...new Set(reports.filter(r => (r.site || '').toUpperCase() === (siteA || '').toUpperCase()).map(r => r.date_from))].sort().reverse();
+  const datesB = [...new Set(reports.filter(r => (r.site || '').toUpperCase() === (siteB || '').toUpperCase()).map(r => r.date_from))].sort().reverse();
+
+  // Fetch the exact ledger rows safely!
+  const dataA = reports.find(r => (r.site || '').toUpperCase() === (siteA || '').toUpperCase() && r.date_from === dateA);
+  const dataB = reports.find(r => (r.site || '').toUpperCase() === (siteB || '').toUpperCase() && r.date_from === dateB);
+
+  const num = (v) => parseInt(v) || 0;
+
+ // ✨ THE PREMIUM EXCEL EXPORT BRAIN: Builds a fully styled .xlsx file! 📊
+  const exportComparisonToExcel = async () => {
+    if (!dataA && !dataB) {
+      alert("Please select at least one node to export! ");
+      return;
+    }
+
+    const sA = siteA || "Node Alpha";
+    const dA = dateA || "No Date";
+    const sB = siteB || "Node Beta";
+    const dB = dateB || "No Date";
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Matrix Comparison');
+
+    // 1. Setup Perfect Column Spacing
+    sheet.columns = [
+      { header: 'SECURITY METRIC', key: 'metric', width: 38 },
+      { header: `${sA} (${dA})`, key: 'alpha', width: 22 },
+      { header: 'DELTA', key: 'delta', width: 15 },
+      { header: `${sB} (${dB})`, key: 'beta', width: 22 }
+    ];
+
+    // 2. Style the Main Header Row (Sleek Dark Mode Vibe!)
+    const headerRow = sheet.getRow(1);
+    headerRow.height = 25;
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+    headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }; // Slate 900
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+    sheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+
+    // Helper: Add Colored Category Banners
+    const addCategory = (name, colorArgb) => {
+      const row = sheet.addRow({ metric: name, alpha: '', delta: '', beta: '' });
+      row.height = 22;
+      row.font = { bold: true, color: { argb: colorArgb }, size: 10 };
+      row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } }; // Very light slate
+      sheet.mergeCells(`A${row.number}:D${row.number}`);
+      row.getCell(1).alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+    };
+
+    // Helper: Add Data Rows with Surgical Delta Colors!
+    const addRow = (label, key, isWarning = false) => {
+      const vA = dataA ? num(dataA[key]) : 0;
+      const vB = dataB ? num(dataB[key]) : 0;
+      const diff = vA - vB;
+      const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
+
+      const row = sheet.addRow({ metric: label, alpha: vA, delta: diffStr, beta: vB });
+      row.height = 20;
+      row.alignment = { vertical: 'middle', horizontal: 'center' };
+      row.getCell(1).alignment = { vertical: 'middle', horizontal: 'left', indent: 2 }; // Indent metric names
+      
+      row.getCell(2).font = { bold: true, color: { argb: 'FF334155' } };
+      row.getCell(4).font = { bold: true, color: { argb: 'FF334155' } };
+
+      // ✨ THE MAGIC: Coloring the Delta Cell!
+      const deltaCell = row.getCell(3);
+      deltaCell.font = { bold: true };
+      
+      if (diff === 0) {
+        deltaCell.font.color = { argb: 'FF94A3B8' }; // Slate 400 (Neutral)
+      } else {
+        const isPositive = diff > 0;
+        const isBad = isWarning ? isPositive : !isPositive; // e.g. Positive Scrap = Bad (Red)
+        
+        // Red for Bad, Green for Good!
+        deltaCell.font.color = { argb: isBad ? 'FFE11D48' : 'FF059669' }; 
+        deltaCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isBad ? 'FFFFE4E6' : 'FFD1FAE5' } }; 
+      }
+    };
+
+    // 3. Inject the Data!
+    addCategory('🚚 LOGISTICS', 'FF4F46E5'); // Indigo
+    addRow('Solid Dispatch', 'disp_solid');
+    addRow('Gas Dispatch', 'disp_gas');
+    addRow('Scrap Dispatch', 'disp_scrap', true);
+    addRow('Company Receipts', 'rec_company');
+    addRow('Contractor Receipts', 'rec_contractor');
+
+    addCategory('🛡️ ASSET PROTECTION (OGP)', 'FFD97706'); // Amber
+    addRow('RMGP Out', 'ogp_rmgp', true);
+    addRow('RMGP In', 'ogp_rmgp_in');
+    addRow('NRGP', 'ogp_nrgp', true);
+
+    addCategory('👥 FOOTFALL & MANPOWER', 'FF059669'); // Emerald
+    addRow('Contractor Workers', 'foot_contractor');
+    addRow('RIL Employees', 'foot_ril');
+    addRow('Gov Officials', 'foot_gov', true);
+    addRow('Day Deployment (SS+SG)', 'dep_day_ss');
+    addRow('Night Deployment (SS+SG)', 'dep_night_ss');
+
+    // 4. Generate the File and Trigger Download!
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Node_Matrix_${sA}_vs_${sB}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const renderMetric = (label, keyA, keyB, isWarning = false) => {
+    const vA = dataA ? num(dataA[keyA]) : 0;
+    const vB = dataB ? num(dataB[keyB]) : 0;
+    const diff = vA - vB;
+    
+    // ✨ Dynamic Color Logic for the Delta Pill
+    const isNeutral = diff === 0;
+    const isPositive = diff > 0;
+    const pillColor = isNeutral 
+      ? 'bg-slate-100 text-slate-400 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700' 
+      : isPositive 
+        ? (isWarning ? 'bg-rose-500/10 text-rose-600 border-rose-200 dark:border-rose-500/30 shadow-[0_0_10px_rgba(244,63,94,0.2)]' : 'bg-emerald-500/10 text-emerald-600 border-emerald-200 dark:border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]') 
+        : (isWarning ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200 dark:border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]' : 'bg-rose-500/10 text-rose-600 border-rose-200 dark:border-rose-500/30 shadow-[0_0_10px_rgba(244,63,94,0.2)]');
+
+    return (
+      <div className="flex items-center justify-between py-4 px-5 border-b border-slate-100 dark:border-slate-800/60 hover:bg-indigo-50/30 dark:hover:bg-indigo-500/5 transition-all group">
+        <span className="w-1/3 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors pr-4">{label}</span>
+        
+        <div className="w-2/3 flex items-center justify-between gap-6">
+          <span className={`flex-1 text-center font-black text-xl ${!dataA ? 'text-slate-300 dark:text-slate-700' : 'text-slate-800 dark:text-slate-100'}`}>{dataA ? vA : '-'}</span>
+          
+          {/* ✨ The Upgraded Glowing Delta Badge */}
+          {dataA && dataB ? (
+            <span className={`text-[10px] font-black px-3 py-1.5 rounded-lg w-20 text-center border ${pillColor} transition-all`}>
+              {diff > 0 ? '+' : ''}{diff}
+            </span>
+          ) : <span className="w-20"></span>}
+
+          <span className={`flex-1 text-center font-black text-xl ${!dataB ? 'text-slate-300 dark:text-slate-700' : 'text-slate-800 dark:text-slate-100'}`}>{dataB ? vB : '-'}</span>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in fade-in duration-300" onClick={onClose}>
+      <div className="bg-white/95 dark:bg-[#0B1120]/95 backdrop-blur-3xl border border-white/50 dark:border-indigo-500/20 rounded-[2.5rem] shadow-[0_0_80px_-15px_rgba(99,102,241,0.3)] w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-500" onClick={e => e.stopPropagation()}>
+        
+        {/* Glows */}
+        <div className="absolute top-0 left-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+        <div className="absolute bottom-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+
+        <div className="p-6 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center relative z-10">
+          <div>
+            <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2"><Activity size={20} className="text-indigo-500"/> Node Comparator</h2>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Cross-examine ledger entries</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* ✨ The PREMIUM EXPORT Button! */}
+            <button onClick={exportComparisonToExcel} className="flex items-center gap-1.5 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95 border border-emerald-400/50">
+              <Download size={14}/> Export Excel
+            </button>
+            <button onClick={onClose} className="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-500 shadow-sm border border-slate-200 dark:border-slate-700"><X size={16}/></button>
+          </div>
+        </div>
+
+        <div className="p-6 overflow-y-auto custom-scrollbar flex-1 relative z-10 space-y-6">
+          
+          {/* The Selectors */}
+          <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-inner">
+            <div className="flex-1 space-y-3">
+              <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest block text-center">Node Alpha</span>
+              <select value={siteA} onChange={e => {setSiteA(e.target.value); setDateA('');}} className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs font-bold uppercase outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-300">
+                <option value="">Select Site</option>
+                {availableSites.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <select disabled={!siteA} value={dateA} onChange={e => setDateA(e.target.value)} className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs font-bold uppercase outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-300 disabled:opacity-50">
+                <option value="">Select Date</option>
+                {datesA.map(d => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </div>
+            
+            <div className="w-10 h-10 shrink-0 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 font-black text-xs uppercase shadow-inner border border-slate-300 dark:border-slate-700">VS</div>
+
+            <div className="flex-1 space-y-3">
+              <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest block text-center">Node Beta</span>
+              <select value={siteB} onChange={e => {setSiteB(e.target.value); setDateB('');}} className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs font-bold uppercase outline-none focus:border-emerald-500 text-slate-700 dark:text-slate-300">
+                <option value="">Select Site</option>
+                {availableSites.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <select disabled={!siteB} value={dateB} onChange={e => setDateB(e.target.value)} className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs font-bold uppercase outline-none focus:border-emerald-500 text-slate-700 dark:text-slate-300 disabled:opacity-50">
+                <option value="">Select Date</option>
+                {datesB.map(d => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* The Matrix Data Board */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm">
+            <div className="bg-slate-100 dark:bg-slate-800 p-3 flex text-[9px] font-black uppercase tracking-widest text-slate-500 text-center border-b border-slate-200 dark:border-slate-700">
+              <span className="w-1/3 text-left pl-2">Metric</span>
+              <div className="w-2/3 flex justify-between px-4"><span className="text-indigo-500">Alpha</span><span>Delta</span><span className="text-emerald-500">Beta</span></div>
+            </div>
+            
+            <div className="px-2 pb-4">
+              
+              {/* 🚚 LOGISTICS BANNER */}
+              <div className="mt-6 mb-2 mx-3 bg-gradient-to-r from-slate-100 to-transparent dark:from-slate-800/60 py-2.5 px-4 rounded-r-xl border-l-4 border-indigo-500 shadow-sm">
+                <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.25em]">Logistics</span>
+              </div>
+              {renderMetric('Total Dispatch (Solid+Gas+Scrap)', 'disp_solid', 'disp_solid', false)} 
+              {renderMetric('Scrap Dispatch', 'disp_scrap', 'disp_scrap', true)}
+              {renderMetric('Company Receipts', 'rec_company', 'rec_company', false)}
+              {renderMetric('Contractor Receipts', 'rec_contractor', 'rec_contractor', false)}
+              
+              {/* 🛡️ ASSET PROTECTION BANNER */}
+              <div className="mt-8 mb-2 mx-3 bg-gradient-to-r from-slate-100 to-transparent dark:from-slate-800/60 py-2.5 px-4 rounded-r-xl border-l-4 border-amber-500 shadow-sm">
+                <span className="text-[9px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-[0.25em]">Asset Protection (OGP)</span>
+              </div>
+              {renderMetric('RMGP Out', 'ogp_rmgp', 'ogp_rmgp', true)}
+              {renderMetric('RMGP In', 'ogp_rmgp_in', 'ogp_rmgp_in', false)}
+              {renderMetric('NRGP', 'ogp_nrgp', 'ogp_nrgp', true)}
+
+              {/* 👥 FOOTFALL BANNER */}
+              <div className="mt-8 mb-2 mx-3 bg-gradient-to-r from-slate-100 to-transparent dark:from-slate-800/60 py-2.5 px-4 rounded-r-xl border-l-4 border-emerald-500 shadow-sm">
+                <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.25em]">Footfall & Manpower</span>
+              </div>
+              {renderMetric('Contractor Workers', 'foot_contractor', 'foot_contractor', false)}
+              {renderMetric('RIL Employees', 'foot_ril', 'foot_ril', false)}
+              {renderMetric('Gov Officials', 'foot_gov', 'foot_gov', true)}
+              {renderMetric('Day Deployment (SS+SG)', 'dep_day_ss', 'dep_day_ss', false)}
+              {renderMetric('Night Deployment (SS+SG)', 'dep_night_ss', 'dep_night_ss', false)}
+              
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ==========================================
 // 📈 OPERATIONAL OPERATIONS & THREAT MATRIX (CSO DASHBOARD)
 // ==========================================
@@ -3945,7 +4521,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
   const [filterState, setFilterState] = useState("All"); 
   const [filterSite, setFilterSite] = useState("All");
   const [viewingRep, setViewingRep] = useState(null);
-
+const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Matrix Trigger
   // ✨ NEW: THE GPS TRACKER & BACKGROUND LOCK! 📍
   const [scrollPos, setScrollPos] = useState(0);
   React.useEffect(() => {
@@ -4042,21 +4618,112 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
   const pendingSitesList = expectedCommissionedSites.filter(s => !submittedSitesList.includes((s || "").toUpperCase()));
   const complianceRate = expectedCommissionedSites.length > 0 ? Math.round((submittedSitesList.length / expectedCommissionedSites.length) * 100) : 0;
 
-  const exportMasterAudit = () => {
-    const row1 = ["Sr_No", "SITE", "Date_From", "Date_To", "DISPATCH", "", "", "RECEIPT", "", "OGP", "", "", "VEHICLE", "", "CONTRACTOR/ RIL STAFF", "", "VISITOR", "GOV. OFFICIAL", "DEPLOYMENT", "", "", ""];
-    const row2 = ["", "", "", "", "SOLID", "GAS", "SCRAP", "COMPANY", "CONTRACTOR", "NRGP", "RMGP", "RMGP IN", "CONTRACTOR VEHICLE", "COMPANY/ EMP. VEHICLE", "CONTRACTOR WORKER", "RIL EMPLOYE", "", "", "Day SS", "Day SG", "Night SS", "Night SG"];
-    const csvRows = [row1.join(','), row2.join(',')];
-    
-    filtered.forEach(r => {
-      csvRows.push([r.sr_no, r.site, r.date_from, r.date_to, r.disp_solid, r.disp_gas, r.disp_scrap, r.rec_company, r.rec_contractor, r.ogp_nrgp, r.ogp_rmgp, r.ogp_rmgp_in, r.veh_contractor, r.veh_company, r.foot_contractor, r.foot_ril, r.foot_visitor, r.foot_gov, r.dep_day_ss, r.dep_day_sg, r.dep_night_ss, r.dep_night_sg].map(v => `"${v || 0}"`).join(','));
+  // ✨ THE PREMIUM MASTER AUDIT EXPORTER 📊 (Strictly Daily!)
+  const exportMasterAudit = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Master Audit Ledger');
+
+    // 1. Setup Perfect Column Widths (Sliced out the 4th column!)
+    sheet.columns = [
+      { width: 8 }, { width: 22 }, { width: 16 },                // Info (Sr, Site, Report Date)
+      { width: 10 }, { width: 10 }, { width: 10 },               // Dispatch
+      { width: 12 }, { width: 14 },                              // Receipt
+      { width: 10 }, { width: 10 }, { width: 10 },               // OGP
+      { width: 20 }, { width: 22 },                              // Vehicle
+      { width: 20 }, { width: 14 },                              // Staff
+      { width: 12 }, { width: 16 },                              // Visitor & Gov
+      { width: 10 }, { width: 10 }, { width: 12 }, { width: 12 } // Deployment
+    ];
+
+    // 2. The Master Headers (Row 1)
+    const row1 = sheet.addRow([
+      "Sr_No", "SITE", "REPORT DATE", 
+      "DISPATCH", "", "", "RECEIPT", "", "OGP", "", "", 
+      "VEHICLE", "", "CONTRACTOR / RIL STAFF", "", 
+      "VISITOR", "GOV. OFFICIAL", "DEPLOYMENT", "", "", ""
+    ]);
+
+    // ✨ Merge the master category cells! (Shifted everything over by 1!)
+    sheet.mergeCells('A1:A2'); sheet.mergeCells('B1:B2'); sheet.mergeCells('C1:C2'); 
+    sheet.mergeCells('D1:F1'); // Dispatch (D, E, F)
+    sheet.mergeCells('G1:H1'); // Receipt (G, H)
+    sheet.mergeCells('I1:K1'); // OGP (I, J, K)
+    sheet.mergeCells('L1:M1'); // Vehicle (L, M)
+    sheet.mergeCells('N1:O1'); // Staff (N, O)
+    sheet.mergeCells('P1:P2'); // Visitor
+    sheet.mergeCells('Q1:Q2'); // Gov
+    sheet.mergeCells('R1:U1'); // Deployment (R, S, T, U)
+
+    // Style Row 1 (Sleek Dark Mode Slate!)
+    row1.height = 25;
+    row1.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10 };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
     });
 
-    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `CSO_Master_Audit_${getISTDate()}.csv`;
-    a.click();
+    // 3. The Sub-Headers (Row 2) - Removed one blank at the start!
+    const row2 = sheet.addRow([
+      "", "", "", 
+      "SOLID", "GAS", "SCRAP", "COMPANY", "CONTRACTOR", 
+      "NRGP", "RMGP", "RMGP IN", "CON. VEHICLE", "CO./EMP. VEHICLE", 
+      "CON. WORKER", "RIL EMP", "", "", 
+      "Day SS", "Day SG", "Night SS", "Night SG"
+    ]);
+
+    // Style Row 2 (Light Slate contrast)
+    row2.height = 30;
+    row2.eachCell((cell, colNumber) => {
+      // Skip merged vertical cells (Now columns 1, 2, 3, 16, 17)
+      if ([1, 2, 3, 16, 17].includes(colNumber)) return; 
+      cell.font = { bold: true, color: { argb: 'FF1E293B' }, size: 9 };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+      cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
+    });
+
+    // 4. Inject the Data!
+    filtered.forEach(r => {
+      const dataRow = sheet.addRow([
+        r.sr_no, (r.site || '').toUpperCase(), r.date_from, // ✨ Sliced out r.date_to!
+        num(r.disp_solid), num(r.disp_gas), num(r.disp_scrap),
+        num(r.rec_company), num(r.rec_contractor),
+        num(r.ogp_nrgp), num(r.ogp_rmgp), num(r.ogp_rmgp_in),
+        num(r.veh_contractor), num(r.veh_company),
+        num(r.foot_contractor), num(r.foot_ril),
+        num(r.foot_visitor), num(r.foot_gov),
+        num(r.dep_day_ss), num(r.dep_day_sg), num(r.dep_night_ss), num(r.dep_night_sg)
+      ]);
+
+      dataRow.alignment = { vertical: 'middle', horizontal: 'center' };
+      
+      dataRow.eachCell((cell) => {
+        cell.border = { top: { style: 'thin', color: { argb: 'FFF1F5F9' } }, bottom: { style: 'thin', color: { argb: 'FFF1F5F9' } } };
+      });
+
+      // ✨ THE MAGIC: Shifted the column targeting by -1 so it still highlights correctly!
+      if (num(r.disp_scrap) > 50) {
+        dataRow.getCell(6).font = { bold: true, color: { argb: 'FFE11D48' } }; // Scrap is now Col 6
+      }
+      if (num(r.ogp_rmgp) > num(r.ogp_rmgp_in)) {
+        dataRow.getCell(10).font = { bold: true, color: { argb: 'FFE11D48' } }; // RMGP Out is now Col 10
+      }
+      if (num(r.foot_gov) > 0) {
+        dataRow.getCell(17).font = { bold: true, color: { argb: 'FFD97706' } }; // Gov is now Col 17
+      }
+    });
+
+    // 5. Generate and Download!
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `CSO_Master_Audit_${getISTDate()}.xlsx`; 
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const anomalies = [];
@@ -4082,7 +4749,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
   anomalies.sort((a, b) => b.diff - a.diff);
 
   return (
-    <div className="space-y-6 relative">
+    <div className="w-full flex-1 min-w-0 space-y-6 relative">
       
     {/* 🟢 COMMAND BAR */}
       {/* ✨ फिक्स: z-[100] इसे Asset Leakage कार्ड के बिल्कुल ऊपर रखेगा! */}
@@ -4101,13 +4768,18 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
           {/* ✨ FIXED: CLEAR button now correctly resets the new date states! */}
           <button onClick={() => { setFilterStartDate(getISTDate()); setFilterEndDate(getISTDate()); setFilterState('All'); setFilterSite('All'); }} className="text-[10px] font-black tracking-widest text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors h-max mb-0.5">CLEAR</button>
         </div>
-        <button onClick={exportMasterAudit} className="relative z-10 px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 active:scale-95">
-          <Download size={16} /> Export Master Audit
-        </button>
-      </div>
+        <div className="relative z-10 flex flex-wrap gap-3 mt-4 sm:mt-0">
+          <button onClick={() => setShowComparator(true)} className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-indigo-500/20 transition-all flex items-center gap-2 active:scale-95 border border-indigo-400/50">
+            <Activity size={16} /> Compare Nodes
+          </button>
+          <button onClick={exportMasterAudit} className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 active:scale-95 border border-emerald-400/50">
+            <Download size={16} /> Export Master Audit
+          </button>
+        </div>
+        </div>
 
       {/* 🚨 SECURITY KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         {/* CHART 1: ASSET LEAKAGE */}
         <div className={`bg-white dark:bg-slate-900 p-5 rounded-2xl border-t-4 shadow-sm transition-all relative group cursor-help z-40 ${isAssetAlert ? 'border-rose-500 dark:shadow-[0_0_15px_rgba(244,63,94,0.15)]' : 'border-indigo-500 border-slate-200 dark:border-slate-800'}`}>
@@ -4239,10 +4911,10 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
       </div>
 
       {/* 📊 THE TRIPLE-THREAT VISUAL MATRIX */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
+      <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
         
         {/* CHART 1: DISPATCH */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group">
+        <div className="w-full min-w-0 h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group">
            <div className="flex justify-between items-start mb-6 shrink-0">
              <div>
                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Dispatch</h3>
@@ -4250,7 +4922,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
              </div>
              <Activity size={16} className="text-emerald-500"/>
            </div>
-           <div className="flex-1 relative flex items-end justify-around gap-4 px-2 pb-2 border-b border-slate-100 dark:border-slate-800/50 mb-2">
+           <div className="flex-1 min-w-0 relative flex items-end justify-around gap-4 px-2 pb-2 border-b border-slate-100 dark:border-slate-800/50 mb-2">
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-2 pb-2 opacity-[0.05] dark:opacity-[0.1]">{[...Array(5)].map((_, i) => <div key={i} className="w-full border-t border-slate-900 dark:border-slate-100"></div>)}</div>
               <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
                 <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-slate-800 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">{tSolid}</div>
@@ -4271,7 +4943,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
         </div>
 
         {/* CHART 2: RECEIPTS */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group">
+        <div className="w-full min-w-0 h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group">
            <div className="flex justify-between items-start mb-6 shrink-0">
              <div>
                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Receipts</h3>
@@ -4279,14 +4951,14 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
              </div>
              <Activity size={16} className="text-blue-500"/>
            </div>
-           <div className="flex-1 relative flex items-end justify-around gap-6 px-4 pb-2 border-b border-slate-100 dark:border-slate-800/50 mb-2">
+           <div className="flex-1 min-w-0 relative flex items-end justify-around gap-6 px-4 pb-2 border-b border-slate-100 dark:border-slate-800/50 mb-2">
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-4 pb-2 opacity-[0.05] dark:opacity-[0.1]">{[...Array(5)].map((_, i) => <div key={i} className="w-full border-t border-slate-900 dark:border-slate-100"></div>)}</div>
-              <div className="flex flex-col items-center group/bar h-full justify-end relative z-10 w-16">
+              <div className="flex-1 min-w-0 flex flex-col items-center group/bar h-full justify-end relative z-10">
                 <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-blue-600 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">{recCo}</div>
                 <div style={{ height: `${(recCo / (Math.max(recCo, recCon, 1))) * 100}%`, minHeight: recCo > 0 ? '4px' : '0' }} className="w-full max-w-[32px] bg-blue-400 dark:bg-blue-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
                 <span className="mt-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Company</span>
               </div>
-              <div className="flex flex-col items-center group/bar h-full justify-end relative z-10 w-16">
+              <div className="flex-1 min-w-0 flex flex-col items-center group/bar h-full justify-end relative z-10">
                 <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-slate-700 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">{recCon}</div>
                 <div style={{ height: `${(recCon / (Math.max(recCo, recCon, 1))) * 100}%`, minHeight: recCon > 0 ? '4px' : '0' }} className="w-full max-w-[32px] bg-slate-400 dark:bg-slate-600 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
                 <span className="mt-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Contractor</span>
@@ -4295,7 +4967,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
         </div>
 
         {/* CHART 3: OGP */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group">
+        <div className="w-full min-w-0 h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group">
            <div className="flex justify-between items-start mb-6 shrink-0">
              <div>
                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">OGP Assets</h3>
@@ -4303,7 +4975,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
              </div>
              <Shield size={16} className="text-amber-500"/>
            </div>
-           <div className="flex-1 relative flex items-end justify-around gap-4 px-2 pb-2 border-b border-slate-100 dark:border-slate-800/50 mb-2">
+           <div className="flex-1 min-w-0 relative flex items-end justify-around gap-4 px-2 pb-2 border-b border-slate-100 dark:border-slate-800/50 mb-2">
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-2 pb-2 opacity-[0.05] dark:opacity-[0.1]">{[...Array(5)].map((_, i) => <div key={i} className="w-full border-t border-slate-900 dark:border-slate-100"></div>)}</div>
               <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
                 <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-slate-800 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">{rmgpOut}</div>
@@ -4324,7 +4996,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
         </div>
 
         {/* CHART 4: OPERATIONS */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group">
+        <div className="w-full min-w-0 h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group">
            <div className="flex justify-between items-start mb-6 shrink-0">
              <div>
                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Site Presence</h3>
@@ -4332,11 +5004,11 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
              </div>
              <Users size={16} className="text-indigo-500"/>
            </div>
-           <div className="flex-1 relative flex items-end justify-around gap-2 px-1 pb-2 border-b border-slate-100 dark:border-slate-800/50 mb-2">
+           <div className="flex-1 min-w-0 relative flex items-end justify-around gap-4 px-3 pb-3 border-b border-slate-100 dark:border-slate-800/50 mb-2">
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-1 pb-2 opacity-[0.05] dark:opacity-[0.1]">{[...Array(5)].map((_, i) => <div key={i} className="w-full border-t border-slate-900 dark:border-slate-100"></div>)}</div>
               <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
                 <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-slate-800 text-white text-[9px] font-black py-1 px-1.5 rounded-lg pointer-events-none shadow-xl border border-white/10">{footCon}</div>
-                <div style={{ height: `${(footCon / (Math.max(footCon, footRil, vehCon, vehCo, 1))) * 100}%`, minHeight: footCon > 0 ? '4px' : '0' }} className="w-full max-w-[20px] bg-blue-400 dark:bg-blue-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
+                <div style={{ height: `${(footCon / (Math.max(footCon, footRil, vehCon, vehCo, 1))) * 100}%`, minHeight: footCon > 0 ? '4px' : '0' }} className="w-full max-w-[28px] bg-blue-400 dark:bg-blue-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
                 <span className="mt-3 text-[8px] font-black text-slate-400 uppercase tracking-widest text-center">Con<br/>Wrk</span>
               </div>
               <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
@@ -4354,13 +5026,238 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
                 <div style={{ height: `${(vehCo / (Math.max(footCon, footRil, vehCon, vehCo, 1))) * 100}%`, minHeight: vehCo > 0 ? '4px' : '0' }} className="w-full max-w-[20px] bg-teal-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
                 <span className="mt-3 text-[8px] font-black text-slate-400 uppercase tracking-widest text-center">Co<br/>Veh</span>
               </div>
-           </div>
-        </div>
+          </div>
 
+        </div> {/* End of Top 4 Grid */}
       </div>
+       {/* 🏭 NEW: PRODUCTION & YIELD ANALYTICS MATRIX */}
+        <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch mt-6">
+          
+          {/* 🎯 CHART 1: YIELD EFFICIENCY (CIRCULAR RADIAL GAUGE) */}
+          <div className="w-full min-w-0 h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group relative overflow-hidden">
+            <div className="absolute -right-10 -top-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-[40px] pointer-events-none transition-all group-hover:bg-emerald-500/20"></div>
+            <div className="flex justify-between items-start mb-2 shrink-0 relative z-10">
+              <div>
+                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Yield Efficiency</h3>
+                <p className="text-[9px] font-bold text-emerald-500 uppercase mt-1">Useful vs Scrap</p>
+              </div>
+              <Target size={16} className="text-emerald-500 shrink-0"/>
+            </div>
+            
+            <div className="flex-1 flex flex-col justify-center items-center relative z-10 w-full">
+              {(() => {
+                const totalProd = tSolid + tGas + tScrap;
+                const usefulProd = tSolid + tGas;
+                const yieldRate = totalProd > 0 ? Math.round((usefulProd / totalProd) * 100) : 0;
+                
+                // Flawless SVG Math for the ring
+                const radius = 40;
+                const circumference = 2 * Math.PI * radius;
+                const strokeDashoffset = circumference - (yieldRate / 100) * circumference;
 
-      {/* 🗂️ TACTICAL LEDGER WALL (PREMIUM UPGRADE) */}
+                return (
+                  <>
+                    <div className="relative w-36 h-36 flex-shrink-0 mx-auto flex items-center justify-center">
+                      <svg className="absolute inset-0 w-full h-full transform -rotate-90 drop-shadow-xl" viewBox="0 0 100 100">
+                        {/* Background Track */}
+                        <circle cx="50" cy="50" r={radius} fill="transparent" stroke="currentColor" strokeWidth="8" className="text-slate-100 dark:text-slate-800" />
+                        {/* Dynamic Progress Ring */}
+                        <circle cx="50" cy="50" r={radius} fill="transparent" stroke="currentColor" strokeWidth="8" strokeLinecap="round" 
+                                className={`${yieldRate >= 85 ? 'text-emerald-500' : yieldRate >= 50 ? 'text-amber-500' : 'text-rose-500'} transition-all duration-1000 ease-out`} 
+                                strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span className="text-3xl font-black text-slate-900 dark:text-white leading-none">{yieldRate}%</span>
+                        <span className="text-[8px] font-black uppercase tracking-widest text-slate-400 mt-1">Yield</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 w-full text-[10px] font-black uppercase tracking-widest text-slate-500 mt-4">
+                       <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700/50 shadow-sm"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></div> Out: {usefulProd}</span>
+                       <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700/50 shadow-sm"><div className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-600 shrink-0"></div> Scrap: {tScrap}</span>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+
+          {/* 🍩 CHART 2: OUTPUT DISTRIBUTION (PURE CSS DOUGHNUT CHART) */}
+          <div className="w-full min-w-0 h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group relative">
+            <div className="flex justify-between items-start mb-2 shrink-0">
+              <div>
+                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Distribution</h3>
+                <p className="text-[9px] font-bold text-indigo-500 uppercase mt-1">Solid vs Gas Blend</p>
+              </div>
+              <PieChart size={16} className="text-indigo-500 shrink-0"/>
+            </div>
+            
+            <div className="flex-1 flex flex-col justify-center items-center w-full relative z-10">
+              {(() => {
+                const totalUseful = tSolid + tGas;
+                const solidPct = totalUseful > 0 ? Math.round((tSolid / totalUseful) * 100) : 0;
+                
+                return (
+                  <>
+                    {/* Pure CSS Doughnut! */}
+                    <div className="relative w-32 h-32 rounded-full shadow-lg border-8 border-white dark:border-slate-900 transition-all duration-500 hover:scale-105"
+                         style={{ background: `conic-gradient(#6366F1 ${solidPct}%, #0EA5E9 0)` }}>
+                      <div className="absolute inset-2.5 bg-white dark:bg-slate-900 rounded-full flex flex-col items-center justify-center shadow-inner">
+                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Blend</span>
+                      </div>
+                    </div>
+
+                    <div className="flex w-full justify-between items-end mt-6 px-2">
+                       <div className="flex flex-col items-start">
+                          <span className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1"><div className="w-2 h-2 rounded-full bg-indigo-500"></div> Solid</span>
+                          <span className="text-xl font-black text-indigo-600 dark:text-indigo-400">{tSolid} <span className="text-xs text-slate-400">({solidPct}%)</span></span>
+                       </div>
+                       <div className="flex flex-col items-end">
+                          <span className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Gas <div className="w-2 h-2 rounded-full bg-sky-500"></div></span>
+                          <span className="text-xl font-black text-sky-600 dark:text-sky-400"><span className="text-xs text-slate-400">({100 - solidPct}%)</span> {tGas}</span>
+                       </div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+
+          {/* 🛤️ CHART 3: PLANT THROUGHPUT (PIPELINE FLOW DIAGRAM) */}
+          <div className="w-full min-w-0 h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group relative">
+            <div className="flex justify-between items-start mb-2 shrink-0">
+              <div>
+                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Throughput</h3>
+                <p className="text-[9px] font-bold text-amber-500 uppercase mt-1">Material Flow</p>
+              </div>
+              <ArrowRight size={16} className="text-amber-500 shrink-0"/>
+            </div>
+            
+            <div className="flex-1 flex flex-col justify-center items-center w-full relative z-10">
+              
+              <div className="flex items-center justify-between w-full relative px-2">
+                {/* Connecting Pipeline */}
+                <div className="absolute top-1/2 left-4 right-4 h-1.5 bg-slate-100 dark:bg-slate-800 -translate-y-1/2 rounded-full"></div>
+                <div className="absolute top-1/2 left-4 right-4 h-1.5 bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500 -translate-y-1/2 rounded-full opacity-50 animate-pulse"></div>
+
+                {/* Inbound Node */}
+                <div className="relative z-10 bg-white dark:bg-slate-900 border-4 border-emerald-500 rounded-full w-20 h-20 flex flex-col items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.2)] group-hover:-translate-y-1 transition-transform">
+                  <Target size={16} className="text-emerald-500 mb-0.5" />
+                  <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 leading-none">{recCo + recCon}</span>
+                </div>
+
+                {/* Arrow Indicator */}
+                <div className="relative z-10 bg-slate-100 dark:bg-slate-800 border-2 border-white dark:border-slate-900 rounded-full w-8 h-8 flex flex-col items-center justify-center shadow-md">
+                   <ArrowRight size={14} className="text-slate-400" />
+                </div>
+
+                {/* Outbound Node */}
+                <div className="relative z-10 bg-white dark:bg-slate-900 border-4 border-amber-500 rounded-full w-20 h-20 flex flex-col items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.2)] group-hover:-translate-y-1 transition-transform">
+                  <Truck size={16} className="text-amber-500 mb-0.5" />
+                  <span className="text-xs font-black text-amber-600 dark:text-amber-400 leading-none">{tSolid + tGas + tScrap}</span>
+                </div>
+              </div>
+
+              <div className="flex justify-between w-full mt-6 px-4">
+                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Total<br/>Inbound</span>
+                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Total<br/>Outbound</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 📈 CHART 4: 7-DAY TREND (AREA SPLINE GRAPH) */}
+          <div className="w-full min-w-0 h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group relative">
+            <div className="flex justify-between items-start mb-4 shrink-0">
+              <div>
+                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">7-Day Trend</h3>
+                <p className="text-[9px] font-bold text-indigo-500 uppercase mt-1">Daily Output</p>
+              </div>
+              <TrendingUp size={16} className="text-indigo-500 shrink-0"/>
+            </div>
+
+            <div className="flex-1 w-full relative flex flex-col">
+              {(() => {
+                const trendData = [...filtered]
+                  .reduce((acc, r) => {
+                    const existing = acc.find(x => x.date === r.date_from);
+                    if (existing) {
+                      existing.solid += num(r.disp_solid);
+                      existing.gas += num(r.disp_gas);
+                      existing.scrap += num(r.disp_scrap);
+                    } else {
+                      acc.push({ date: r.date_from, solid: num(r.disp_solid), gas: num(r.disp_gas), scrap: num(r.disp_scrap) });
+                    }
+                    return acc;
+                  }, [])
+                  .sort((a, b) => new Date(a.date) - new Date(b.date))
+                  .slice(-7); 
+
+                if (trendData.length === 0) return <div className="flex-1 flex items-center justify-center text-slate-400 text-xs font-bold uppercase tracking-widest">No Data</div>;
+
+                const maxTrend = Math.max(...trendData.map(d => Math.max(d.solid, d.gas, d.scrap, 10)), 10) * 1.2; 
+                
+                const getX = (i) => trendData.length > 1 ? (i / (trendData.length - 1)) * 100 : 50;
+                
+                const getPoints = (key) => trendData.map((d, i) => {
+                  const x = getX(i);
+                  const y = 100 - (d[key] / maxTrend) * 100;
+                  return `${x},${y}`;
+                }).join(' ');
+
+                // ✨ Creating the Polygon points for the Area Fill!
+                const solidPoints = getPoints('solid');
+                const solidArea = `${solidPoints} 100,100 0,100`;
+
+                return (
+                  <div className="flex-1 w-full flex flex-col relative pb-2">
+                    <div className="flex-1 w-full relative overflow-visible mt-2">
+                      <svg viewBox="0 -5 100 105" className="absolute inset-0 w-full h-full overflow-visible" preserveAspectRatio="none">
+                        
+                        {/* Area Fill Gradients! */}
+                        <defs>
+                          <linearGradient id="solidGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#6366F1" stopOpacity="0.4" />
+                            <stop offset="100%" stopColor="#6366F1" stopOpacity="0" />
+                          </linearGradient>
+                        </defs>
+
+                        {/* Background Grid */}
+                        <line x1="0" y1="0" x2="100" y2="0" stroke="currentColor" className="text-slate-100 dark:text-slate-800" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+                        <line x1="0" y1="50" x2="100" y2="50" stroke="currentColor" className="text-slate-100 dark:text-slate-800" strokeDasharray="4 4" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+                        <line x1="0" y1="100" x2="100" y2="100" stroke="currentColor" className="text-slate-200 dark:text-slate-700" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+
+                        {/* ✨ Beautiful Area Fill Under the Solid Line */}
+                        <polygon points={solidArea} fill="url(#solidGrad)" vectorEffect="non-scaling-stroke" />
+
+                        {/* Trend Lines */}
+                        <polyline points={solidPoints} fill="none" stroke="#6366F1" strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-sm" />
+                        <polyline points={getPoints('gas')} fill="none" stroke="#0EA5E9" strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-sm" />
+                        <polyline points={getPoints('scrap')} fill="none" stroke="#F43F5E" strokeWidth="2.5" vectorEffect="non-scaling-stroke" strokeDasharray="4 4" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-sm opacity-80" />
+                      </svg>
+                    </div>
+                    
+                    <div className="flex justify-between items-center mt-3 px-1 shrink-0">
+                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">{trendData[0].date.split('-').slice(1).join('/')}</span>
+                      <span className="text-[8px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">7-Day</span>
+                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">{trendData[trendData.length - 1].date.split('-').slice(1).join('/')}</span>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+            
+            <div className="flex justify-between sm:justify-center items-center gap-x-3 mt-auto pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0 w-full mb-1">
+              <span className="flex items-center gap-1.5 text-[8.5px] font-black text-slate-500 uppercase tracking-widest"><div className="w-2 h-2 rounded-full bg-indigo-500 shrink-0"></div> Solid</span>
+              <span className="flex items-center gap-1.5 text-[8.5px] font-black text-slate-500 uppercase tracking-widest"><div className="w-2 h-2 rounded-full bg-sky-500 shrink-0"></div> Gas</span>
+              <span className="flex items-center gap-1.5 text-[8.5px] font-black text-slate-500 uppercase tracking-widest opacity-80"><div className="w-2 h-2 text-rose-500 flex items-center justify-center font-bold tracking-[-2px] shrink-0">--</div> Scrap</span>
+            </div>
+
+          </div>
+
+        </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+      
         {filtered.map(r => {
           const r_rmgpOut = num(r.ogp_rmgp);
           const r_rmgpIn = num(r.ogp_rmgp_in);
@@ -4424,7 +5321,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
                <div>
                  <span className="text-[10px] font-black bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 backdrop-blur-md shadow-sm px-3 py-1.5 rounded-lg uppercase tracking-widest">Sr No. {viewingRep.sr_no}</span>
                  <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-4 uppercase tracking-tight drop-shadow-sm leading-none">{viewingRep.site}</h2>
-                 <p className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 mt-2 flex items-center gap-1.5"><Calendar size={12}/> Logged: {viewingRep.date_from} TO {viewingRep.date_to}</p>
+                 <p className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 mt-2 flex items-center gap-1.5"><Calendar size={12}/> Logged: {viewingRep.date_from}</p>
                </div>
                <button onClick={() => setViewingRep(null)} className="p-3 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-white/50 dark:bg-black/40 backdrop-blur-md rounded-full shadow-sm border border-white/50 dark:border-slate-700/50 transition-all active:scale-95"><X size={18} /></button>
              </div>
@@ -4561,9 +5458,19 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
         </div>
       )}
 
+      {/* ✨ RENDER THE FAANG COMPARATOR MODAL */}
+      {showComparator && (
+        <MisComparatorModal 
+          reports={weeklyReports} 
+          availableSites={availableSites} 
+          onClose={() => setShowComparator(false)} 
+        />
+      )}
+
     </div>
   );
 }
+
 // ==========================================
 // ⚙️ THE ULTIMATE HORIZONTAL SETTINGS DASHBOARD
 // ==========================================
@@ -4585,7 +5492,7 @@ function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, o
   const [editingProfileId, setEditingProfileId] = useState(null);
   const [editProfileName, setEditProfileName] = useState('');
 
-  const [newCred, setNewCred] = useState({ email: '', password: '', site: '', names: '' });
+  const [newCred, setNewCred] = useState({ email: '', password: '', site: '', officerName: '' });
   const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
@@ -4629,11 +5536,38 @@ function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, o
     }
   };
 
+   // 🗑️ ✨ GOD-MODE DELETE (Calls the Edge Function to vaporize the Auth credentials!)
   const handleDeleteProfile = async (id, name, role) => {
     if (role === 'admin') return alert("You cannot delete an Admin from this UI. 🛡️");
-    if(window.confirm(`🚨 Revoke access for ${name}?`)) {
-      const { error } = await supabase.from('profiles').delete().eq('id', id);
-      if (!error) setAllProfiles(allProfiles.filter(p => p.id !== id));
+    if(window.confirm(`🚨 Permanently revoke all vault access for ${name}? This cannot be undone!`)) {
+      
+      // We call your backend function so it can safely use the Service Role Key!
+      const { data, error } = await supabase.functions.invoke('delete-site-user', {
+        body: { userId: id }
+      });
+
+      if (error || (data && data.error)) {
+        alert(`Vault Rejection: ${error?.message || data?.error}`);
+      } else {
+        setAllProfiles(allProfiles.filter(p => p.id !== id));
+        alert(`✅ ${name}'s access has been permanently terminated.`);
+      }
+    }
+  };
+
+  // 🔑 ✨ GOD-MODE PASSWORD RESET (Calls the Edge Function to forcefully change it!)
+  const handleForcePasswordReset = async (id, name) => {
+    const newPassword = window.prompt(`Enter a new temporary password for ${name} (Min 6 chars):`);
+    if (!newPassword || newPassword.length < 6) return alert("Operation cancelled. Password must be at least 6 characters.");
+
+    const { data, error } = await supabase.functions.invoke('reset-user-password', {
+      body: { userId: id, newPassword: newPassword }
+    });
+
+    if (error || (data && data.error)) {
+      alert(`Vault Rejection: ${error?.message || data?.error}`);
+    } else {
+      alert(`✅ Password for ${name} successfully changed! You can now securely send it to them.`);
     }
   };
 
@@ -4755,7 +5689,7 @@ function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, o
               
               <form onSubmit={handleCreateCredential} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 relative z-10 items-end">
                 <div className="xl:col-span-1">
-                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Site Terminal</label>
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Site Name</label>
                   <select required value={newCred.site} onChange={(e) => setNewCred({...newCred, site: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-xs font-bold text-slate-900 dark:text-white uppercase focus:border-emerald-500 outline-none shadow-sm cursor-pointer">
                     <option value="">Select Node...</option>
                     {globalSites.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
@@ -4770,7 +5704,7 @@ function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, o
                   <input type="text" required placeholder="Min 6 chars" minLength="6" value={newCred.password} onChange={(e) => setNewCred({...newCred, password: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none shadow-sm placeholder-slate-400" />
                 </div>
                 <div className="xl:col-span-1">
-                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Officers (Comma separated)</label>
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Officer Name</label>
                   <input type="text" required placeholder="Rahul, Amit" value={newCred.names} onChange={(e) => setNewCred({...newCred, names: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-xs font-bold text-slate-900 dark:text-white focus:border-emerald-500 outline-none shadow-sm placeholder-slate-400 uppercase" />
                 </div>
                 <div className="xl:col-span-1">
@@ -4822,11 +5756,17 @@ function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, o
                             </div>
                           </div>
 
-                          {/* HOVER ACTIONS */}
-                          <div className="shrink-0 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {/* ✨ FAANG HOVER ACTIONS */}
+                          <div className="shrink-0 flex flex-row sm:flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button onClick={() => { setEditingProfileId(profile.id); setEditProfileName(profile.name); }} className="p-2.5 text-slate-400 hover:text-indigo-600 bg-slate-50 dark:bg-slate-900 rounded-xl hover:shadow-sm transition-all border border-slate-200 dark:border-slate-800" title="Edit Names"><Edit2 size={14}/></button>
+                            
                             {profile.role !== 'admin' && (
-                              <button onClick={() => handleDeleteProfile(profile.id, profile.name, profile.role)} className="p-2.5 text-slate-400 hover:text-rose-600 bg-slate-50 dark:bg-slate-900 rounded-xl hover:shadow-sm transition-all border border-slate-200 dark:border-slate-800" title="Revoke Access"><Trash2 size={14}/></button>
+                              <>
+                                {/* 🔑 THE NEW PASSWORD RESET BUTTON */}
+                                <button onClick={() => handleForcePasswordReset(profile.id, profile.name)} className="p-2.5 text-slate-400 hover:text-amber-500 bg-slate-50 dark:bg-slate-900 rounded-xl hover:shadow-sm transition-all border border-slate-200 dark:border-slate-800" title="Force Password Reset"><Unlock size={14}/></button>
+                                
+                                <button onClick={() => handleDeleteProfile(profile.id, profile.name, profile.role)} className="p-2.5 text-slate-400 hover:text-rose-600 bg-slate-50 dark:bg-slate-900 rounded-xl hover:shadow-sm transition-all border border-slate-200 dark:border-slate-800" title="Revoke Access"><Trash2 size={14}/></button>
+                              </>
                             )}
                           </div>
                         </div>
@@ -4956,9 +5896,82 @@ function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, o
 // ==========================================
 // ✏️ WEEKLY LEDGER EDIT MODAL
 // ==========================================
-function WeeklyEditModal({ record, onClose, onSave }) {
-  const [fd, setFd] = useState({...record});
+function WeeklyEditModal({ record, onClose, onSave, userProfile }) {
+  const [fd, setFd] = useState({
+    srNo: record?.sr_no ?? '',
+    dateFrom: record?.date_from ?? getISTDate(),
+    dateTo: record?.date_to ?? record?.date_from ?? getISTDate(),
+    dispSolid: record?.disp_solid ?? '',
+    dispGas: record?.disp_gas ?? '',
+    dispScrap: record?.disp_scrap ?? '',
+    recCompany: record?.rec_company ?? '',
+    recContractor: record?.rec_contractor ?? '',
+    ogpNRGP: record?.ogp_nrgp ?? '',
+    ogpRmgp: record?.ogp_rmgp ?? '',
+    ogpRmgpIn: record?.ogp_rmgp_in ?? '',
+    vehContractor: record?.veh_contractor ?? '',
+    vehCompany: record?.veh_company ?? '',
+    footContractor: record?.foot_contractor ?? '',
+    footRil: record?.foot_ril ?? '',
+    footVisitor: record?.foot_visitor ?? '',
+    footGov: record?.foot_gov ?? '',
+    depDaySS: record?.dep_day_ss ?? '',
+    depDaySG: record?.dep_day_sg ?? '',
+    depNightSS: record?.dep_night_ss ?? '',
+    depNightSG: record?.dep_night_sg ?? '',
+  });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lockedDate, setLockedDate] = useState(null);
+  const [isAllCaughtUp, setIsAllCaughtUp] = useState(false); // ✨ NEW: Tracks if they are done for today!
+
+  if (!userProfile?.site) return;
+
+  // ✨ THE CHRONO-LOCK BRAIN: Forces sequential entries but STOPS at today! 🛑
+  React.useEffect(() => {
+    const fetchLastDate = async () => {
+      const { data, error } = await supabase
+        .from('weekly_reports')
+        .select('date_from')
+        .eq('site', userProfile.site)
+        .order('date_from', { ascending: false })
+        .limit(1);
+      
+      // Safely get today's date in YYYY-MM-DD
+      const d = new Date();
+      const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+      if (data && data.length > 0 && data[0].date_from) {
+        // Calculate exactly +1 day safely without timezone glitches
+        const [year, month, day] = data[0].date_from.split('-').map(Number);
+        const lastDateObj = new Date(year, month - 1, day);
+        lastDateObj.setDate(lastDateObj.getDate() + 1);
+        
+        const nextDateStr = `${lastDateObj.getFullYear()}-${String(lastDateObj.getMonth() + 1).padStart(2, '0')}-${String(lastDateObj.getDate()).padStart(2, '0')}`;
+        
+        if (nextDateStr <= todayStr) {
+          // They missed days OR need to fill today! Lock it to the next required day!
+          setLockedDate(nextDateStr);
+          setIsAllCaughtUp(false);
+          setFd(prev => ({ ...prev, dateFrom: nextDateStr, dateTo: nextDateStr }));
+        } else {
+          // They already filled today! They are completely caught up! 🥂
+          setLockedDate(todayStr); // Just to keep the UI looking normal
+          setIsAllCaughtUp(true);
+          setFd(prev => ({ ...prev, dateFrom: todayStr, dateTo: todayStr }));
+        }
+      } else {
+        // First time ever submitting! Unlock so they can pick their start date.
+        setLockedDate(null);
+        setIsAllCaughtUp(false);
+        setFd(prev => ({ ...prev, dateFrom: todayStr, dateTo: todayStr }));
+      }
+    };
+    fetchLastDate();
+  }, [userProfile.site]);
+
+  // Safe max date for the HTML input
+  const todayMax = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -5438,12 +6451,14 @@ function AdminBroadcastView({ SITES = [], globalSites = [], userProfile }) {
 // ==========================================
 // 📱 MOBILE SUPERVISOR LEAVE FORM
 // ==========================================
-function LeaveMobileForm({ userProfile, fillerName, setActiveTab }) {
+function LeaveMobileForm({ userProfile, setActiveTab }) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [leaveType, setLeaveType] = useState('Casual Leave');
   const [reason, setReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasProxy, setHasProxy] = useState('No'); // Dropdown state
+const [proxyName, setProxyName] = useState(''); // Text box state
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -5452,11 +6467,12 @@ function LeaveMobileForm({ userProfile, fillerName, setActiveTab }) {
     setIsSubmitting(true);
     const { error } = await supabase.from('leaves').insert([{
       site: userProfile.site,
-      supervisor_name: fillerName || userProfile.name,
+      supervisor_name: userProfile.name,
       start_date: startDate,
       end_date: endDate,
       leave_type: leaveType,
-      reason: reason
+      reason: reason,
+      proxy_ss_name: hasProxy === 'Yes' ? proxyName : null
     }]);
     setIsSubmitting(false);
 
@@ -5507,6 +6523,41 @@ function LeaveMobileForm({ userProfile, fillerName, setActiveTab }) {
           </div>
         </div>
       </div>
+
+{/* Proxy SS Dropdown */}
+<div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 mt-3">
+  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">
+    Is there a Proxy SS?
+  </label>
+  <select 
+    value={hasProxy} 
+    onChange={(e) => {
+      setHasProxy(e.target.value);
+      if (e.target.value === 'No') setProxyName(''); // Clear name if they switch back to No
+    }} 
+    className="w-full bg-transparent text-sm font-bold text-slate-800 dark:text-slate-200 outline-none"
+  >
+    <option value="No">No Proxy Needed</option>
+    <option value="Yes">Yes, Proxy Assigned</option>
+  </select>
+</div>
+
+{/* Conditional Text Box - Only shows if 'Yes' is selected */}
+{hasProxy === 'Yes' && (
+  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800 mt-2">
+    <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1 block">
+      Enter Proxy SS Name
+    </label>
+    <input 
+      type="text" 
+      required 
+      placeholder="E.g., John Doe"
+      value={proxyName} 
+      onChange={(e) => setProxyName(e.target.value)} 
+      className="w-full bg-transparent text-sm font-bold text-blue-900 dark:text-blue-100 outline-none" 
+    />
+  </div>
+)}
 
       <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-purple-500/30 flex justify-center items-center gap-2 active:scale-95 transition-all">
         {isSubmitting ? 'Sending Request...' : 'Submit to Command'}
@@ -5617,13 +6668,45 @@ function AdminLeaveView() {
                   </div>
                   <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border ${leave.status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30' : leave.status === 'Rejected' ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30' : 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 animate-pulse'}`}>{leave.status}</span>
                 </div>
-                <div className="ml-2 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800/50 mb-4 grid grid-cols-2 gap-2">
-                  <div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5 flex items-center gap-1"><Calendar size={10}/> From</p><p className="text-xs font-bold text-slate-700 dark:text-slate-300">{leave.start_date}</p></div>
-                  <div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5 flex items-center gap-1"><Calendar size={10}/> To</p><p className="text-xs font-bold text-slate-700 dark:text-slate-300">{leave.end_date}</p></div>
+                {/* ✨ UPGRADED DATE BOX WITH DURATION BADGE */}
+                <div className="ml-2 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800/50 mb-4 flex flex-col">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5 flex items-center gap-1"><Calendar size={10}/> From</p><p className="text-xs font-bold text-slate-700 dark:text-slate-300">{leave.start_date}</p></div>
+                    <div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5 flex items-center gap-1"><Calendar size={10}/> To</p><p className="text-xs font-bold text-slate-700 dark:text-slate-300">{leave.end_date}</p></div>
+                  
+                  </div>
+                  
+                  {/* ✨ THE DURATION CALCULATOR */}
+                  {(() => {
+                    const start = new Date(leave.start_date);
+                    const end = new Date(leave.end_date);
+                    const diffDays = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
+                    return (
+                      <div className="mt-3 pt-2 border-t border-slate-200 dark:border-slate-700/50 flex justify-between items-center">
+                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Total Duration</span>
+                        <span className="px-2 py-1 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 font-black text-[9px] uppercase tracking-widest rounded border border-purple-200 dark:border-purple-800/50 shadow-sm">
+                          {diffDays} {diffDays === 1 ? 'Day' : 'Days'} Off
+                        </span>
+                      </div>
+                    );
+                  })()}
+                  
                 </div>
+                
                 <div className="ml-2 mb-5 flex-1">
                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Provided Reason:</p>
                   <p className="text-xs font-medium text-slate-600 dark:text-slate-400 line-clamp-2 italic">"{leave.reason}"</p>
+                {/* Proxy Details */}
+{leave.proxy_ss_name && (
+  <div className="mt-3 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800/50">
+    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-1">
+      <User size={12} /> Proxy Assigned To
+    </p>
+    <p className="text-sm font-bold text-blue-900 dark:text-blue-100 mt-1">
+      {leave.proxy_ss_name}
+    </p>
+  </div>
+)}
                 </div>
                 {leave.status === 'Pending' && (
                   <div className="ml-2 grid grid-cols-2 gap-3 mt-auto pt-4 border-t border-slate-100 dark:border-slate-800/50">
@@ -5631,6 +6714,8 @@ function AdminLeaveView() {
                     <button onClick={() => updateLeaveStatus(leave.id, 'Rejected')} className="bg-rose-50 hover:bg-rose-500 text-rose-600 hover:text-white dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm flex items-center justify-center gap-1.5 active:scale-95"><X size={14}/> Deny</button>
                   </div>
                 )}
+
+                
               </div>
             ))}
             {filteredLeaves.length === 0 && <div className="col-span-full py-16 text-center text-slate-500 text-sm font-bold uppercase tracking-widest">No requests found.</div>}
@@ -5704,8 +6789,36 @@ function LeaveMobileHistory({ userProfile }) {
               <span className="flex items-center gap-1.5"><Calendar size={12} className="text-slate-400"/> {leave.start_date}</span>
               <span className="text-slate-300 dark:text-slate-600">➔</span>
               <span>{leave.end_date}</span>
+            
             </div>
+            {/* ✨ THE DURATION CALCULATOR */}
+                  {(() => {
+                    const start = new Date(leave.start_date);
+                    const end = new Date(leave.end_date);
+                    const diffDays = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
+                    return (
+                      <div className="mt-3 pt-2 border-t border-slate-200 dark:border-slate-700/50 flex justify-between items-center">
+                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Total Duration</span>
+                        <span className="px-2 py-1 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 font-black text-[9px] uppercase tracking-widest rounded border border-purple-200 dark:border-purple-800/50 shadow-sm">
+                          {diffDays} {diffDays === 1 ? 'Day' : 'Days'} Off
+                        </span>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Proxy Details */}
+{leave.proxy_ss_name && (
+  <div className="mt-3 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800/50">
+    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-1">
+      <User size={12} /> Proxy Assigned To
+    </p>
+    <p className="text-sm font-bold text-blue-900 dark:text-blue-100 mt-1">
+      {leave.proxy_ss_name}
+    </p>
+  </div>
+)}
           </div>
+          
         ))
       )}
     </div>
@@ -5827,7 +6940,7 @@ function SmartDateFilter({ startDate, setStartDate, endDate, setEndDate }) {
 // ==========================================
 // 🚛 NIGHT HAULT MOBILE FORM (SUPERVISOR)
 // ==========================================
-function NightHaultMobileForm({ userProfile, fetchNightHaults, setActiveTab, fillerName, language }) {
+function NightHaultMobileForm({ userProfile, fetchNightHaults, setActiveTab, language }) {
   const t = TRANSLATIONS[language]?.nh || TRANSLATIONS['en'].nh;
   
   // ✨ BACK TO BASICS: Uses the literal, exact present day so supervisors never get confused!
@@ -5874,7 +6987,7 @@ function NightHaultMobileForm({ userProfile, fetchNightHaults, setActiveTab, fil
   const handleSubmit = (e) => {
     e.preventDefault();
     const newRecords = vehicles.map(v => ({
-      date, site: userProfile.site, veh_no: v.vehNo.toUpperCase(), material: v.material, location: v.location, purpose: v.purpose, submitted_by: fillerName || userProfile.name
+      date, site: userProfile.site, veh_no: v.vehNo.toUpperCase(), material: v.material, location: v.location, purpose: v.purpose, submitted_by:userProfile.name
     }));
     executeSubmit(newRecords);
   };
@@ -5882,7 +6995,7 @@ function NightHaultMobileForm({ userProfile, fetchNightHaults, setActiveTab, fil
   const handleMarkNil = () => {
     if(window.confirm("Declare 0 vehicles in plant tonight?")) {
       const nilRecord = [{
-        date, site: userProfile.site, veh_no: "NIL", material: "-", location: "-", purpose: "NO VEHICLES IN PLANT", submitted_by: fillerName || userProfile.name
+        date, site: userProfile.site, veh_no: "NIL", material: "-", location: "-", purpose: "NO VEHICLES IN PLANT", submitted_by: userProfile.name
       }];
       executeSubmit(nilRecord);
     }
@@ -6039,16 +7152,41 @@ function AdminNightHaultView({ nightHaults, isLoading, onEdit, onDelete, SITES =
   
   // Ensure the expected list also uses uppercase to check against the submissions!
   const pendingSitesList = expectedSites.map(s => (s || "").toUpperCase().trim()).filter(s => !submittedSitesList.includes(s));
-// ✨ GOD-MODE EXPORT: Clean Rows + Bottom Summary Section!
-  const exportMasterCSV = () => {
-    if (filtered.length === 0 && expectedSites.length === 0) return alert("No data to export!");
+
+  // ✨ THE PREMIUM NIGHT HALT EXPORTER 📊 (Fully Styled with Summaries!)
+  const exportMasterExcel = async () => {
+    if (filtered.length === 0 && expectedSites.length === 0) return alert("Oops! 🥺 No data to export!");
     
-    const headers = ['Date', 'Site', 'Vehicle No', 'Material', 'Location', 'Purpose', 'Submitted By', 'Status'];
-    const csvRows = [];
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Night Halt Master');
+
+    // 1. Setup Perfect Column Widths
+    sheet.columns = [
+      { header: 'DATE', key: 'date', width: 16 },
+      { header: 'SITE', key: 'site', width: 25 },
+      { header: 'VEHICLE NO', key: 'veh_no', width: 20 },
+      { header: 'MATERIAL', key: 'material', width: 25 },
+      { header: 'LOCATION', key: 'location', width: 25 },
+      { header: 'PURPOSE', key: 'purpose', width: 30 },
+      { header: 'SUBMITTED BY', key: 'submitted_by', width: 25 },
+      { header: 'STATUS', key: 'status', width: 22 }
+    ];
+
+    // 2. Style the Header Row (Dark Mode Slate!)
+    const headerRow = sheet.getRow(1);
+    headerRow.height = 30;
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10 };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }; // Slate 900
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
+    });
+
+    // --- DATA PROCESSING LOGIC ---
     let grandTotalVehicles = 0;
     const siteSummaries = []; 
 
-    // 1. Group all actual logs by an uppercase, trimmed site name to avoid JS string ghost bugs!
+    // Group all actual logs safely!
     const groupedLogs = {};
     filtered.forEach(log => {
       const sName = (log.site || "UNKNOWN").toUpperCase().trim();
@@ -6056,30 +7194,52 @@ function AdminNightHaultView({ nightHaults, isLoading, onEdit, onDelete, SITES =
       groupedLogs[sName].push(log);
     });
 
-    // 2. Combine the expected sites and the actual logged sites into one unified, clean list!
+    // Combine expected sites and logged sites, then sort alphabetically
     const allTargetSites = new Set([
       ...expectedSites.map(s => (s || "").toUpperCase().trim()),
       ...Object.keys(groupedLogs)
     ]);
-
-    // 3. Sort them alphabetically (Now they will all sort perfectly since they are uppercase!)
     const sortedTargets = [...allTargetSites].sort();
 
+    // 3. Inject and Style the Data
     sortedTargets.forEach(siteName => {
       const siteLogs = groupedLogs[siteName] || [];
       let siteVehicleCount = 0;
       
       if (siteLogs.length === 0) {
-         csvRows.push(`"${filterEndDate || 'N/A'}","${siteName}","---","---","---","---","---","PENDING SUBMISSION"`);
+         // 🚨 PENDING SUBMISSION (Highlight row faintly red)
+         const row = sheet.addRow({ 
+           date: filterEndDate || 'N/A', site: siteName, veh_no: '---', 
+           material: '---', location: '---', purpose: '---', 
+           submitted_by: '---', status: 'PENDING SUBMISSION' 
+         });
+         row.alignment = { vertical: 'middle', horizontal: 'center' };
+         row.getCell('status').font = { bold: true, color: { argb: 'FFE11D48' } }; // Rose 600
+         row.getCell('status').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE4E6' } }; // Light Rose background
+
       } else {
          siteLogs.forEach(log => {
            if (log.veh_no === 'NIL') {
-             csvRows.push(`"${log.date}","${log.site}","NIL","NIL","NIL","NIL","${log.submitted_by}","CLEARED (0 VEHICLES)"`);
+             // ✅ CLEARED (0 VEHICLES)
+             const row = sheet.addRow({ 
+               date: log.date, site: log.site, veh_no: 'NIL', 
+               material: 'NIL', location: 'NIL', purpose: 'NIL', 
+               submitted_by: log.submitted_by, status: 'CLEARED (0 VEHICLES)' 
+             });
+             row.alignment = { vertical: 'middle', horizontal: 'center' };
+             row.getCell('status').font = { bold: true, color: { argb: 'FF059669' } }; // Emerald 600
+             row.getCell('status').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } }; // Light Emerald background
            } else {
+             // 🚚 ACTUAL VEHICLE REPORTED
              siteVehicleCount++;
              grandTotalVehicles++;
-             const clean = (t) => `"${(t||'').replace(/"/g, '""')}"`;
-             csvRows.push([log.date, log.site, log.veh_no, log.material, log.location, log.purpose, log.submitted_by, "REPORTED"].map(clean).join(','));
+             const row = sheet.addRow({ 
+               date: log.date, site: log.site, veh_no: log.veh_no, 
+               material: log.material, location: log.location, purpose: log.purpose, 
+               submitted_by: log.submitted_by, status: 'REPORTED' 
+             });
+             row.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+             row.getCell('status').font = { bold: true, color: { argb: 'FF3B82F6' } }; // Blue 500
            }
          });
          
@@ -6090,25 +7250,51 @@ function AdminNightHaultView({ nightHaults, isLoading, onEdit, onDelete, SITES =
       }
     });
 
-    // ✨ THE NEW SUMMARY BLOCK AT THE BOTTOM!
+    // ✨ 4. THE BEAUTIFUL SUMMARY BLOCK AT THE BOTTOM!
     if (siteSummaries.length > 0) {
-      csvRows.push(`"","","","","","","",""`); // Blank spacing row
-      csvRows.push(`"","*** SITE SUMMARIES ***","","","","","",""`);
+      sheet.addRow([]); // Blank spacer
+      
+      const sumHeader = sheet.addRow({ site: '*** SITE SUMMARIES ***' });
+      sheet.mergeCells(`B${sumHeader.number}:C${sumHeader.number}`);
+      sumHeader.getCell('site').font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      sumHeader.getCell('site').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F46E5' } }; // Indigo 600
+      sumHeader.getCell('site').alignment = { horizontal: 'center' };
       
       siteSummaries.forEach(summary => {
-        csvRows.push(`"","${summary.siteName}","${summary.count} Vehicles","","","","",""`);
+        const sumRow = sheet.addRow({ site: summary.siteName, veh_no: `${summary.count} Vehicles` });
+        sumRow.getCell('site').font = { bold: true };
+        sumRow.getCell('veh_no').font = { bold: true, color: { argb: 'FF0F172A' } };
+        sumRow.getCell('site').alignment = { horizontal: 'center' };
+        sumRow.getCell('veh_no').alignment = { horizontal: 'center' };
       });
     }
 
-    // ✨ ADD GRAND TOTAL ROW AT THE VERY BOTTOM
-    csvRows.push(`"","","","","","","",""`); 
-    csvRows.push(`"","** GRAND TOTAL ALL SITES **","** ${grandTotalVehicles} VEHICLES **","","","","",""`);
+    // ✨ 5. THE GRAND TOTAL ROW
+    sheet.addRow([]); // Blank spacer
+    const grandRow = sheet.addRow({ site: 'GRAND TOTAL ALL SITES', veh_no: `${grandTotalVehicles} VEHICLES` });
+    sheet.mergeCells(`B${grandRow.number}:C${grandRow.number}`); // Make the label span two columns
+    grandRow.getCell('site').font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
+    grandRow.getCell('site').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }; // Slate 900
+    grandRow.getCell('site').alignment = { horizontal: 'center', vertical: 'middle' };
+    
+    // Put the total number in the Material column so it sits next to the merged label!
+    const grandTotalCell = sheet.getCell(`D${grandRow.number}`); 
+    grandTotalCell.value = `${grandTotalVehicles} VEHICLES`;
+    grandTotalCell.font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
+    grandTotalCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEA580C' } }; // Orange 600 to make it POP!
+    grandTotalCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    grandRow.height = 30;
 
-    const csvContent = [headers.join(','), ...csvRows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
-    link.download = `CBG_NightHault_Master_${filterStartDate}_to_${filterEndDate}.csv`;
+    // 6. Generate and Download!
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a'); 
+    link.href = url;
+    link.download = `CBG_NightHault_Master_${filterStartDate}_to_${filterEndDate}.xlsx`; // ✨ Now .xlsx!
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -6121,7 +7307,7 @@ function AdminNightHaultView({ nightHaults, isLoading, onEdit, onDelete, SITES =
           <FilterSelect label="VIP Site" value={filterSite} onChange={setFilterSite} options={[...availableSites].sort()} />
           <button onClick={() => { setFilterStartDate(getISTDate()); setFilterEndDate(getISTDate()); setFilterState('All'); setFilterSite('All'); }} className="text-[10px] font-black tracking-widest text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors h-max mb-0.5">CLEAR</button>
         </div>
-        <button onClick={exportMasterCSV} className="relative z-10 px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg transition-all flex items-center gap-2 active:scale-95">
+        <button onClick={exportMasterExcel} className="relative z-10 px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg transition-all flex items-center gap-2 active:scale-95">
           <Download size={16} /> Export Master Sheet
         </button>
       </div>
@@ -6312,6 +7498,458 @@ function NightHaultEditModal({ record, onClose, onSave }) {
         </div>
         
       </div>
+    </div>
+  );
+}
+// ==========================================
+// 🚨 FAANG ADMIN EMERGENCY DIRECTORY VIEW
+// ==========================================
+// ==========================================
+// 🚨 FAANG ADMIN EMERGENCY DIRECTORY VIEW
+// ==========================================
+function AdminEmergencyView({ emergencyContacts, fetchEmergencyContacts, SITES, SITES_BY_STATE, STATE_NAMES }) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterState, setFilterState] = useState('All');
+  const [filterSite, setFilterSite] = useState('All');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingContact, setEditingContact] = useState(null);
+  const [viewingContact, setViewingContact] = useState(null); // ✨ NEW: View State!
+
+  const availableSites = filterState === "All" ? SITES : SITES_BY_STATE[filterState] || [];
+
+  const filtered = (emergencyContacts || []).filter(c => {
+    const q = searchTerm.toLowerCase();
+    const matchesSearch = c.name?.toLowerCase().includes(q) || c.category?.toLowerCase().includes(q) || c.site?.toLowerCase().includes(q);
+    const matchesState = filterState === 'All' || availableSites.includes(c.site);
+    const matchesSite = filterSite === 'All' || c.site === filterSite;
+    return matchesSearch && matchesState && matchesSite;
+  });
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    const data = { ...editingContact };
+    if (data.id) {
+      await supabase.from('emergency_contacts').update(data).eq('id', data.id);
+    } else {
+      await supabase.from('emergency_contacts').insert([data]);
+    }
+    setIsEditing(false);
+    fetchEmergencyContacts();
+  };
+
+  const handleDelete = async (id) => {
+    if(window.confirm("🚨 Are you sure you want to delete this emergency facility?")) {
+      await supabase.from('emergency_contacts').delete().eq('id', id);
+      fetchEmergencyContacts();
+    }
+  };
+
+  const handleCSVImport = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target.result;
+      const rows = text.split('\n').map(r => r.trim()).filter(r => r);
+      const headers = rows[0].split(',').map(h => h.trim().toLowerCase());
+      
+      const newContacts = [];
+      for (let i = 1; i < rows.length; i++) {
+        const values = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
+        let contact = {};
+        headers.forEach((header, index) => { contact[header] = values[index] || null; });
+        if (contact.site && contact.category && contact.name && contact.phone) {
+          newContacts.push({
+            site: contact.site.toUpperCase(),
+            category: contact.category,
+            name: contact.name,
+            phone: contact.phone.replace(/\D/g, ''),
+            address: contact.address || null,
+            notes: contact.notes || null
+          });
+        }
+      }
+      
+      if (newContacts.length > 0) {
+        const { error } = await supabase.from('emergency_contacts').insert(newContacts);
+        if (error) alert(`Vault Rejection: ${error.message}`);
+        else {
+          alert(`✅ Successfully imported ${newContacts.length} emergency facilities!`);
+          fetchEmergencyContacts();
+        }
+      } else {
+        alert("Invalid CSV format! Ensure 'site', 'category', 'name', and 'phone' columns exist.");
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const exportExcel = async () => {
+    if (filtered.length === 0) return alert("No data to export!");
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Emergency Directory');
+    
+    sheet.columns = [
+      { header: 'SITE', key: 'site', width: 25 },
+      { header: 'CATEGORY', key: 'category', width: 15 },
+      { header: 'FACILITY NAME', key: 'name', width: 30 },
+      { header: 'PHONE / HELPLINE', key: 'phone', width: 20 },
+      { header: 'ADDRESS', key: 'address', width: 40 },
+      { header: 'NOTES', key: 'notes', width: 30 }
+    ];
+
+    const headerRow = sheet.getRow(1);
+    headerRow.height = 25;
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE11D48' } }; // Rose 600
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+    });
+
+    filtered.forEach(c => {
+      sheet.addRow({
+        site: c.site, category: c.category, name: c.name, phone: c.phone, address: c.address, notes: c.notes
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `CBG_Emergency_Directory.xlsx`;
+    link.click();
+  };
+
+  return (
+    <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-300">
+      {/* Action Bar */}
+      <div className="flex flex-wrap gap-4 justify-between items-center mb-6 bg-rose-50 dark:bg-rose-500/10 p-5 rounded-[2rem] border border-rose-200 dark:border-rose-500/30">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-rose-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-rose-500/30">
+            <AlertTriangle size={24} />
+          </div>
+          <div>
+            <h2 className="text-lg font-black text-rose-600 dark:text-rose-400 uppercase tracking-tight">Master Emergency Vault</h2>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Global Crisis Facilities</p>
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => {
+            const headers = "site,category,name,phone,address,notes\n";
+            const dummyData = "MUMBAI HQ,Bomb Squad,HQ Elite Team,9876543210,Colaba Main Gate,24/7 Standby\n";
+            const blob = new Blob([headers + dummyData], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'CBG_Emergency_Template.csv');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }} className="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-black uppercase tracking-widest shadow-sm active:scale-95 transition-all flex items-center gap-2 border border-slate-200 dark:border-slate-700"><FileText size={16}/> CSV Format</button>
+          <button onClick={() => { setEditingContact({ site: SITES[0] || '', category: 'Police', name: '', phone: '', address: '', notes: '' }); setIsEditing(true); }} className="py-2.5 px-4 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-md shadow-rose-500/20 active:scale-95 transition-all flex items-center gap-2"><Plus size={16}/> Add Facility</button>
+          <input type="file" accept=".csv" id="em-csv-upload" className="hidden" onChange={(e) => { handleCSVImport(e.target.files[0]); e.target.value = null; }} />
+          <label htmlFor="em-csv-upload" className="py-2.5 px-4 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-black uppercase tracking-widest shadow-sm hover:shadow-md cursor-pointer active:scale-95 transition-all flex items-center gap-2"><Download size={16} className="rotate-180"/> Import</label>
+          <button onClick={exportExcel} className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-md shadow-emerald-500/20 active:scale-95 transition-all flex items-center gap-2"><Download size={16}/> Export</button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        <div className="relative flex-1 min-w-[250px]">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input type="text" placeholder="Search facilities..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-rose-500 shadow-sm" />
+        </div>
+        <FilterSelect label="State" value={filterState} onChange={(e) => { setFilterState(e); setFilterSite("All"); }} options={STATE_NAMES} />
+        <FilterSelect label="Site" value={filterSite} onChange={setFilterSite} options={[...availableSites].sort()} />
+      </div>
+
+      {/* Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-10">
+        {filtered.map(c => {
+          let badgeColor = 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700';
+          if (c.category === 'Police') badgeColor = 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-500/30';
+          if (c.category === 'Fire') badgeColor = 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-500/30';
+          if (c.category === 'Hospital' || c.category === 'Ambulance' || c.category === 'Medical') badgeColor = 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-500/30';
+          if (c.category === 'Custom') badgeColor = 'bg-purple-50 text-purple-600 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-500/30';
+
+          return (
+            <div key={c.id} onClick={() => setViewingContact(c)} className="bg-white dark:bg-slate-900 p-5 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all group relative overflow-hidden cursor-pointer">
+              <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                <button onClick={(e) => { e.stopPropagation(); setEditingContact(c); setIsEditing(true); }} className="p-1.5 text-slate-400 hover:text-indigo-500 bg-slate-50 dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700"><Edit2 size={14}/></button>
+                <button onClick={(e) => { e.stopPropagation(); handleDelete(c.id); }} className="p-1.5 text-slate-400 hover:text-rose-500 bg-slate-50 dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700"><Trash2 size={14}/></button>
+              </div>
+              <span className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border shadow-sm ${badgeColor}`}>{c.category}</span>
+              <h3 className="font-black text-slate-900 dark:text-white uppercase text-lg mt-3 leading-tight pr-12">{c.name}</h3>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 flex items-center gap-1.5"><MapPin size={12}/> {c.site}</p>
+              
+              <div className="mt-4 bg-slate-50 dark:bg-slate-950/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800/50 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-mono font-black text-slate-800 dark:text-slate-200">{formatPhone(c.phone)}</span>
+                  <button onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(c.phone); alert('Copied!'); }} className="text-slate-400 hover:text-rose-500"><Copy size={16}/></button>
+                </div>
+                {c.address && <p className="text-xs font-bold text-slate-600 dark:text-slate-400 pt-2 border-t border-slate-200 dark:border-slate-700/50 leading-relaxed">{c.address}</p>}
+              </div>
+            </div>
+          );
+        })}
+        {filtered.length === 0 && <div className="col-span-full text-center text-slate-500 py-10 font-bold uppercase tracking-widest">No Emergency Facilities Found.</div>}
+      </div>
+
+      {/* ✨ VIEW MODAL INJECTION ✨ */}
+      {viewingContact && <EmergencyViewModal record={viewingContact} onClose={() => setViewingContact(null)} />}
+
+      {isEditing && (
+        <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-800 rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden relative">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center">
+              <h3 className="font-black text-rose-600 dark:text-rose-400 flex items-center gap-2 uppercase tracking-tight text-lg"><AlertTriangle size={18}/> {editingContact.id ? 'Edit Facility' : 'New Emergency Facility'}</h3>
+              <button onClick={() => setIsEditing(false)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 bg-white dark:bg-slate-800 rounded-full shadow-sm"><X size={16}/></button>
+            </div>
+            <form onSubmit={handleSave} className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Site</label>
+                  <select required value={editingContact.site} onChange={e => setEditingContact({...editingContact, site: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-3 text-xs font-bold uppercase outline-none focus:border-rose-500">
+                    {SITES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Category</label>
+                    <select 
+                      required 
+                      value={['Police', 'Fire', 'Hospital', 'Ambulance'].includes(editingContact.category) ? editingContact.category : 'Custom'} 
+                      onChange={e => setEditingContact({...editingContact, category: e.target.value === 'Custom' ? '' : e.target.value})} 
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-3 text-xs font-bold uppercase outline-none focus:border-rose-500"
+                    >
+                      <option value="Police">Police</option>
+                      <option value="Fire">Fire Department</option>
+                      <option value="Hospital">Hospital / Medical</option>
+                      <option value="Ambulance">Ambulance</option>
+                      <option value="Custom">Other Custom</option>
+                    </select>
+                  </div>
+                  
+                  {/* ✨ INVISIBLE LOGIC: Only show if it's NOT a standard category! */}
+                  {!['Police', 'Fire', 'Hospital', 'Ambulance'].includes(editingContact.category) && (
+                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                      <input 
+                        type="text" 
+                        required 
+                        placeholder="Enter Custom Category..." 
+                        value={editingContact.category} 
+                        onChange={e => setEditingContact({...editingContact, category: e.target.value})} 
+                        className="w-full bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-rose-500 uppercase text-rose-700 dark:text-rose-300 placeholder:text-rose-300 dark:placeholder:text-rose-700/50 shadow-inner" 
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Facility Name / Contact Person</label>
+                <input type="text" required placeholder="E.g. City Hospital, Inspector Sharma" value={editingContact.name} onChange={e => setEditingContact({...editingContact, name: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-rose-500 uppercase" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Phone / Helpline</label>
+                <input type="tel" required minLength="3" maxLength="15" placeholder="e.g. 100 or 9876543210" value={editingContact.phone} onChange={e => setEditingContact({...editingContact, phone: e.target.value.replace(/\D/g, '')})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-xs font-mono font-bold outline-none focus:border-rose-500 tracking-wider" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Address</label>
+                <input type="text" placeholder="Full address..." value={editingContact.address} onChange={e => setEditingContact({...editingContact, address: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-rose-500" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Notes (Optional)</label>
+                <textarea placeholder="Any additional details..." value={editingContact.notes} onChange={e => setEditingContact({...editingContact, notes: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-rose-500 min-h-[80px] resize-y"></textarea>
+              </div>
+              <button type="submit" className="w-full py-4 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-rose-500/30 active:scale-95 transition-all">Save Facility</button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==========================================
+// 🚨 EMERGENCY VIEW MODAL (WITH CATEGORY ANIMATIONS!)
+// ==========================================
+function EmergencyViewModal({ record, onClose }) {
+  const safeName = record.name || "Unknown";
+  
+  // ✨ Dynamic Styling based on Category!
+  let themeColor = 'slate';
+  let glowColor = 'bg-slate-500/20';
+  
+  if (record.category === 'Police') { themeColor = 'blue'; glowColor = 'bg-blue-600/30'; }
+  else if (record.category === 'Fire') { themeColor = 'rose'; glowColor = 'bg-rose-600/30'; }
+  else if (record.category === 'Hospital' || record.category === 'Ambulance' || record.category === 'Medical') { themeColor = 'emerald'; glowColor = 'bg-emerald-600/30'; }
+  else { themeColor = 'purple'; glowColor = 'bg-purple-600/30'; } // For custom ones like Bomb Squad!
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md z-[250] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300" onClick={onClose}>
+      <div className={`bg-white/90 dark:bg-[#0B1120]/90 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_0_80px_-15px_rgba(0,0,0,0.5)] w-full max-w-md max-h-[90vh] overflow-hidden relative animate-in zoom-in-[0.95] duration-500 border border-${themeColor}-500/30 flex flex-col group`} onClick={e => e.stopPropagation()}>
+        
+        {/* ✨ Category-Specific Glowing Orbs */}
+        <div className={`absolute -top-32 -left-32 w-72 h-72 ${glowColor} rounded-full blur-[80px] pointer-events-none group-hover:scale-110 transition-all duration-700 animate-pulse`}></div>
+        <div className={`absolute top-1/4 -right-32 w-72 h-72 ${glowColor} rounded-full blur-[80px] pointer-events-none`}></div>
+
+        {/* Close Button */}
+        <button onClick={onClose} className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-900 dark:text-slate-500 dark:hover:text-white bg-white/50 dark:bg-black/50 backdrop-blur-md rounded-full shadow-sm border border-slate-200/50 dark:border-slate-700/50 transition-all active:scale-90 z-50"><X size={18} /></button>
+
+        {/* 🛸 Holographic Header */}
+        <div className="pt-12 pb-6 px-8 flex flex-col items-center relative z-10 border-b border-slate-200/50 dark:border-slate-700/50">
+          <div className="relative mb-6">
+            {/* Radar Rings */}
+            <div className={`absolute inset-0 border border-${themeColor}-500/50 rounded-full animate-ping`} style={{ animationDuration: '2s' }}></div>
+            <div className={`absolute -inset-4 border border-${themeColor}-500/20 rounded-full animate-pulse`} style={{ animationDuration: '3s' }}></div>
+            
+            <div className={`w-28 h-28 rounded-full bg-gradient-to-br from-${themeColor}-400 to-${themeColor}-600 shadow-[0_0_40px_rgba(0,0,0,0.4)] border-4 border-white/80 dark:border-[#0B1120] flex items-center justify-center text-5xl font-black text-white relative z-10 transform hover:scale-105 transition-transform duration-500`}>
+              <AlertTriangle size={48} className="drop-shadow-md" />
+            </div>
+          </div>
+
+          <div className="text-center">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none mb-2 drop-shadow-md">{safeName}</h2>
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1 bg-${themeColor}-100 dark:bg-${themeColor}-500/20 text-${themeColor}-700 dark:text-${themeColor}-400 rounded-lg text-[10px] font-black uppercase tracking-widest border border-${themeColor}-200/50 dark:border-${themeColor}-500/30`}>
+              {record.category} Facility
+            </div>
+          </div>
+        </div>
+        
+        <div className="p-6 sm:p-8 overflow-y-auto custom-scrollbar flex-1 relative z-10 space-y-5">
+          
+          {/* ✨ Quick Actions */}
+          <div className="flex gap-3 mb-2">
+            <button onClick={() => { navigator.clipboard.writeText(record.phone); alert(' Phone No. Copied!'); }} className={`flex-1 py-3 bg-white/60 dark:bg-black/40 backdrop-blur-md rounded-2xl border border-white/50 dark:border-slate-700/50 flex flex-col items-center justify-center gap-1 hover:bg-${themeColor}-50 dark:hover:bg-${themeColor}-500/10 hover:border-${themeColor}-200 dark:hover:border-${themeColor}-500/30 transition-all group active:scale-95 shadow-sm`}>
+              <Phone size={18} className={`text-${themeColor}-600 dark:text-${themeColor}-400 group-hover:scale-110 transition-transform`} />
+              <span className={`text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest group-hover:text-${themeColor}-600 dark:group-hover:text-${themeColor}-400 mt-1`}>Copy Number</span>
+            </button>
+          </div>
+
+          {/* Data Blocks */}
+          <div className="bg-white/60 dark:bg-black/40 backdrop-blur-md p-5 rounded-[1.5rem] border border-white/50 dark:border-slate-700/50 shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] space-y-4">
+            <div>
+              <span className={`text-[10px] font-black text-${themeColor}-900/50 dark:text-${themeColor}-300/50 uppercase tracking-widest block mb-1`}>Emergency Helpline</span>
+              <span className="text-2xl font-mono font-black text-slate-800 dark:text-slate-200 tracking-wider">{formatPhone(record.phone)}</span>
+            </div>
+            {record.address && (
+              <div className="border-t border-slate-200/50 dark:border-slate-700/50 pt-4">
+                <span className={`text-[10px] font-black text-${themeColor}-900/50 dark:text-${themeColor}-300/50 uppercase tracking-widest block mb-1 flex items-center gap-1`}><MapPin size={12}/> Facility Address</span>
+                <span className="text-sm font-black text-slate-800 dark:text-slate-300 uppercase">{record.address}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Jurisdiction Card */}
+          <div className="bg-white/60 dark:bg-black/40 backdrop-blur-md p-5 rounded-[1.5rem] border border-white/50 dark:border-slate-700/50 shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] space-y-4 relative overflow-hidden">
+            <div className={`absolute -top-10 -right-10 w-32 h-32 bg-${themeColor}-500/10 rounded-full blur-2xl`}></div>
+            <h4 className={`text-[11px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest flex items-center gap-1.5 relative z-10`}><MapPin size={14} className={`text-${themeColor}-500`}/> Regional Jurisdiction</h4>
+            <div className="relative z-10">
+              <span className="text-[9px] font-bold text-slate-500 uppercase block mb-2">Assigned Site</span>
+              <span className={`px-3 py-1.5 bg-${themeColor}-500/10 text-${themeColor}-700 dark:text-${themeColor}-400 border border-${themeColor}-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1.5 w-max`}><span className={`w-1.5 h-1.5 bg-${themeColor}-500 rounded-full animate-pulse`}></span>{record.site}</span>
+            </div>
+          </div>
+
+          {/* Notes Card */}
+          {record.notes && (
+            <div className="bg-white/60 dark:bg-black/40 backdrop-blur-md p-5 rounded-[1.5rem] border border-white/50 dark:border-slate-700/50 shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] relative overflow-hidden">
+              <span className={`text-[11px] font-black text-${themeColor}-600 dark:text-${themeColor}-500 uppercase tracking-widest flex items-center gap-1.5 mb-2 relative z-10`}>
+                <BookOpen size={14} /> Critical Notes
+              </span>
+              <p className="text-xs font-bold text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap relative z-10">
+                {record.notes}
+              </p>
+            </div>
+          )}
+          
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// 🚨 SUPERVISOR MOBILE EMERGENCY VIEW (VIEW ONLY)
+// ==========================================
+function SupervisorEmergencyView({ emergencyContacts, userProfile }) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [viewingContact, setViewingContact] = useState(null);
+
+  // ✨ THE BROADCAST GHOST BUSTER BRAIN! (Case & Space Insensitive)
+  const safeUserSite = (userProfile?.site || "").toUpperCase().trim();
+
+  const filtered = (emergencyContacts || []).filter(c => {
+    // 1. Check if the site matches OR if it's a GLOBAL HQ contact
+    const safeContactSite = (c.site || "").toUpperCase().trim();
+    const isMySite = safeContactSite === safeUserSite || safeContactSite === 'GLOBAL';
+
+    // 2. Apply the search bar filters
+    const q = searchTerm.toLowerCase();
+    const matchesSearch = c.name?.toLowerCase().includes(q) || c.category?.toLowerCase().includes(q);
+
+    return isMySite && matchesSearch;
+  });
+
+  return (
+    <div className="p-4 space-y-4 pt-4 pb-24">
+      {/* Native Mobile Search Bar */}
+      <div className="bg-white dark:bg-[#0B1120] p-4 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-3 relative overflow-hidden">
+        <div className="flex justify-between items-center">
+          <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><Search size={14} className="text-rose-500"/> Search Facilities</span>
+        </div>
+        <div className="relative">
+          <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input type="text" placeholder="Police, Fire, Name..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-8 pr-2 py-3 text-xs font-bold bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-rose-500 shadow-inner text-slate-700 dark:text-slate-300 transition-colors" />
+        </div>
+      </div>
+
+      {/* Cards Grid */}
+      <div className="space-y-4">
+        {filtered.map(c => {
+          let badgeColor = 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700';
+          if (c.category === 'Police') badgeColor = 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-500/30';
+          if (c.category === 'Fire') badgeColor = 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-500/30';
+          if (c.category === 'Hospital' || c.category === 'Ambulance' || c.category === 'Medical') badgeColor = 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-500/30';
+          if (c.category === 'Custom') badgeColor = 'bg-purple-50 text-purple-600 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-500/30';
+
+          return (
+            <div key={c.id} onClick={() => setViewingContact(c)} className="bg-white dark:bg-slate-900 p-5 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 shadow-sm active:scale-[0.98] transition-all relative overflow-hidden cursor-pointer flex flex-col gap-3">
+              <div className="flex justify-between items-start">
+                <span className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border shadow-sm ${badgeColor}`}>{c.category}</span>
+                {c.site === 'GLOBAL' && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[8px] font-black uppercase tracking-widest border shadow-sm bg-purple-50 text-purple-600 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-500/30">
+                    <Globe2 size={10} /> HQ
+                  </span>
+                )}
+              </div>
+              <div>
+                <h3 className="font-black text-slate-900 dark:text-white uppercase text-base leading-tight">{c.name}</h3>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-950/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800/50 flex justify-between items-center mt-1">
+                <div className="flex items-center gap-2">
+                  <Phone size={14} className="text-slate-400" />
+                  <span className="text-sm font-mono font-black text-slate-800 dark:text-slate-200">{formatPhone(c.phone)}</span>
+                </div>
+                <button onClick={(e) => { e.stopPropagation(); window.location.href=`tel:${c.phone}`; }} className="bg-emerald-500 text-white p-2 rounded-lg shadow-md active:scale-90 transition-transform">
+                  <Phone size={14} />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+        {filtered.length === 0 && (
+          <div className="text-center py-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm">
+            <CheckCircle size={32} className="text-slate-300 dark:text-slate-600 mb-4 mx-auto"/>
+            <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest">Vault Secure</h3>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">No local emergency facilities found.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Tap-to-View Modal Integration! */}
+      {viewingContact && <EmergencyViewModal record={viewingContact} onClose={() => setViewingContact(null)} />}
     </div>
   );
 }
