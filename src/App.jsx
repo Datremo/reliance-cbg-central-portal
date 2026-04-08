@@ -201,6 +201,7 @@ export default function App() {
   const [userProfile, setUserProfile] = useState(null);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
+  
   const [theme, setTheme] = useState('light');
   const [deletingRecord, setDeletingRecord] = useState(null); 
   const [viewingRecord, setViewingRecord] = useState(null); 
@@ -397,6 +398,21 @@ const toggleIncidentStatus = async (inc) => {
 
 // ✨ NEW: WEEKLY LEDGER GOD-MODE CONTROLS
   const [editingWeekly, setEditingWeekly] = useState(null);
+
+
+  // ✨ NEW: INCIDENT GOD-MODE CONTROLS
+  const [editingIncident, setEditingIncident] = useState(null);
+
+  const saveIncidentEdit = async (updatedRecord) => {
+    const { id, created_at, ...updateData } = updatedRecord;
+    const { error } = await supabase.from('incidents').update(updateData).eq('id', id);
+    if (error) {
+      alert(`Vault Rejection: ${error.message}`);
+    } else {
+      fetchIncidents();
+      setEditingIncident(null);
+    }
+  };
 
   const deleteWeeklyReport = async (id) => {
     if(window.confirm("Are you absolutely sure you want to delete this MIS report?")) {
@@ -691,13 +707,13 @@ const toggleIncidentStatus = async (inc) => {
               fetchBroadcasts={fetchBroadcasts}
             />
           ) : (
-        <SupervisorMobileView userProfile={userProfile} deployments={deployments} incidents={incidents} weeklyReports={weeklyReports} nightHaults={nightHaults} emergencyContacts={emergencyContacts} isLoading={isLoadingData} fetchDeployments={fetchDeployments} fetchIncidents={fetchIncidents} fetchWeeklyReports={fetchWeeklyReports} fetchNightHaults={fetchNightHaults} fetchEmergencyContacts={fetchEmergencyContacts} onEditWeekly={setEditingWeekly} onEditNightHault={setEditingNightHault} onDeleteNightHault={setDeletingNightHault} onLogout={handleInstantLogout} onEdit={setEditingRecord} onDelete={setDeletingRecord} onView={setViewingRecord} onToggleAck={toggleIncidentStatus} onDeleteIncident={deleteIncident} onAddContact={() => setEditingContact({ name: '', phone: '', designation: 'SS - Security Supervisor', state_name: '', site: '', email: '', company: '' })} onEditContact={setEditingContact} onDeleteContact={setDeletingContact} theme={theme} toggleTheme={toggleTheme} broadcasts={broadcasts} acks={acks} fetchBroadcasts={fetchBroadcasts} />          )}
+        <SupervisorMobileView userProfile={userProfile} deployments={deployments} incidents={incidents} weeklyReports={weeklyReports} nightHaults={nightHaults} emergencyContacts={emergencyContacts} isLoading={isLoadingData} fetchDeployments={fetchDeployments} fetchIncidents={fetchIncidents} fetchWeeklyReports={fetchWeeklyReports} fetchNightHaults={fetchNightHaults} fetchEmergencyContacts={fetchEmergencyContacts} onEditWeekly={setEditingWeekly} onEditNightHault={setEditingNightHault} onEditIncident={setEditingIncident} onDeleteNightHault={setDeletingNightHault} onLogout={handleInstantLogout} onEdit={setEditingRecord} onDelete={setDeletingRecord} onView={setViewingRecord} onToggleAck={toggleIncidentStatus} onDeleteIncident={deleteIncident} onAddContact={() => setEditingContact({ name: '', phone: '', designation: 'SS - Security Supervisor', state_name: '', site: '', email: '', company: '' })} onEditContact={setEditingContact} onDeleteContact={setDeletingContact} theme={theme} toggleTheme={toggleTheme} broadcasts={broadcasts} acks={acks} fetchBroadcasts={fetchBroadcasts} />          )}
         </div>
           {/* Modals for Deployments */}
         {editingRecord && <EditModal record={editingRecord} onClose={() => setEditingRecord(null)} onSave={saveEdit} />}
         {deletingRecord && <DeleteModal record={deletingRecord} onClose={() => setDeletingRecord(null)} onConfirm={confirmDelete} type="deployment" />}
         {viewingRecord && <ViewModal record={viewingRecord} onClose={() => setViewingRecord(null)} />}
-        
+        {editingIncident && <IncidentEditModal record={editingIncident} onClose={() => setEditingIncident(null)} onSave={saveIncidentEdit} />}
         {/*   NEW: Modals for Contacts! */}
         {editingContact && <ContactFormModal record={editingContact} onClose={() => setEditingContact(null)} onSave={saveContact} SITES={SITES} SITES_BY_STATE={SITES_BY_STATE} STATE_NAMES={STATE_NAMES} />}           {deletingContact && <DeleteModal record={deletingContact} onClose={() => setDeletingContact(null)} onConfirm={confirmDeleteContact} type="contact" />}
         {viewingContact && <ContactViewModal record={viewingContact} onClose={() => setViewingContact(null)} />}
@@ -986,7 +1002,7 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
 // 📱 SUPERVISOR iOS-STYLE COMMAND HUB + CINEMATIC INTRO
 // ==========================================
 
-function SupervisorMobileView({ userProfile, deployments, incidents, weeklyReports, nightHaults, emergencyContacts, isLoading, fetchDeployments, fetchIncidents, fetchWeeklyReports, fetchNightHaults, onEditWeekly, onLogout, onEdit, onDelete, onView, onDeleteIncident, onEditNightHault,onDeleteNightHault, theme, toggleTheme, broadcasts, acks, fetchBroadcasts, onSync }) {
+function SupervisorMobileView({ userProfile, deployments, incidents, weeklyReports, nightHaults, emergencyContacts, isLoading, fetchDeployments, fetchIncidents, fetchWeeklyReports, fetchNightHaults, onEditWeekly, onLogout, onEdit, onDelete, onView, onEditNightHault,onEditIncident,onDeleteNightHault, theme, toggleTheme, broadcasts, acks, fetchBroadcasts, onSync }) {
   const [currentApp, setCurrentApp] = useState('hub'); 
   const [appTab, setAppTab] = useState('form'); 
    
@@ -1170,7 +1186,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
           <button onClick={() => { setCurrentApp('emergency'); setAppTab('history'); }} className="aspect-square bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.2)] border border-white/60 dark:border-slate-700/50 flex flex-col items-center justify-center gap-4 transition-all active:scale-[0.96] hover:shadow-lg group relative overflow-hidden">
             <div className="absolute -top-6 -right-6 w-24 h-24 bg-rose-500/10 rounded-full blur-2xl group-hover:bg-rose-500/20 transition-all"></div>
             <div className="w-14 h-14 bg-gradient-to-br from-rose-500 to-red-700 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-rose-600/30 group-hover:scale-110 transition-transform duration-300"><Phone size={28} className="stroke-[1.5]"/></div>
-            <span className="block font-bold text-slate-700 dark:text-white text-sm sm:text-base tracking-wide leading-tight px-2 text-center">SOS Vault</span>
+            <span className="block font-bold text-slate-700 dark:text-white text-sm sm:text-base tracking-wide leading-tight px-2 text-center">Emergency Contacts</span>
           </button>
         </div>
       </div>
@@ -1210,7 +1226,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
         {currentApp === 'deployment' && appTab === 'history' && <SupervisorMobileHistory deployments={deployments} isLoading={isLoading} onEdit={onEdit} onDelete={onDelete} onView={onView} language={language}/>}
         
         {currentApp === 'incident' && appTab === 'form' && <IncidentMobileForm userProfile={userProfile} fetchIncidents={fetchIncidents} setActiveTab={setAppTab} language={language}/>}
-        {currentApp === 'incident' && appTab === 'history' && <IncidentMobileHistory incidents={incidents} isLoading={isLoading} language={language}/>}
+        {currentApp === 'incident' && appTab === 'history' && <IncidentMobileHistory incidents={incidents} isLoading={isLoading} language={language} onEdit={onEditIncident} />}
 
         {currentApp === 'weekly' && appTab === 'form' && <WeeklyMobileForm userProfile={userProfile} fetchWeeklyReports={fetchWeeklyReports} setActiveTab={setAppTab} language={language}/>}
         {currentApp === 'weekly' && appTab === 'history' && <WeeklyMobileHistory weeklyReports={weeklyReports} isLoading={isLoading} onEditWeekly={onEditWeekly} language={language}/>}
@@ -3389,7 +3405,7 @@ function IncidentMobileForm({ userProfile, fetchIncidents, setActiveTab, languag
   );
 }
 
-function IncidentMobileHistory({ incidents, isLoading, language, onEdit, onDelete }) {
+function IncidentMobileHistory({ incidents, isLoading, language, onEdit }) {
   const t = TRANSLATIONS[language] || TRANSLATIONS['en'];
   const [viewDate, setViewDate] = useState(getISTDate());
   const [viewingInc, setViewingInc] = useState(null);
@@ -7950,6 +7966,85 @@ function SupervisorEmergencyView({ emergencyContacts, userProfile }) {
 
       {/* Tap-to-View Modal Integration! */}
       {viewingContact && <EmergencyViewModal record={viewingContact} onClose={() => setViewingContact(null)} />}
+    </div>
+  );
+}
+
+// ==========================================
+// 🚨 INCIDENT EDIT MODAL (SUPERVISOR GOD-MODE)
+// ==========================================
+function IncidentEditModal({ record, onClose, onSave }) {
+  const [fd, setFd] = useState({ ...record });
+  
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(fd);
+  };
+  
+  const inputClass = "w-full bg-white dark:bg-[#0B1120] border-2 border-slate-300 dark:border-slate-600 rounded-2xl py-3 px-4 text-xs font-black text-slate-900 dark:text-white outline-none focus:border-rose-500 dark:focus:border-rose-400 focus:ring-4 focus:ring-rose-500/20 transition-all shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05),inset_0_2px_4px_rgba(0,0,0,0.04)]";
+  const labelClass = "block text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest mb-1.5 ml-1 drop-shadow-sm";
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md z-[250] flex items-center justify-center p-4 animate-in fade-in duration-300">
+       <div className="bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_0_80px_-15px_rgba(225,29,72,0.4)] w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] border border-white/50 dark:border-rose-500/30 relative animate-in zoom-in-[0.98] duration-300">
+          
+          {/* Cyber Glow */}
+          <div className="absolute -top-32 -left-32 w-72 h-72 bg-rose-500/20 rounded-full blur-[80px] pointer-events-none"></div>
+
+          <div className="px-6 py-5 border-b border-slate-200/50 dark:border-slate-800/50 flex justify-between items-center relative z-10">
+             <h3 className="font-black text-slate-900 dark:text-white flex items-center gap-3 text-lg uppercase tracking-tight">
+                <div className="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center border border-rose-500/20"><AlertTriangle size={16} /></div>
+                Modify Incident Report
+             </h3>
+             <button onClick={onClose} className="p-2 bg-white/50 dark:bg-black/40 backdrop-blur-md rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm border border-white/50 dark:border-slate-700/50 active:scale-95"><X size={16}/></button>
+          </div>
+
+          <form id="incident-edit-form" onSubmit={handleSubmit} className="p-6 overflow-y-auto custom-scrollbar space-y-4 relative z-10">
+             <div>
+                <label className={labelClass}>Incident Type / Name</label>
+                <input type="text" required value={fd.incident_name || ''} onChange={e => setFd({...fd, incident_name: e.target.value.toUpperCase()})} className={`${inputClass} !border-rose-200 dark:!border-rose-500/30 !bg-rose-50/50 dark:!bg-rose-500/5 text-rose-700 dark:text-rose-400`} />
+             </div>
+             
+             <div className="grid grid-cols-2 gap-3">
+                <div>
+                   <label className={labelClass}>Occurrence Time</label>
+                   <input type="text" placeholder="YYYY-MM-DD HH:MM" required value={fd.time_of_incident || ''} onChange={e => setFd({...fd, time_of_incident: e.target.value})} className={inputClass} />
+                </div>
+                <div>
+                   <label className={labelClass}>Exact Location</label>
+                   <input type="text" required value={fd.incident_location || ''} onChange={e => setFd({...fd, incident_location: e.target.value})} className={inputClass} />
+                </div>
+             </div>
+
+             <div className="grid grid-cols-3 gap-3">
+                <div><label className={labelClass}>Reported By</label><input type="text" required value={fd.reported_by || ''} onChange={e => setFd({...fd, reported_by: e.target.value.toUpperCase()})} className={inputClass} /></div>
+                <div><label className={labelClass}>EP Number</label><input type="text" required value={fd.ep_number || ''} onChange={e => setFd({...fd, ep_number: e.target.value.toUpperCase()})} className={inputClass} /></div>
+                <div><label className={labelClass}>Pincode</label><input type="text" required value={fd.pincode || ''} onChange={e => setFd({...fd, pincode: e.target.value.toUpperCase()})} className={inputClass} /></div>
+             </div>
+
+             <div>
+                <label className={labelClass}>Detailed Report</label>
+                <textarea required value={fd.details || ''} onChange={e => setFd({...fd, details: e.target.value})} className={`${inputClass} min-h-[80px] resize-y`}></textarea>
+             </div>
+             <div>
+                <label className={labelClass}>Findings</label>
+                <textarea required value={fd.findings || ''} onChange={e => setFd({...fd, findings: e.target.value})} className={`${inputClass} min-h-[60px] resize-y`}></textarea>
+             </div>
+             <div>
+                <label className={labelClass}>Actions Taken</label>
+                <textarea required value={fd.actions_taken || ''} onChange={e => setFd({...fd, actions_taken: e.target.value})} className={`${inputClass} min-h-[60px] resize-y`}></textarea>
+             </div>
+             <div>
+                <label className={labelClass}>Recommendations</label>
+                <textarea required value={fd.recommendations || ''} onChange={e => setFd({...fd, recommendations: e.target.value})} className={`${inputClass} min-h-[60px] resize-y`}></textarea>
+             </div>
+          </form>
+
+          <div className="p-5 bg-white/40 dark:bg-black/40 backdrop-blur-xl border-t border-white/50 dark:border-slate-700/50 flex gap-3 shrink-0 rounded-b-[2.5rem] relative z-10">
+             <button type="button" onClick={onClose} className="flex-1 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest bg-white/60 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 shadow-sm border border-slate-300 dark:border-slate-600 active:scale-95 transition-all">Cancel</button>
+             <button type="submit" form="incident-edit-form" className="flex-[2] py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 flex items-center justify-center gap-2 active:scale-95 transition-all border border-rose-500/50"><Save size={16}/> Save Updates</button>
+          </div>
+       </div>
     </div>
   );
 }
