@@ -4334,9 +4334,11 @@ function MisComparatorModal({ reports, availableSites, onClose }) {
     };
 
     // Helper: Add Data Rows with Surgical Delta Colors!
-    const addRow = (label, key, isWarning = false) => {
-      const vA = dataA ? num(dataA[key]) : 0;
-      const vB = dataB ? num(dataB[key]) : 0;
+    const addRow = (label, keys, isWarning = false) => {
+      // ✨ MAGIC: If we pass an array of keys, sum them up! Otherwise, fetch the single key.
+      const getVal = (data) => Array.isArray(keys) ? keys.reduce((sum, k) => sum + num(data[k]), 0) : num(data[keys]);
+      const vA = dataA ? getVal(dataA) : 0;
+      const vB = dataB ? getVal(dataB) : 0;
       const diff = vA - vB;
       const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
 
@@ -4365,24 +4367,24 @@ function MisComparatorModal({ reports, availableSites, onClose }) {
     };
 
     // 3. Inject the Data!
-    addCategory('🚚 LOGISTICS', 'FF4F46E5'); // Indigo
+    addCategory('🚚 MATERIAL MOVEMENT', 'FF4F46E5'); // Indigo
     addRow('Solid Dispatch', 'disp_solid');
     addRow('Gas Dispatch', 'disp_gas');
-    addRow('Scrap Dispatch', 'disp_scrap', true);
+    addRow('LFOM Dispatch', 'disp_scrap'); // ✨ No more red warning!
     addRow('Company Receipts', 'rec_company');
     addRow('Contractor Receipts', 'rec_contractor');
 
-    addCategory('🛡️ ASSET PROTECTION (OGP)', 'FFD97706'); // Amber
+    addCategory('🛡️OGP STATUS', 'FFD97706'); // Amber
     addRow('RMGP Out', 'ogp_rmgp', true);
     addRow('RMGP In', 'ogp_rmgp_in');
     addRow('NRGP', 'ogp_nrgp', true);
 
-    addCategory('👥 FOOTFALL & MANPOWER', 'FF059669'); // Emerald
+    addCategory('👥 TOTAL PEOPLE COUNT', 'FF059669'); // Emerald
     addRow('Contractor Workers', 'foot_contractor');
     addRow('RIL Employees', 'foot_ril');
     addRow('Gov Officials', 'foot_gov', true);
-    addRow('Day Deployment (SS+SG)', 'dep_day_ss');
-    addRow('Night Deployment (SS+SG)', 'dep_night_ss');
+    addRow('Day Deployment (SS+SG)', ['dep_day_ss', 'dep_day_sg']);
+    addRow('Night Deployment (SS+SG)', ['dep_night_ss', 'dep_night_sg']);
 
     // 4. Generate the File and Trigger Download!
     const buffer = await workbook.xlsx.writeBuffer();
@@ -4396,9 +4398,11 @@ function MisComparatorModal({ reports, availableSites, onClose }) {
     document.body.removeChild(link);
   };
 
-  const renderMetric = (label, keyA, keyB, isWarning = false) => {
-    const vA = dataA ? num(dataA[keyA]) : 0;
-    const vB = dataB ? num(dataB[keyB]) : 0;
+  const renderMetric = (label, keys, isWarning = false) => {
+    // ✨ MAGIC: Allows summing arrays for the UI Modal!
+    const getVal = (data) => Array.isArray(keys) ? keys.reduce((sum, k) => sum + num(data[k]), 0) : num(data[keys]);
+    const vA = dataA ? getVal(dataA) : 0;
+    const vB = dataB ? getVal(dataB) : 0;
     const diff = vA - vB;
     
     // ✨ Dynamic Color Logic for the Delta Pill
@@ -4496,28 +4500,30 @@ function MisComparatorModal({ reports, availableSites, onClose }) {
               <div className="mt-6 mb-2 mx-3 bg-gradient-to-r from-slate-100 to-transparent dark:from-slate-800/60 py-2.5 px-4 rounded-r-xl border-l-4 border-indigo-500 shadow-sm">
                 <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.25em]">Logistics</span>
               </div>
-              {renderMetric('Total Dispatch (Solid+Gas+Scrap)', 'disp_solid', 'disp_solid', false)} 
-              {renderMetric('Scrap Dispatch', 'disp_scrap', 'disp_scrap', true)}
-              {renderMetric('Company Receipts', 'rec_company', 'rec_company', false)}
-              {renderMetric('Contractor Receipts', 'rec_contractor', 'rec_contractor', false)}
+              {/* ✨ FIXED: Now actually sums up Solid + Gas + LFOM! */}
+              {renderMetric('Total Dispatch (Solid+Gas+LFOM)', ['disp_solid', 'disp_gas', 'disp_scrap'])} 
+              {renderMetric('LFOM Dispatch', 'disp_scrap')} 
+              {renderMetric('Company Receipts', 'rec_company')}
+              {renderMetric('Contractor Receipts', 'rec_contractor')}
               
               {/* 🛡️ ASSET PROTECTION BANNER */}
               <div className="mt-8 mb-2 mx-3 bg-gradient-to-r from-slate-100 to-transparent dark:from-slate-800/60 py-2.5 px-4 rounded-r-xl border-l-4 border-amber-500 shadow-sm">
                 <span className="text-[9px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-[0.25em]">Asset Protection (OGP)</span>
               </div>
-              {renderMetric('RMGP Out', 'ogp_rmgp', 'ogp_rmgp', true)}
-              {renderMetric('RMGP In', 'ogp_rmgp_in', 'ogp_rmgp_in', false)}
-              {renderMetric('NRGP', 'ogp_nrgp', 'ogp_nrgp', true)}
+              {renderMetric('RMGP Out', 'ogp_rmgp', true)}
+              {renderMetric('RMGP In', 'ogp_rmgp_in')}
+              {renderMetric('NRGP', 'ogp_nrgp', true)}
 
               {/* 👥 FOOTFALL BANNER */}
               <div className="mt-8 mb-2 mx-3 bg-gradient-to-r from-slate-100 to-transparent dark:from-slate-800/60 py-2.5 px-4 rounded-r-xl border-l-4 border-emerald-500 shadow-sm">
                 <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.25em]">Footfall & Manpower</span>
               </div>
-              {renderMetric('Contractor Workers', 'foot_contractor', 'foot_contractor', false)}
-              {renderMetric('RIL Employees', 'foot_ril', 'foot_ril', false)}
-              {renderMetric('Gov Officials', 'foot_gov', 'foot_gov', true)}
-              {renderMetric('Day Deployment (SS+SG)', 'dep_day_ss', 'dep_day_ss', false)}
-              {renderMetric('Night Deployment (SS+SG)', 'dep_night_ss', 'dep_night_ss', false)}
+              {renderMetric('Contractor Workers', 'foot_contractor')}
+              {renderMetric('RIL Employees', 'foot_ril')}
+              {renderMetric('Gov Officials', 'foot_gov', true)}
+              {/* ✨ FIXED: Now accurately sums up Supervisors (SS) + Guards (SG)! */}
+              {renderMetric('Day Deployment (SS+SG)', ['dep_day_ss', 'dep_day_sg'])}
+              {renderMetric('Night Deployment (SS+SG)', ['dep_night_ss', 'dep_night_sg'])}
               
             </div>
           </div>
@@ -4537,18 +4543,41 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
   const [filterState, setFilterState] = useState("All"); 
   const [filterSite, setFilterSite] = useState("All");
   const [viewingRep, setViewingRep] = useState(null);
-const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Matrix Trigger
-  // ✨ NEW: THE GPS TRACKER & BACKGROUND LOCK! 📍
+  const [showComparator, setShowComparator] = useState(false); 
+  const [showTrendModal, setShowTrendModal] = useState(false); 
+
+  // ✨ THE TIME-WARP MODAL STATES (Safely declared at the top level!)
+  const [isComparing, setIsComparing] = useState(false);
+  const [primaryStart, setPrimaryStart] = useState(getISTDate());
+  const [primaryEnd, setPrimaryEnd] = useState(getISTDate());
+  const [compareStart, setCompareStart] = useState(getISTDate());
+  const [compareEnd, setCompareEnd] = useState(getISTDate());
+
+  // ✨ THE GPS TRACKER & BACKGROUND LOCK! 📍
   const [scrollPos, setScrollPos] = useState(0);
+  
   React.useEffect(() => {
-    if (viewingRep) {
-       setScrollPos(window.scrollY); // Locks onto your exact screen position!
-       document.body.style.overflow = 'hidden'; // Freezes the background scroll!
+    // If ANY modal is open, lock the screen!
+    if (viewingRep || showComparator) {
+       // Find the closest scrolling parent! (In your dashboard, it's usually the <main> or the container with 'custom-scrollbar')
+       // Since this component is injected inside a scrollable div, window.scrollY might be 0. We need the actual container's scroll!
+       const scrollContainer = document.querySelector('.custom-scrollbar'); 
+       setScrollPos(scrollContainer ? scrollContainer.scrollTop : window.scrollY); 
+       
+       document.body.style.overflow = 'hidden'; 
+       if(scrollContainer) scrollContainer.style.overflow = 'hidden'; // Lock the container too!
     } else {
-       document.body.style.overflow = 'auto'; // Unfreezes when closed
+       document.body.style.overflow = 'auto';
+       const scrollContainer = document.querySelector('.custom-scrollbar'); 
+       if(scrollContainer) scrollContainer.style.overflow = 'auto';
     }
-    return () => { document.body.style.overflow = 'auto'; }; // Safety cleanup
-  }, [viewingRep]);
+    
+    return () => { 
+      document.body.style.overflow = 'auto'; 
+      const scrollContainer = document.querySelector('.custom-scrollbar'); 
+      if(scrollContainer) scrollContainer.style.overflow = 'auto';
+    }; 
+  }, [viewingRep, showComparator]);
 
   // ✨ OPERATIONAL FILTER MAGIC: We ONLY want operational/commissioned sites in this dropdown!
   const baseSites = filterState === "All" ? SITES : SITES_BY_STATE[filterState] || [];
@@ -4575,7 +4604,7 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
   let totalStrictDeficit = 0;
   const siteDeficits = []; 
   
-  let tSolid = 0, tGas = 0, tScrap = 0;
+  let tSolid = 0, tGas = 0, tLfom = 0; // ✨ Upgraded to LFOM!
   let recCo = 0, recCon = 0;
   let nrgp = 0, rmgpOut = 0, rmgpIn = 0;
   let vehCon = 0, vehCo = 0;
@@ -4586,7 +4615,7 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
   filtered.forEach(r => {
     tSolid += num(r.disp_solid);
     tGas += num(r.disp_gas);
-    tScrap += num(r.disp_scrap);
+    tLfom += num(r.disp_scrap); // ✨ Still using DB column 'disp_scrap', but storing as LFOM!
 
     recCo += num(r.rec_company);
     recCon += num(r.rec_contractor);
@@ -4682,7 +4711,7 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
     // 3. The Sub-Headers (Row 2) - Removed one blank at the start!
     const row2 = sheet.addRow([
       "", "", "", 
-      "SOLID", "GAS", "SCRAP", "COMPANY", "CONTRACTOR", 
+      "SOLID", "GAS", "LFOM", "COMPANY", "CONTRACTOR", 
       "NRGP", "RMGP", "RMGP IN", "CON. VEHICLE", "CO./EMP. VEHICLE", 
       "CON. WORKER", "RIL EMP", "", "", 
       "Day SS", "Day SG", "Night SS", "Night SG"
@@ -4719,9 +4748,7 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
       });
 
       // ✨ THE MAGIC: Shifted the column targeting by -1 so it still highlights correctly!
-      if (num(r.disp_scrap) > 50) {
-        dataRow.getCell(6).font = { bold: true, color: { argb: 'FFE11D48' } }; // Scrap is now Col 6
-      }
+      // (Removed Scrap alert because LFOM is a product!)
       if (num(r.ogp_rmgp) > num(r.ogp_rmgp_in)) {
         dataRow.getCell(10).font = { bold: true, color: { argb: 'FFE11D48' } }; // RMGP Out is now Col 10
       }
@@ -4756,7 +4783,7 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
         if (diff >= 50) anomalies.push({ site, label, prev: num(prev[key]), curr: num(curr[key]), diff });
       };
 
-      checkSpike('disp_scrap', 'Scrap');
+      checkSpike('disp_scrap', 'LFOM'); // ✨ Spikes in LFOM are just logged, not called Scrap!
       checkSpike('disp_gas', 'Gas/Slurry');
       checkSpike('rec_company', 'Receipts (Co)');
       checkSpike('rec_contractor', 'Receipts (Con)');
@@ -4942,18 +4969,19 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-2 pb-2 opacity-[0.05] dark:opacity-[0.1]">{[...Array(5)].map((_, i) => <div key={i} className="w-full border-t border-slate-900 dark:border-slate-100"></div>)}</div>
               <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
                 <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-slate-800 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">{tSolid}</div>
-                <div style={{ height: `${(tSolid / (Math.max(tSolid, tGas, tScrap, 1))) * 100}%`, minHeight: tSolid > 0 ? '4px' : '0' }} className="w-full max-w-[28px] bg-slate-400 dark:bg-slate-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
+                <div style={{ height: `${(tSolid / (Math.max(tSolid, tGas, tLfom, 1))) * 100}%`, minHeight: tSolid > 0 ? '4px' : '0' }} className="w-full max-w-[28px] bg-slate-400 dark:bg-slate-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
                 <span className="mt-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Solid</span>
               </div>
               <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
-                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-indigo-600 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">{tGas}</div>
-                <div style={{ height: `${(tGas / (Math.max(tSolid, tGas, tScrap, 1))) * 100}%`, minHeight: tGas > 0 ? '4px' : '0' }} className="w-full max-w-[28px] bg-indigo-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
+                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-emerald-600 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">{tGas}</div>
+                <div style={{ height: `${(tGas / (Math.max(tSolid, tGas, tLfom, 1))) * 100}%`, minHeight: tGas > 0 ? '4px' : '0' }} className="w-full max-w-[28px] bg-emerald-500 rounded-t-lg transition-all duration-1000 group-hover/bar:brightness-110"></div>
                 <span className="mt-3 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Gas</span>
               </div>
+              {/* ✨ PREMIUM PURPLE LFOM BAR! */}
               <div className="flex-1 flex flex-col items-center group/bar h-full justify-end relative z-10">
-                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-rose-600 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">{tScrap}</div>
-                <div style={{ height: `${(tScrap / (Math.max(tSolid, tGas, tScrap, 1))) * 100}%`, minHeight: tScrap > 0 ? '4px' : '0' }} className="w-full max-w-[28px] bg-rose-500 rounded-t-lg transition-all duration-1000 shadow-[0_-2px_10px_rgba(244,63,94,0.3)] group-hover/bar:brightness-110"></div>
-                <span className="mt-3 text-[9px] font-black text-rose-500 uppercase tracking-widest text-center animate-pulse">Scrap</span>
+                <div className="mb-2 opacity-0 group-hover/bar:opacity-100 transition-all duration-300 bg-purple-600 text-white text-[10px] font-black py-1 px-2 rounded-lg pointer-events-none shadow-xl border border-white/10">{tLfom}</div>
+                <div style={{ height: `${(tLfom / (Math.max(tSolid, tGas, tLfom, 1))) * 100}%`, minHeight: tLfom > 0 ? '4px' : '0' }} className="w-full max-w-[28px] bg-purple-500 rounded-t-lg transition-all duration-1000 shadow-[0_-2px_10px_rgba(168,85,247,0.3)] group-hover/bar:brightness-110"></div>
+                <span className="mt-3 text-[9px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest text-center">LFOM</span>
               </div>
            </div>
         </div>
@@ -5015,7 +5043,7 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
         <div className="w-full min-w-0 h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group">
            <div className="flex justify-between items-start mb-6 shrink-0">
              <div>
-               <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Site Presence</h3>
+               <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">People count</h3>
                <p className="text-[9px] font-bold text-indigo-500 uppercase mt-1 flex items-center gap-1.5"><span className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse"></span>{filterSite === "All" ? "Global Network" : filterSite}</p>
              </div>
              <Users size={16} className="text-indigo-500"/>
@@ -5046,51 +5074,49 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
 
         </div> {/* End of Top 4 Grid */}
       </div>
-       {/* 🏭 NEW: PRODUCTION & YIELD ANALYTICS MATRIX */}
+       {/* 🏭 NEW: PRODUCTION & CONVERSION ANALYTICS MATRIX */}
         <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch mt-6">
           
-          {/* 🎯 CHART 1: YIELD EFFICIENCY (CIRCULAR RADIAL GAUGE) */}
+          {/* 🎯 CHART 1: PLANT CONVERSION RATE */}
           <div className="w-full min-w-0 h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group relative overflow-hidden">
             <div className="absolute -right-10 -top-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-[40px] pointer-events-none transition-all group-hover:bg-emerald-500/20"></div>
-            <div className="flex justify-between items-start mb-2 shrink-0 relative z-10">
+            <div className="flex justify-between items-start mb-6 shrink-0 relative z-10">
               <div>
-                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Yield Efficiency</h3>
-                <p className="text-[9px] font-bold text-emerald-500 uppercase mt-1">Useful vs Scrap</p>
+                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Plant Conversion</h3>
+                <p className="text-[9px] font-bold text-emerald-500 uppercase mt-1">Dispatch vs Receipts</p>
               </div>
               <Target size={16} className="text-emerald-500 shrink-0"/>
             </div>
             
-            <div className="flex-1 flex flex-col justify-center items-center relative z-10 w-full">
+            <div className="flex-1 flex flex-col justify-center items-center relative z-10 w-full pb-2">
               {(() => {
-                const totalProd = tSolid + tGas + tScrap;
-                const usefulProd = tSolid + tGas;
-                const yieldRate = totalProd > 0 ? Math.round((usefulProd / totalProd) * 100) : 0;
+                const totalInbound = recCo + recCon;
+                const totalOutbound = tSolid + tGas + tLfom;
+                const conversionRate = totalInbound > 0 ? Math.round((totalOutbound / totalInbound) * 100) : 0;
                 
-                // Flawless SVG Math for the ring
                 const radius = 40;
                 const circumference = 2 * Math.PI * radius;
-                const strokeDashoffset = circumference - (yieldRate / 100) * circumference;
+                const displayRate = Math.min(conversionRate, 100); 
+                const strokeDashoffset = circumference - (displayRate / 100) * circumference;
 
                 return (
                   <>
-                    <div className="relative w-36 h-36 flex-shrink-0 mx-auto flex items-center justify-center">
+                    <div className="relative w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0 mx-auto mt-auto mb-4">
                       <svg className="absolute inset-0 w-full h-full transform -rotate-90 drop-shadow-xl" viewBox="0 0 100 100">
-                        {/* Background Track */}
                         <circle cx="50" cy="50" r={radius} fill="transparent" stroke="currentColor" strokeWidth="8" className="text-slate-100 dark:text-slate-800" />
-                        {/* Dynamic Progress Ring */}
                         <circle cx="50" cy="50" r={radius} fill="transparent" stroke="currentColor" strokeWidth="8" strokeLinecap="round" 
-                                className={`${yieldRate >= 85 ? 'text-emerald-500' : yieldRate >= 50 ? 'text-amber-500' : 'text-rose-500'} transition-all duration-1000 ease-out`} 
+                                className={`${conversionRate >= 85 ? 'text-emerald-500' : conversionRate >= 50 ? 'text-amber-500' : 'text-rose-500'} transition-all duration-1000 ease-out`} 
                                 strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span className="text-3xl font-black text-slate-900 dark:text-white leading-none">{yieldRate}%</span>
+                        <span className="text-3xl font-black text-slate-900 dark:text-white leading-none">{conversionRate}%</span>
                         <span className="text-[8px] font-black uppercase tracking-widest text-slate-400 mt-1">Yield</span>
                       </div>
                     </div>
                     
-                    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 w-full text-[10px] font-black uppercase tracking-widest text-slate-500 mt-4">
-                       <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700/50 shadow-sm"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></div> Out: {usefulProd}</span>
-                       <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700/50 shadow-sm"><div className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-600 shrink-0"></div> Scrap: {tScrap}</span>
+                    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 w-full text-[10px] font-black uppercase tracking-widest text-slate-500 mt-auto">
+                       <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700/50 shadow-sm"><div className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-600 shrink-0"></div> In: {totalInbound}</span>
+                       <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700/50 shadow-sm"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></div> Out: {totalOutbound}</span>
                     </div>
                   </>
                 );
@@ -5098,39 +5124,104 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
             </div>
           </div>
 
-          {/* 🍩 CHART 2: OUTPUT DISTRIBUTION (PURE CSS DOUGHNUT CHART) */}
+          {/* 🍰 CHART 2: PRODUCT MIX (TRUE 3D CAKE SLICE PIE CHART) */}
           <div className="w-full min-w-0 h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group relative">
-            <div className="flex justify-between items-start mb-2 shrink-0">
+            <div className="flex justify-between items-start mb-6 shrink-0">
               <div>
-                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Distribution</h3>
-                <p className="text-[9px] font-bold text-indigo-500 uppercase mt-1">Solid vs Gas Blend</p>
+                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Production Distribution</h3>
+                <p className="text-[9px] font-bold text-indigo-500 uppercase mt-1">Interactive chart</p>
               </div>
               <PieChart size={16} className="text-indigo-500 shrink-0"/>
             </div>
             
-            <div className="flex-1 flex flex-col justify-center items-center w-full relative z-10">
+            <div className="flex-1 flex flex-col justify-center items-center w-full relative z-10 pb-2">
               {(() => {
-                const totalUseful = tSolid + tGas;
-                const solidPct = totalUseful > 0 ? Math.round((tSolid / totalUseful) * 100) : 0;
+                const totalOutbound = tSolid + tGas + tLfom;
+                // Pure decimal percentages for SVG Math
+                const solidPct = totalOutbound > 0 ? (tSolid / totalOutbound) : 0;
+                const gasPct = totalOutbound > 0 ? (tGas / totalOutbound) : 0;
+                const lfomPct = totalOutbound > 0 ? (tLfom / totalOutbound) : 0;
                 
+                // ✨ THE 3D CAKE SLICE GENERATOR ✨
+                let cumulativePercent = 0;
+                const getSlice = (percent, color, darkColor, label) => {
+                  if (percent <= 0) return null;
+                  
+                  // Math for the wedge arc
+                  const startX = Math.cos(2 * Math.PI * cumulativePercent - Math.PI/2);
+                  const startY = Math.sin(2 * Math.PI * cumulativePercent - Math.PI/2);
+                  cumulativePercent += percent;
+                  const endX = Math.cos(2 * Math.PI * cumulativePercent - Math.PI/2);
+                  const endY = Math.sin(2 * Math.PI * cumulativePercent - Math.PI/2);
+                  
+                  const largeArcFlag = percent > 0.5 ? 1 : 0;
+                  const pathData = `M 0 0 L ${startX * 50} ${startY * 50} A 50 50 0 ${largeArcFlag} 1 ${endX * 50} ${endY * 50} Z`;
+
+                  // ✨ THE MAGIC VECTOR: Find the exact middle angle of the slice to pull it straight out!
+                  const midAngle = 2 * Math.PI * (cumulativePercent - percent/2) - Math.PI/2;
+                  const pullX = Math.cos(midAngle);
+                  const pullY = Math.sin(midAngle);
+
+                  // Tooltip position (hovers over the emerging slice)
+                  const labelX = pullX * 36; 
+                  const labelY = pullY * 36;
+
+                  return (
+                    <g key={label} 
+                       className="group cursor-pointer transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] origin-center"
+                       onMouseEnter={(e) => {
+                         // 🚀 Pulls out along its bisector and scales up!
+                         e.currentTarget.style.transform = `translate(${pullX * 12}px, ${pullY * 12}px) scale(1.05)`;
+                         // ✨ DOM Hack: Instantly brings this slice to the absolute front so it doesn't overlap!
+                         e.currentTarget.parentNode.appendChild(e.currentTarget);
+                       }}
+                       onMouseLeave={(e) => {
+                         // Snaps perfectly back into the cake!
+                         e.currentTarget.style.transform = `translate(0px, 0px) scale(1)`;
+                       }}
+                    >
+                      {/* 🍫 CAKE THICKNESS (The 3D Base) - Shifted down to create a physical block edge! */}
+                      <path d={pathData} fill={darkColor} transform="translate(1.5, 3.5)" className="transition-all duration-500 group-hover:translate-x-[3px] group-hover:translate-y-[6px]" />
+                      
+                      {/* 🍰 CAKE SURFACE (The Top Layer) */}
+                      <path d={pathData} fill={color} stroke="#ffffff" strokeWidth="0.5" className="dark:stroke-slate-900 drop-shadow-sm group-hover:brightness-110 transition-all" />
+
+                      {/* ✨ SHINE EFFECT (Inner Glass Highlight) */}
+                      <path d={pathData} fill="none" stroke="#ffffff" strokeWidth="1.5" className="opacity-20" transform="scale(0.96)" />
+
+                      {/* 💬 HOVER TOOLTIP */}
+                      <g className="opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none scale-50 group-hover:scale-100 origin-center" style={{ transformOrigin: `${labelX}px ${labelY}px` }}>
+                        <rect x={labelX - 22} y={labelY - 14} width="44" height="28" rx="6" fill="#ffffff" className="dark:fill-slate-800 shadow-[0_10px_20px_rgba(0,0,0,0.5)]" />
+                        <text x={labelX} y={labelY - 2} textAnchor="middle" alignmentBaseline="middle" fill={color} className="text-[7px] font-black uppercase tracking-widest">{label}</text>
+                        <text x={labelX} y={labelY + 8} textAnchor="middle" alignmentBaseline="middle" fill="currentColor" className="text-[8px] font-black text-slate-800 dark:text-slate-100">{Math.round(percent * 100)}%</text>
+                      </g>
+                    </g>
+                  );
+                };
+
                 return (
                   <>
-                    {/* Pure CSS Doughnut! */}
-                    <div className="relative w-32 h-32 rounded-full shadow-lg border-8 border-white dark:border-slate-900 transition-all duration-500 hover:scale-105"
-                         style={{ background: `conic-gradient(#6366F1 ${solidPct}%, #0EA5E9 0)` }}>
-                      <div className="absolute inset-2.5 bg-white dark:bg-slate-900 rounded-full flex flex-col items-center justify-center shadow-inner">
-                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Blend</span>
-                      </div>
+                    <div className="relative w-44 h-44 flex-shrink-0 mx-auto mt-auto mb-4">
+                       <svg viewBox="-60 -60 120 120" className="w-full h-full overflow-visible drop-shadow-2xl">
+                          {/* We pair the vibrant color with a dark "crust" color for thickness! */}
+                          {getSlice(solidPct, '#6366F1', '#4338CA', 'Solid')}
+                          {getSlice(gasPct, '#10B981', '#047857', 'Gas')}
+                          {getSlice(lfomPct, '#A855F7', '#7E22CE', 'LFOM')}
+                       </svg>
                     </div>
 
-                    <div className="flex w-full justify-between items-end mt-6 px-2">
+                    <div className="flex w-full justify-between items-end mt-auto px-1">
                        <div className="flex flex-col items-start">
                           <span className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1"><div className="w-2 h-2 rounded-full bg-indigo-500"></div> Solid</span>
-                          <span className="text-xl font-black text-indigo-600 dark:text-indigo-400">{tSolid} <span className="text-xs text-slate-400">({solidPct}%)</span></span>
+                          <span className="text-lg font-black text-indigo-600 dark:text-indigo-400">{tSolid} <span className="text-[10px] text-slate-400">({Math.round(solidPct*100)}%)</span></span>
+                       </div>
+                       <div className="flex flex-col items-center">
+                          <span className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Gas <div className="w-2 h-2 rounded-full bg-emerald-500"></div></span>
+                          <span className="text-lg font-black text-emerald-600 dark:text-emerald-400"><span className="text-[10px] text-slate-400">({Math.round(gasPct*100)}%)</span> {tGas}</span>
                        </div>
                        <div className="flex flex-col items-end">
-                          <span className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Gas <div className="w-2 h-2 rounded-full bg-sky-500"></div></span>
-                          <span className="text-xl font-black text-sky-600 dark:text-sky-400"><span className="text-xs text-slate-400">({100 - solidPct}%)</span> {tGas}</span>
+                          <span className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">LFOM <div className="w-2 h-2 rounded-full bg-purple-500"></div></span>
+                          <span className="text-lg font-black text-purple-600 dark:text-purple-400"><span className="text-[10px] text-slate-400">({Math.round(lfomPct*100)}%)</span> {tLfom}</span>
                        </div>
                     </div>
                   </>
@@ -5139,50 +5230,52 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
             </div>
           </div>
 
-          {/* 🛤️ CHART 3: PLANT THROUGHPUT (PIPELINE FLOW DIAGRAM) */}
+          {/* 🛤️ CHART 3: PLANT THROUGHPUT */}
           <div className="w-full min-w-0 h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group relative">
-            <div className="flex justify-between items-start mb-2 shrink-0">
+            <div className="flex justify-between items-start mb-6 shrink-0">
               <div>
-                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Throughput</h3>
+                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Vehicle Count</h3>
                 <p className="text-[9px] font-bold text-amber-500 uppercase mt-1">Material Flow</p>
               </div>
               <ArrowRight size={16} className="text-amber-500 shrink-0"/>
             </div>
             
-            <div className="flex-1 flex flex-col justify-center items-center w-full relative z-10">
-              
-              <div className="flex items-center justify-between w-full relative px-2">
-                {/* Connecting Pipeline */}
+            <div className="flex-1 flex flex-col justify-center items-center w-full relative z-10 pb-2">
+              <div className="flex items-center justify-between w-full relative px-2 mt-auto mb-4">
                 <div className="absolute top-1/2 left-4 right-4 h-1.5 bg-slate-100 dark:bg-slate-800 -translate-y-1/2 rounded-full"></div>
-                <div className="absolute top-1/2 left-4 right-4 h-1.5 bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500 -translate-y-1/2 rounded-full opacity-50 animate-pulse"></div>
+                <div className="absolute top-1/2 left-4 right-4 h-1.5 bg-gradient-to-r from-emerald-500 via-amber-500 to-indigo-500 -translate-y-1/2 rounded-full opacity-50 animate-pulse"></div>
 
-                {/* Inbound Node */}
                 <div className="relative z-10 bg-white dark:bg-slate-900 border-4 border-emerald-500 rounded-full w-20 h-20 flex flex-col items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.2)] group-hover:-translate-y-1 transition-transform">
                   <Target size={16} className="text-emerald-500 mb-0.5" />
                   <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 leading-none">{recCo + recCon}</span>
                 </div>
 
-                {/* Arrow Indicator */}
                 <div className="relative z-10 bg-slate-100 dark:bg-slate-800 border-2 border-white dark:border-slate-900 rounded-full w-8 h-8 flex flex-col items-center justify-center shadow-md">
                    <ArrowRight size={14} className="text-slate-400" />
                 </div>
 
-                {/* Outbound Node */}
-                <div className="relative z-10 bg-white dark:bg-slate-900 border-4 border-amber-500 rounded-full w-20 h-20 flex flex-col items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.2)] group-hover:-translate-y-1 transition-transform">
-                  <Truck size={16} className="text-amber-500 mb-0.5" />
-                  <span className="text-xs font-black text-amber-600 dark:text-amber-400 leading-none">{tSolid + tGas + tScrap}</span>
+                <div className="relative z-10 bg-white dark:bg-slate-900 border-4 border-indigo-500 rounded-full w-20 h-20 flex flex-col items-center justify-center shadow-[0_0_20px_rgba(99,102,241,0.2)] group-hover:-translate-y-1 transition-transform">
+                  <Truck size={16} className="text-indigo-500 mb-0.5" />
+                  <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 leading-none">{tSolid + tGas + tLfom}</span>
                 </div>
               </div>
 
-              <div className="flex justify-between w-full mt-6 px-4">
+              <div className="flex justify-between w-full mt-auto px-4">
                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Total<br/>Inbound</span>
                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Total<br/>Outbound</span>
               </div>
             </div>
           </div>
 
-          {/* 📈 CHART 4: 7-DAY TREND (AREA SPLINE GRAPH) */}
-          <div className="w-full min-w-0 h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group relative">
+          {/* 📈 CHART 4: 7-DAY TREND (CLICKABLE PORTAL) */}
+          <div 
+            onClick={() => setShowTrendModal(true)}
+            className="w-full min-w-0 h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col min-h-[300px] group relative cursor-pointer hover:shadow-xl hover:border-indigo-400 dark:hover:border-indigo-500/50 hover:-translate-y-1 transition-all"
+          >
+            {/* ✨ Interactive Hover Glow */}
+            <div className="absolute inset-0 bg-indigo-500/0 group-hover:bg-indigo-500/5 rounded-2xl transition-colors pointer-events-none"></div>
+            <div className="absolute top-4 right-4 bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 text-[8px] font-black px-2 py-1 rounded uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Expand Analytics</div>
+
             <div className="flex justify-between items-start mb-4 shrink-0">
               <div>
                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">7-Day Trend</h3>
@@ -5199,9 +5292,9 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
                     if (existing) {
                       existing.solid += num(r.disp_solid);
                       existing.gas += num(r.disp_gas);
-                      existing.scrap += num(r.disp_scrap);
+                      existing.lfom += num(r.disp_scrap); 
                     } else {
-                      acc.push({ date: r.date_from, solid: num(r.disp_solid), gas: num(r.disp_gas), scrap: num(r.disp_scrap) });
+                      acc.push({ date: r.date_from, solid: num(r.disp_solid), gas: num(r.disp_gas), lfom: num(r.disp_scrap) });
                     }
                     return acc;
                   }, [])
@@ -5210,7 +5303,7 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
 
                 if (trendData.length === 0) return <div className="flex-1 flex items-center justify-center text-slate-400 text-xs font-bold uppercase tracking-widest">No Data</div>;
 
-                const maxTrend = Math.max(...trendData.map(d => Math.max(d.solid, d.gas, d.scrap, 10)), 10) * 1.2; 
+                const maxTrend = Math.max(...trendData.map(d => Math.max(d.solid, d.gas, d.lfom, 10)), 10) * 1.2; 
                 
                 const getX = (i) => trendData.length > 1 ? (i / (trendData.length - 1)) * 100 : 50;
                 
@@ -5220,7 +5313,6 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
                   return `${x},${y}`;
                 }).join(' ');
 
-                // ✨ Creating the Polygon points for the Area Fill!
                 const solidPoints = getPoints('solid');
                 const solidArea = `${solidPoints} 100,100 0,100`;
 
@@ -5228,8 +5320,6 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
                   <div className="flex-1 w-full flex flex-col relative pb-2">
                     <div className="flex-1 w-full relative overflow-visible mt-2">
                       <svg viewBox="0 -5 100 105" className="absolute inset-0 w-full h-full overflow-visible" preserveAspectRatio="none">
-                        
-                        {/* Area Fill Gradients! */}
                         <defs>
                           <linearGradient id="solidGrad" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stopColor="#6366F1" stopOpacity="0.4" />
@@ -5237,18 +5327,16 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
                           </linearGradient>
                         </defs>
 
-                        {/* Background Grid */}
                         <line x1="0" y1="0" x2="100" y2="0" stroke="currentColor" className="text-slate-100 dark:text-slate-800" strokeWidth="1" vectorEffect="non-scaling-stroke" />
                         <line x1="0" y1="50" x2="100" y2="50" stroke="currentColor" className="text-slate-100 dark:text-slate-800" strokeDasharray="4 4" strokeWidth="1" vectorEffect="non-scaling-stroke" />
                         <line x1="0" y1="100" x2="100" y2="100" stroke="currentColor" className="text-slate-200 dark:text-slate-700" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
 
-                        {/* ✨ Beautiful Area Fill Under the Solid Line */}
                         <polygon points={solidArea} fill="url(#solidGrad)" vectorEffect="non-scaling-stroke" />
 
-                        {/* Trend Lines */}
-                        <polyline points={solidPoints} fill="none" stroke="#6366F1" strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-sm" />
-                        <polyline points={getPoints('gas')} fill="none" stroke="#0EA5E9" strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-sm" />
-                        <polyline points={getPoints('scrap')} fill="none" stroke="#F43F5E" strokeWidth="2.5" vectorEffect="non-scaling-stroke" strokeDasharray="4 4" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-sm opacity-80" />
+                        <polyline points={solidPoints} fill="none" stroke="#6366F1" strokeWidth="3.5" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-sm" />
+                        {/* ✨ GAS IS NOW GREEN! */}
+                        <polyline points={getPoints('gas')} fill="none" stroke="#10B981" strokeWidth="3.5" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-sm" />
+                        <polyline points={getPoints('lfom')} fill="none" stroke="#A855F7" strokeWidth="3.5" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-sm" />
                       </svg>
                     </div>
                     
@@ -5262,10 +5350,11 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
               })()}
             </div>
             
-            <div className="flex justify-between sm:justify-center items-center gap-x-3 mt-auto pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0 w-full mb-1">
+            <div className="flex justify-between sm:justify-center items-center gap-x-3 mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 shrink-0 w-full mb-1">
               <span className="flex items-center gap-1.5 text-[8.5px] font-black text-slate-500 uppercase tracking-widest"><div className="w-2 h-2 rounded-full bg-indigo-500 shrink-0"></div> Solid</span>
-              <span className="flex items-center gap-1.5 text-[8.5px] font-black text-slate-500 uppercase tracking-widest"><div className="w-2 h-2 rounded-full bg-sky-500 shrink-0"></div> Gas</span>
-              <span className="flex items-center gap-1.5 text-[8.5px] font-black text-slate-500 uppercase tracking-widest opacity-80"><div className="w-2 h-2 text-rose-500 flex items-center justify-center font-bold tracking-[-2px] shrink-0">--</div> Scrap</span>
+              {/* ✨ GREEN GAS LEGEND! */}
+              <span className="flex items-center gap-1.5 text-[8.5px] font-black text-slate-500 uppercase tracking-widest"><div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></div> Gas</span>
+              <span className="flex items-center gap-1.5 text-[8.5px] font-black text-slate-500 uppercase tracking-widest"><div className="w-2 h-2 rounded-full bg-purple-500 shrink-0"></div> LFOM</span>
             </div>
 
           </div>
@@ -5277,10 +5366,10 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
         {filtered.map(r => {
           const r_rmgpOut = num(r.ogp_rmgp);
           const r_rmgpIn = num(r.ogp_rmgp_in);
-          const r_scrap = num(r.disp_scrap);
+          const r_lfom = num(r.disp_scrap); // ✨ LFOM is good!
+          
           const isLeakage = r_rmgpOut > r_rmgpIn;
-          const isHighScrap = r_scrap > 50; 
-          const hasAnomaly = isLeakage || isHighScrap;
+          const hasAnomaly = isLeakage; // ✨ Only leakage triggers red cards now!
 
           return (
             <div key={r.id} onClick={() => setViewingRep(r)} className={`bg-white dark:bg-[#0f172a] p-6 rounded-[2rem] border-2 cursor-pointer hover:-translate-y-1.5 transition-all group relative overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] ${hasAnomaly ? 'border-rose-200 dark:border-rose-500/30' : 'border-slate-100 dark:border-slate-800'}`}>
@@ -5302,8 +5391,7 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
               <div className="grid grid-cols-2 gap-3 mt-5 pl-2">
                 <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 p-3 rounded-2xl shadow-sm relative overflow-hidden">
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Total Dispatch</span>
-                  <span className={`text-xl font-black relative z-10 ${isHighScrap ? 'text-rose-600 dark:text-rose-400' : 'text-slate-800 dark:text-slate-200'}`}>{num(r.disp_solid)+num(r.disp_gas)+r_scrap}</span>
-                  {isHighScrap && <AlertTriangle size={16} className="absolute right-3 bottom-3 text-rose-500/20" />}
+                  <span className="text-xl font-black relative z-10 text-slate-800 dark:text-slate-200">{num(r.disp_solid)+num(r.disp_gas)+r_lfom}</span>
                 </div>
                 <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 p-3 rounded-2xl shadow-sm relative overflow-hidden">
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">RMGP Delta</span>
@@ -5316,15 +5404,21 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
         })}
       </div>
 
-      {/* 📄 CYBER-GLASS DEEP DIVE MODAL (GPS TRACKED FOR MOBILE!) */}
+      {/* 📄 CYBER-GLASS DEEP DIVE MODAL (BULLETPROOF FIXED POSITIONING) */}
       {viewingRep && (
         <div 
-          className="absolute left-0 w-full z-[150] bg-slate-900/60 dark:bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in duration-300" 
-          style={{ top: `${scrollPos}px`, height: '100dvh' }}
+          // ✨ CHANGED: z-[9999] ensures it beats absolutely everything else on the DOM. 
+          // Removed `items-end` for mobile because it sometimes forces tall content off-screen.
+          className="fixed inset-0 z-[9999] bg-slate-900/60 dark:bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300" 
           onClick={() => setViewingRep(null)}
         >
           {/* ✨ The Premium Floating Glass Container */}
-          <div className="bg-white/90 dark:bg-[#0B1120]/80 backdrop-blur-3xl border-t sm:border border-white/50 dark:border-emerald-500/20 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_0_80px_-15px_rgba(16,185,129,0.3)] w-full max-w-5xl max-h-[85vh] sm:max-h-[90vh] overflow-hidden flex flex-col relative animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-[0.95] duration-500" onClick={e => e.stopPropagation()}>
+          <div 
+             // ✨ CHANGED: Removed max-h-[85vh] and slide-in-from-bottom-full which caused off-screen clipping!
+             // Forced `max-h-[90vh]` uniformly and used a pure `zoom-in` animation.
+             className="bg-white/95 dark:bg-[#0B1120]/95 backdrop-blur-3xl border border-white/50 dark:border-emerald-500/20 rounded-[2.5rem] shadow-[0_0_80px_-15px_rgba(16,185,129,0.3)] w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-500" 
+             onClick={e => e.stopPropagation()}
+          >
              
              {/* 🔮 Ambient Background Glows */}
              <div className="absolute -top-32 -left-32 w-72 h-72 bg-emerald-500/20 rounded-full blur-[80px] pointer-events-none"></div>
@@ -5459,7 +5553,7 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
                <button onClick={() => {
                   const r = viewingRep;
                   const row1 = ["Sr_No", "SITE", "Date_From", "Date_To", "DISPATCH", "", "", "RECEIPT", "", "OGP", "", "", "VEHICLE", "", "CONTRACTOR/ RIL STAFF", "", "VISITOR", "GOV. OFFICIAL", "DEPLOYMENT", "", "", ""];
-                  const row2 = ["", "", "", "", "SOLID", "GAS", "SCRAP", "COMPANY", "CONTRACTOR", "NRGP", "RMGP", "RMGP IN", "CONTRACTOR VEHICLE", "COMPANY/ EMP. VEHICLE", "CONTRACTOR WORKER", "RIL EMPLOYE", "", "", "Day SS", "Day SG", "Night SS", "Night SG"];
+                  const row2 = ["", "", "", "", "SOLID", "GAS", "LFOM", "COMPANY", "CONTRACTOR", "NRGP", "RMGP", "RMGP IN", "CONTRACTOR VEHICLE", "COMPANY/ EMP. VEHICLE", "CONTRACTOR WORKER", "RIL EMPLOYE", "", "", "Day SS", "Day SG", "Night SS", "Night SG"];
                   const row3 = [r.sr_no, r.site, r.date_from, r.date_to, r.disp_solid, r.disp_gas, r.disp_scrap, r.rec_company, r.rec_contractor, r.ogp_nrgp, r.ogp_rmgp, r.ogp_rmgp_in, r.veh_contractor, r.veh_company, r.foot_contractor, r.foot_ril, r.foot_visitor, r.foot_gov, r.dep_day_ss, r.dep_day_sg, r.dep_night_ss, r.dep_night_sg].map(v => `"${v || 0}"`);
                   
                   const csv = [row1.join(','), row2.join(','), row3.join(',')].join('\n');
@@ -5476,17 +5570,150 @@ const [showComparator, setShowComparator] = useState(false); // ✨ NEW: The Mat
 
       {/* ✨ RENDER THE FAANG COMPARATOR MODAL */}
       {showComparator && (
-        <MisComparatorModal 
-          reports={weeklyReports} 
-          availableSites={availableSites} 
-          onClose={() => setShowComparator(false)} 
-        />
+        <div 
+          className="absolute left-0 w-full z-[200] animate-in fade-in duration-300"
+          style={{ top: `${scrollPos}px`, height: '100%' }}
+        >
+          <MisComparatorModal 
+            reports={weeklyReports} 
+            availableSites={availableSites} 
+            onClose={() => setShowComparator(false)} 
+          />
+        </div>
+      )}
+
+
+{/* ✨ RENDER THE FAANG COMPARATOR MODAL */}
+      {showComparator && (
+        <div className="fixed inset-0 z-[200] animate-in fade-in duration-300">
+          <MisComparatorModal reports={weeklyReports} availableSites={availableSites} onClose={() => setShowComparator(false)} />
+        </div>
+      )}
+
+      {/* 🚀 THE TIME-WARP TREND COMPARATOR MODAL */}
+      {showTrendModal && (
+        <div className="fixed inset-0 z-[200] bg-slate-900/60 dark:bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300" onClick={() => setShowTrendModal(false)}>
+          <div className="bg-white/95 dark:bg-[#0B1120]/95 backdrop-blur-3xl border border-white/50 dark:border-indigo-500/20 rounded-[2.5rem] shadow-[0_0_80px_-15px_rgba(99,102,241,0.3)] w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-500" onClick={e => e.stopPropagation()}>
+            
+            {/* Header */}
+            <div className="p-5 sm:p-6 border-b border-slate-200/50 dark:border-slate-700/50 flex flex-wrap gap-4 justify-between items-center relative z-10 bg-slate-50/50 dark:bg-slate-900/50">
+              <div>
+                <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2"><TrendingUp size={20} className="text-indigo-500"/> Time-Warp Analytics</h2>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Cross-examine historical production timelines</p>
+              </div>
+              <button onClick={() => setShowTrendModal(false)} className="p-2.5 bg-white dark:bg-slate-800 rounded-full hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-slate-700 transition-colors text-slate-500 shadow-sm border border-slate-200 dark:border-slate-700"><X size={16}/></button>
+            </div>
+
+            {/* Sub-Header: Side-by-Side Date Selectors */}
+            {(() => {
+              // Reusable Graph Generator!
+              const renderGraph = (start, end, title, isGhost = false) => {
+                const targetData = weeklyReports
+                  .filter(r => r.date_from >= start && r.date_from <= end && (filterSite === "All" || (r.site || "").toUpperCase() === filterSite.toUpperCase()))
+                  .reduce((acc, r) => {
+                    const existing = acc.find(x => x.date === r.date_from);
+                    if (existing) {
+                      existing.solid += num(r.disp_solid); existing.gas += num(r.disp_gas); existing.lfom += num(r.disp_scrap);
+                    } else {
+                      acc.push({ date: r.date_from, solid: num(r.disp_solid), gas: num(r.disp_gas), lfom: num(r.disp_scrap) });
+                    }
+                    return acc;
+                  }, []).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                if (targetData.length === 0) return <div className="h-full flex items-center justify-center text-slate-400 text-xs font-bold uppercase tracking-widest border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">No Data in Window</div>;
+
+                const maxTrend = Math.max(...targetData.map(d => Math.max(d.solid, d.gas, d.lfom, 10)), 10) * 1.2; 
+                const getX = (i) => targetData.length > 1 ? (i / (targetData.length - 1)) * 100 : 50;
+                const getPoints = (key) => targetData.map((d, i) => `${getX(i)},${100 - (d[key] / maxTrend) * 100}`).join(' ');
+                const solidArea = `${getPoints('solid')} 100,100 0,100`;
+
+                return (
+                  <div className={`flex flex-col h-full bg-white dark:bg-[#0f172a] rounded-3xl p-6 border ${isGhost ? 'border-dashed border-slate-300 dark:border-slate-700 opacity-90' : 'border-slate-200 dark:border-slate-800 shadow-lg'}`}>
+                    <div className="flex justify-between items-end mb-6">
+                       <div>
+                         <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{title}</h3>
+                         <p className="text-sm font-black text-slate-900 dark:text-white uppercase mt-1">{start} <span className="text-indigo-500">➔</span> {end}</p>
+                       </div>
+                    </div>
+                    <div className="flex-1 relative w-full flex flex-col min-h-[250px]">
+                      <svg viewBox="0 -5 100 105" className="absolute inset-0 w-full h-full overflow-visible" preserveAspectRatio="none">
+                        <defs>
+                          <linearGradient id={`grad-${title.replace(/\\s/g,'')}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#6366F1" stopOpacity="0.4" />
+                            <stop offset="100%" stopColor="#6366F1" stopOpacity="0" />
+                          </linearGradient>
+                        </defs>
+                        <line x1="0" y1="0" x2="100" y2="0" stroke="currentColor" className="text-slate-100 dark:text-slate-800" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+                        <line x1="0" y1="50" x2="100" y2="50" stroke="currentColor" className="text-slate-100 dark:text-slate-800" strokeDasharray="4 4" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+                        <line x1="0" y1="100" x2="100" y2="100" stroke="currentColor" className="text-slate-200 dark:text-slate-700" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+
+                        <polygon points={solidArea} fill={`url(#grad-${title.replace(/\\s/g,'')})`} vectorEffect="non-scaling-stroke" />
+                        <polyline points={getPoints('solid')} fill="none" stroke="#6366F1" strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
+                        <polyline points={getPoints('gas')} fill="none" stroke="#10B981" strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
+                        <polyline points={getPoints('lfom')} fill="none" stroke="#A855F7" strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                    <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                      <span className="flex items-center gap-1.5 text-[9px] font-black text-slate-500 uppercase"><div className="w-2.5 h-2.5 rounded-full bg-indigo-500"></div> Solid</span>
+                      <span className="flex items-center gap-1.5 text-[9px] font-black text-slate-500 uppercase"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div> Gas</span>
+                      <span className="flex items-center gap-1.5 text-[9px] font-black text-slate-500 uppercase"><div className="w-2.5 h-2.5 rounded-full bg-purple-500"></div> LFOM</span>
+                    </div>
+                  </div>
+                );
+              };
+
+              return (
+                <div className="flex-1 flex flex-col p-4 sm:p-6 overflow-y-auto custom-scrollbar bg-slate-50 dark:bg-[#0B1120]">
+                  
+                  {/* Cockpit Controls */}
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm mb-6 flex flex-col sm:flex-row gap-6 justify-between items-center z-20 relative">
+                    
+                    {/* Primary Date Range */}
+                    <div className="flex flex-col gap-2 w-full sm:w-auto">
+                      <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Primary Window</span>
+                      <div className="flex gap-2">
+                        <input type="date" value={primaryStart} onChange={e => setPrimaryStart(e.target.value)} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 p-2 rounded-xl outline-none" />
+                        <input type="date" value={primaryEnd} onChange={e => setPrimaryEnd(e.target.value)} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 p-2 rounded-xl outline-none" />
+                      </div>
+                    </div>
+
+                    {/* Compare Toggle */}
+                    <div className="flex flex-col items-center gap-2 shrink-0">
+                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Compare Mode</span>
+                       <button onClick={() => setIsComparing(!isComparing)} className={`relative w-14 h-7 rounded-full transition-colors duration-300 shadow-inner focus:outline-none ${isComparing ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-700'}`}>
+                         <span className={`absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform duration-300 shadow-md ${isComparing ? 'translate-x-7' : 'translate-x-0'}`}></span>
+                       </button>
+                    </div>
+
+                    {/* Secondary Date Range (Only visible if comparing) */}
+                    <div className={`flex flex-col gap-2 w-full sm:w-auto transition-all duration-500 ${isComparing ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'}`}>
+                      <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Comparison Window</span>
+                      <div className="flex gap-2">
+                        <input type="date" disabled={!isComparing} value={compareStart} onChange={e => setCompareStart(e.target.value)} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 p-2 rounded-xl outline-none disabled:opacity-50" />
+                        <input type="date" disabled={!isComparing} value={compareEnd} onChange={e => setCompareEnd(e.target.value)} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 p-2 rounded-xl outline-none disabled:opacity-50" />
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* The Side-By-Side Visuals Matrix! */}
+                  <div className={`flex-1 grid gap-6 transition-all duration-700 ${isComparing ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 lg:w-2/3 lg:mx-auto'}`}>
+                     {renderGraph(primaryStart, primaryEnd, "Primary Timeline", false)}
+                     {isComparing && renderGraph(compareStart, compareEnd, "Comparison Timeline", true)}
+                  </div>
+
+                </div>
+              );
+            })()}
+
+          </div>
+        </div>
       )}
 
     </div>
   );
 }
-
+    
 // ==========================================
 // ⚙️ THE ULTIMATE HORIZONTAL SETTINGS DASHBOARD
 // ==========================================
