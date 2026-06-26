@@ -40,7 +40,7 @@ const TRANSLATIONS = {
     inc: { title: "Incident Report", subtitle: "Direct uplink to Command Center.", type: "Incident Type / Name", occDate: "Occurrence Date & Time", repBy: "Reported By", ep: "EP Number", site: "Site Name", pin: "Pincode", exactLoc: "Location of Incident", details: "Details of Incident", findings: "Findings", action: "Action Taken", reco: "Follow-up & Recommendations", photo: "Photographic Evidence", attach: "Attach", submit: "SUBMIT REPORT", adminSeen: "Admin Acknowledged", pending: "Pending Review", timeOcc: "Time Occurred", timeRep: "Time Reported", copyWA: "COPY FOR WHATSAPP", copyFull: "Copy Full Report", noInc: "No incidents found for this date.", encrypting: "ENCRYPTING UPLINK...", 
       phType: "e.g. Theft, Fire, Breach...", phRepBy: "Officer Name", phEp: "ID Number", phPin: "Code", phLoc: "Specific spot on site...", phDetails: "What exactly happened? Provide full context.", phFindings: "Investigative findings...", phAction: "Immediate response deployed...", phReco: "Suggested protocols to prevent recurrence..."
     },
-    mis: { selectDates: "Select Daily MIS Date", dateFrom: "Report Date", dateTo: "To Date (Leave Blank for Daily)", register: "Official Register", submit: "SUBMIT Daily Report", syncing: "SYNCING...", decrypting: "Decrypting Ledgers...", viewMaster: "View Master", editResend: "Edit / Resend", noLedgers: "No daily ledgers found.", delete: "Delete Ledger", download: "Download .CSV" },
+    mis: { selectDates: "Submission Date", dateFrom: "Report Date", dateTo: "To Date", register: "Official Register", submit: "SUBMIT Daily Report", syncing: "SYNCING...", decrypting: "Decrypting Ledgers...", viewMaster: "View Master", editResend: "Edit / Resend", noLedgers: "No daily ledgers found.", delete: "Delete Ledger", download: "Download .CSV" },
     filter: { today: "Today", yesterday: "Yesterday", last7: "Last 7 Days", thisMonth: "This Month", last90: "Last 90 Days", clearAll: "Clear All", custom: "Custom Date Selection", from: "From Date", to: "To Date (Optional Range)", apply: "Apply Filter" },
     nh: { date: "Report Date", vehNo: "Vehicle Number", material: "Material", loc: "Location", purpose: "Purpose", addVeh: "Add Another Vehicle", submit: "Submit Report", markNil: "Declare NIL (0 Vehicles)", enc: "Transmitting..." }
   },
@@ -51,7 +51,7 @@ const TRANSLATIONS = {
     inc: { title: "घटना रिपोर्ट", subtitle: "कमांड सेंटर को डायरेक्ट रिपोर्ट।", type: "घटना का प्रकार / नाम", occDate: "घटना की तारीख और समय", repBy: "रिपोर्ट करने वाले का नाम", ep: "EP नंबर", site: "साइट का नाम", pin: "पिनकोड", exactLoc: "घटना की सटीक लोकेशन", details: "घटना की पूरी जानकारी", findings: "जांच के नतीजे (Findings)", action: "क्या एक्शन लिया गया", reco: "सुझाव (Recommendations)", photo: "फोटो / सबूत", attach: "फोटो जोड़ें", submit: "रिपोर्ट सबमिट करें", adminSeen: "एडमिन ने देख लिया", pending: "अभी पेंडिंग है", timeOcc: "घटना का समय", timeRep: "रिपोर्ट करने का समय", copyWA: "WA कॉपी", copyFull: "पूरी रिपोर्ट कॉपी करें", noInc: "इस तारीख की कोई घटना नहीं मिली।", encrypting: "रिपोर्ट जा रही है...",
       phType: "जैसे: चोरी, आग, लड़ाई...", phRepBy: "ऑफिसर का नाम", phEp: "आईडी नंबर", phPin: "पिनकोड", phLoc: "साइट पर किस जगह...", phDetails: "क्या हुआ था? पूरी जानकारी दें।", phFindings: "जांच में क्या पता चला...", phAction: "तुरंत क्या कदम उठाए गए...", phReco: "आगे से रोकने के सुझाव..."
     },
-    mis: { selectDates: "MIS रिपोर्ट की तारीख चुनें", dateFrom: "कब से (From)", dateTo: "कब तक (To)", register: "ऑफिशियल रजिस्टर", submit: "रिपोर्ट सबमिट करें", syncing: "सिंक हो रहा है...", decrypting: "लेजर लोड हो रहा है...", viewMaster: "मास्टर देखें", editResend: "एडिट / रीसेंड", noLedgers: "कोई MIS लेजर नहीं मिला।", delete: "डिलीट करें", download: "CSV डाउनलोड करें" },
+    mis: { selectDates: "रिपोर्ट की तारीख", dateFrom: "कब से (From)", dateTo: "कब तक (To)", register: "ऑफिशियल रजिस्टर", submit: "रिपोर्ट सबमिट करें", syncing: "सिंक हो रहा है...", decrypting: "लेजर लोड हो रहा है...", viewMaster: "मास्टर देखें", editResend: "एडिट / रीसेंड", noLedgers: "कोई MIS लेजर नहीं मिला।", delete: "डिलीट करें", download: "CSV डाउनलोड करें" },
     filter: { today: "आज", yesterday: "कल (बीता हुआ)", last7: "पिछले 7 दिन", thisMonth: "इस महीने", last90: "पिछले 90 दिन", clearAll: "सब साफ़ करें", custom: "तारीख चुनें", from: "कब से", to: "कब तक (वैकल्पिक)", apply: "फ़िल्टर लगाएं" },
     nh: { date: "रिपोर्ट की तारीख", vehNo: "गाड़ी नंबर", material: "मटेरियल", loc: "लोकेशन", purpose: "उद्देश्य", addVeh: "एक और गाड़ी जोड़ें", submit: "रिपोर्ट सबमिट करें", markNil: "NIL घोषित करें (0 गाड़ियां)", enc: "सबमिट हो रहा है..." }
   },
@@ -62,7 +62,7 @@ const TRANSLATIONS = {
     inc: { title: "घटना रिपोर्ट", subtitle: "कमांड सेंटरला डायरेक्ट रिपोर्ट.", type: "घटनेचा प्रकार / नाव", occDate: "घटनेची तारीख आणि वेळ", repBy: "रिपोर्ट करणाऱ्याचे नाव", ep: "EP नंबर", site: "साईटचे नाव", pin: "पिनकोड", exactLoc: "घटनेची नेमकी लोकेशन", details: "घटनेची संपूर्ण माहिती", findings: "तपासाचे निष्कर्ष (Findings)", action: "काय ॲक्शन घेतली", reco: "सूचना (Recommendations)", photo: "फोटो / पुरावा", attach: "फोटो जोडा", submit: "रिपोर्ट सबमिट करा", adminSeen: "ॲडमिनने पाहिले", pending: "अजून पेंडिंग आहे", timeOcc: "घटनेची वेळ", timeRep: "रिपोर्ट केल्याची वेळ", copyWA: "WA कॉपी", copyFull: "संपूर्ण रिपोर्ट कॉपी करा", noInc: "या तारखेची कोणतीही घटना आढळली नाही.", encrypting: "रिपोर्ट जात आहे...",
       phType: "उदा: चोरी, आग, भांडण...", phRepBy: "अधिकाऱ्याचे नाव", phEp: "आयडी क्रमांक", phPin: "पिनकोड", phLoc: "नेमकी कोणती जागा...", phDetails: "नेमके काय घडले? संपूर्ण माहिती द्या.", phFindings: "तपासात काय आढळले...", phAction: "त्वरित काय कारवाई केली...", phReco: "पुढे असे घडू नये म्हणून सूचना..."
     },
-    mis: { selectDates: "MIS रिपोर्टची तारीख निवडा", dateFrom: "कधीपासून (From)", dateTo: "कधीपर्यंत (To)", register: "ऑफिशियल रजिस्टर", submit: "रिपोर्ट सबमिट करा", syncing: "सिंक होत आहे...", decrypting: "लेजर लोड होत आहे...", viewMaster: "मास्टर पहा", editResend: "एडिट / रीसेंड", noLedgers: "कोणतेही MIS लेजर आढळले नाही.", delete: "डिलीट करा", download: "CSV डाउनलोड करा" },
+    mis: { selectDates: "रिपोर्टची तारीख निवडा", dateFrom: "कधीपासून (From)", dateTo: "कधीपर्यंत (To)", register: "ऑफिशियल रजिस्टर", submit: "रिपोर्ट सबमिट करा", syncing: "सिंक होत आहे...", decrypting: "लेजर लोड होत आहे...", viewMaster: "मास्टर पहा", editResend: "एडिट / रीसेंड", noLedgers: "कोणतेही MIS लेजर आढळले नाही.", delete: "डिलीट करा", download: "CSV डाउनलोड करा" },
     filter: { today: "आज", yesterday: "काल", last7: "मागील 7 दिवस", thisMonth: "या महिन्यात", last90: "मागील 90 दिवस", clearAll: "सर्व क्लिअर करा", custom: "तारीख निवडा", from: "कधीपासून", to: "कधीपर्यंत (पर्यायी)", apply: "फिल्टर लावा" }
   },
   te: {
@@ -72,7 +72,7 @@ const TRANSLATIONS = {
     inc: { title: "సంఘటన రిపోర్ట్", subtitle: "కమాండ్ సెంటర్‌కు డైరెక్ట్ రిపోర్ట్.", type: "సంఘటన రకం / పేరు", occDate: "సంఘటన తేదీ మరియు సమయం", repBy: "రిపోర్ట్ చేసినవారి పేరు", ep: "EP నంబర్", site: "సైట్ పేరు", pin: "పిన్‌కోడ్", exactLoc: "సంఘటన జరిగిన ప్రదేశం", details: "సంఘటన పూర్తి వివరాలు", findings: "పరిశోధనలు (Findings)", action: "తీసుకున్న చర్య", reco: "సూచనలు (Recommendations)", photo: "ఫోటో / ఆధారం", attach: "ఫోటో జోడించండి", submit: "రిపోర్ట్ సబ్మిట్ చేయండి", adminSeen: "అడ్మిన్ చూశారు", pending: "ఇంకా పెండింగ్‌లో ఉంది", timeOcc: "సంఘటన సమయం", timeRep: "రిపోర్ట్ చేసిన సమయం", copyWA: "WA కాపీ", copyFull: "పూర్తి రిపోర్ట్ కాపీ చేయండి", noInc: "ఈ తేదీకి ఎలాంటి సంఘటన లేదు.", encrypting: "అప్‌లోడ్ అవుతోంది...",
       phType: "ఉదా: దొంగతనం, అగ్నిప్రమాదం...", phRepBy: "ఆఫీసర్ పేరు", phEp: "ID నంబర్", phPin: "పిన్‌కోడ్", phLoc: "కచ్చితమైన ప్రదేశం...", phDetails: "ఏం జరిగింది? పూర్తి వివరాలు రాయండి.", phFindings: "విచారణలో ఏం తేలింది...", phAction: "వెంటనే తీసుకున్న చర్యలు...", phReco: "మళ్లీ జరగకుండా సూచనలు..."
     },
-    mis: { selectDates: "MIS రిపోర్ట్ తేదీని ఎంచుకోండి", dateFrom: "ఎప్పటినుండి (From)", dateTo: "ఎప్పటివరకు (To)", register: "అధికారిక రిజిస్టర్", submit: "రిపోర్ట్ సబ్మిట్ చేయండి", syncing: "సింక్ అవుతోంది...", decrypting: "లెడ్జర్ లోడ్ అవుతోంది...", viewMaster: "మాస్టర్ చూడండి", editResend: "ఎడిట్ / రీసెండ్", noLedgers: "ఎలాంటి MIS లెడ్జర్ లేదు.", delete: "డిలీట్ చేయండి", download: "CSV డౌన్‌లోడ్" },
+    mis: { selectDates: "నివేదిక సమర్పణ తేదీ", dateFrom: "ఎప్పటినుండి (From)", dateTo: "ఎప్పటివరకు (To)", register: "అధికారిక రిజిస్టర్", submit: "రిపోర్ట్ సబ్మిట్ చేయండి", syncing: "సింక్ అవుతోంది...", decrypting: "లెడ్జర్ లోడ్ అవుతోంది...", viewMaster: "మాస్టర్ చూడండి", editResend: "ఎడిట్ / రీసెండ్", noLedgers: "ఎలాంటి MIS లెడ్జర్ లేదు.", delete: "డిలీట్ చేయండి", download: "CSV డౌన్‌లోడ్" },
     filter: { today: "నేడు", yesterday: "నిన్న", last7: "గత 7 రోజులు", thisMonth: "ఈ నెల", last90: "గత 90 రోజులు", clearAll: "అన్నీ క్లియర్ చేయండి", custom: "తేదీ ఎంచుకోండి", from: "నుండి", to: "వరకు (ఐచ్ఛికం)", apply: "ఫిల్టర్ చేయండి" }
   },
   pa: {
@@ -82,7 +82,7 @@ const TRANSLATIONS = {
     inc: { title: "ਘਟਨਾ ਰਿਪੋਰਟ", subtitle: "ਕਮਾਂਡ ਸੈਂਟਰ ਨੂੰ ਸਿੱਧੀ ਰਿਪੋਰਟ।", type: "ਘਟਨਾ ਦੀ ਕਿਸਮ / ਨਾਮ", occDate: "ਘਟਨਾ ਦੀ ਤਾਰੀਖ ਅਤੇ ਸਮਾਂ", repBy: "ਰਿਪੋਰਟ ਕਰਨ ਵਾਲੇ ਦਾ ਨਾਮ", ep: "EP ਨੰਬਰ", site: "ਸਾਈਟ ਦਾ ਨਾਮ", pin: "ਪਿਨਕੋਡ", exactLoc: "ਘਟਨਾ ਦੀ ਸਹੀ ਲੋਕੇਸ਼ਨ", details: "ਘਟਨਾ ਦੀ ਪੂਰੀ ਜਾਣਕਾਰੀ", findings: "ਜਾਂਚ ਦੇ ਨਤੀਜੇ (Findings)", action: "ਕੀ ਕਾਰਵਾਈ ਕੀਤੀ ਗਈ", reco: "ਸੁਝਾਅ (Recommendations)", photo: "ਫੋਟੋ / ਸਬੂਤ", attach: "ਫੋਟੋ ਜੋੜੋ", submit: "ਰਿਪੋਰਟ ਜਮ੍ਹਾਂ ਕਰੋ", adminSeen: "ਐਡਮਿਨ ਨੇ ਦੇਖ ਲਿਆ", pending: "ਅਜੇ ਪੈਂਡਿੰਗ ਹੈ", timeOcc: "ਘਟਨਾ ਦਾ ਸਮਾਂ", timeRep: "ਰਿਪੋਰਟ ਕਰਨ ਦਾ ਸਮਾਂ", copyWA: "WA ਕਾਪੀ", copyFull: "ਪੂਰੀ ਰਿਪੋਰਟ ਕਾਪੀ ਕਰੋ", noInc: "ਇਸ ਤਾਰੀਖ ਦੀ ਕੋਈ ਘਟਨਾ ਨਹੀਂ ਮਿਲੀ।", encrypting: "ਅੱਪਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...",
       phType: "ਜਿਵੇਂ: ਚੋਰੀ, ਅੱਗ, ਲੜਾਈ...", phRepBy: "ਅਫਸਰ ਦਾ ਨਾਮ", phEp: "ਆਈਡੀ ਨੰਬਰ", phPin: "ਪਿਨਕੋਡ", phLoc: "ਸਾਈਟ 'ਤੇ ਕਿਹੜੀ ਜਗ੍ਹਾ...", phDetails: "ਕੀ ਹੋਇਆ ਸੀ? ਪੂਰੀ ਜਾਣਕਾਰੀ ਦਿਓ।", phFindings: "ਜਾਂਚ ਵਿੱਚ ਕੀ ਪਤਾ ਲੱਗਾ...", phAction: "ਤੁਰੰਤ ਕੀ ਕਾਰਵਾਈ ਕੀਤੀ ਗਈ...", phReco: "ਅੱਗੇ ਤੋਂ ਰੋਕਣ ਲਈ ਸੁਝਾਅ..."
     },
-    mis: { selectDates: "MIS ਰਿਪੋਰਟ ਦੀ ਤਾਰੀਖ ਚੁਣੋ", dateFrom: "ਕਦੋਂ ਤੋਂ (From)", dateTo: "ਕਦੋਂ ਤੱਕ (To)", register: "ਅਧਿਕਾਰਤ ਰਜਿਸਟਰ", submit: "ਰਿਪੋਰਟ ਜਮ੍ਹਾਂ ਕਰੋ", syncing: "ਸਿੰਕ ਹੋ ਰਿਹਾ ਹੈ...", decrypting: "ਲੇਜਰ ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...", viewMaster: "ਮਾਸਟਰ ਦੇਖੋ", editResend: "ਐਡਿਟ / ਰੀਸੈਂਡ", noLedgers: "ਕੋਈ MIS ਲੇਜਰ ਨਹੀਂ ਮਿਲਿਆ।", delete: "ਮਿਟਾਓ", download: "CSV ਡਾਊਨਲੋਡ" },
+    mis: { selectDates: "ਰਿਪੋਰਟ ਦੀ ਤਾਰੀਖ", dateFrom: "ਕਦੋਂ ਤੋਂ (From)", dateTo: "ਕਦੋਂ ਤੱਕ (To)", register: "ਅਧਿਕਾਰਤ ਰਜਿਸਟਰ", submit: "ਰਿਪੋਰਟ ਜਮ੍ਹਾਂ ਕਰੋ", syncing: "ਸਿੰਕ ਹੋ ਰਿਹਾ ਹੈ...", decrypting: "ਲੇਜਰ ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...", viewMaster: "ਮਾਸਟਰ ਦੇਖੋ", editResend: "ਐਡਿਟ / ਰੀਸੈਂਡ", noLedgers: "ਕੋਈ MIS ਲੇਜਰ ਨਹੀਂ ਮਿਲਿਆ।", delete: "ਮਿਟਾਓ", download: "CSV ਡਾਊਨਲੋਡ" },
     filter: { today: "ਅੱਜ", yesterday: "ਕੱਲ੍ਹ", last7: "ਪਿਛਲੇ 7 ਦਿਨ", thisMonth: "ਇਸ ਮਹੀਨੇ", last90: "ਪਿਛਲੇ 90 ਦਿਨ", clearAll: "ਸਭ ਸਾਫ਼ ਕਰੋ", custom: "ਤਾਰੀਖ ਚੁਣੋ", from: "ਕਦੋਂ ਤੋਂ", to: "ਕਦੋਂ ਤੱਕ (ਵਿਕਲਪਿਕ)", apply: "ਫਿਲਟਰ ਲਗਾਓ" }
   }
 };
@@ -998,6 +998,7 @@ function AuthScreen({ theme, toggleTheme, setIsUnlocking }) {
     </>
   );
 }
+
 // ==========================================
 // 📱 SUPERVISOR iOS-STYLE COMMAND HUB + CINEMATIC INTRO
 // ==========================================
@@ -1228,7 +1229,7 @@ function SupervisorMobileView({ userProfile, deployments, incidents, weeklyRepor
         {currentApp === 'incident' && appTab === 'form' && <IncidentMobileForm userProfile={userProfile} fetchIncidents={fetchIncidents} setActiveTab={setAppTab} language={language}/>}
         {currentApp === 'incident' && appTab === 'history' && <IncidentMobileHistory incidents={incidents} isLoading={isLoading} language={language} onEdit={onEditIncident} />}
 
-        {currentApp === 'weekly' && appTab === 'form' && <WeeklyMobileForm userProfile={userProfile} fetchWeeklyReports={fetchWeeklyReports} setActiveTab={setAppTab} language={language}/>}
+        {currentApp === 'weekly' && appTab === 'form' && <WeeklyMobileForm userProfile={userProfile} fetchWeeklyReports={fetchWeeklyReports} setActiveTab={setAppTab} language={language} weeklyReports={weeklyReports}/>}
         {currentApp === 'weekly' && appTab === 'history' && <WeeklyMobileHistory weeklyReports={weeklyReports} isLoading={isLoading} onEditWeekly={onEditWeekly} language={language}/>}
       
         {/* ✨ NEW LEAVE ROUTERS */}
@@ -3912,87 +3913,59 @@ function AdminIncidentView({ incidents, isLoading, onAcknowledge, onDelete, SITE
 // 📋 WEEKLY LEDGER REPORT MODULE (EXACT PAPER COPY)
 // ==========================================
 
-function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab, language }) {
+function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab, language, weeklyReports = [] }) {
   const t = TRANSLATIONS[language] || TRANSLATIONS['en'];
+  const [isAllCaughtUp, setIsAllCaughtUp] = useState(false); 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const [fd, setFd] = useState({
     dateFrom: '', dateTo: '', srNo: '', dispSolid: '', dispGas: '', dispScrap: '', recCompany: '', recContractor: '',
     ogpNRGP: '', ogpRmgp: '', ogpRmgpIn: '', vehContractor: '', vehCompany: '', footContractor: '', footRil: '', footVisitor: '', footGov: '',
     depDaySS: '', depDaySG: '', depNightSS: '', depNightSG: ''
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // ✨ SURGICAL FIX: The state must be right here, inside the function! 👇
-  const [lockedDate, setLockedDate] = useState(null);
-const [isAllCaughtUp, setIsAllCaughtUp] = useState(false); // 🛡️ The reality-check state!
 
-// ✨ SURGICAL FIX: Define todayMax right here at the top so the entire UI can see it! 
-  const todayMax = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
-
-  // ✨ THE CHRONO-LOCK BRAIN: Forces sequential MIS entries (No Time Travel allowed!)
-  // ✨ THE GAP-SCANNER BRAIN: Finds the exact missing days in the timeline! 🛑
-  React.useEffect(() => {
-    const fetchMissingDates = async () => {
-      // 1. Fetch ALL dates for this site, sorted from OLDEST to NEWEST
-      const { data, error } = await supabase
-        .from('weekly_reports')
-        .select('date_from')
-        .eq('site', userProfile.site)
-        .order('date_from', { ascending: true });
+  // ✨ THE SMART CHRONO-LOCK & SITE-SYNC MATRIX 🧠
+  useEffect(() => {
+    if (weeklyReports && weeklyReports.length > 0) {
+      // 1. Find the absolute latest report submitted by ANY supervisor at this site
+      const latestReport = [...weeklyReports].sort((a, b) => new Date(b.date_to) - new Date(a.date_to))[0];
       
-      // Safely get today's date in YYYY-MM-DD
-      const d = new Date();
-      const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      const todayDateObj = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-
-      if (data && data.length > 0) {
-        // 2. Put all submitted dates into a super-fast Set memory bank
-        const submittedDates = new Set(data.map(r => r.date_from));
-
-        // 3. The clock starts on their VERY FIRST submission! (Day 0)
-        const firstDateStr = data[0].date_from;
-        const [fYear, fMonth, fDay] = firstDateStr.split('-').map(Number);
-        let checkDate = new Date(fYear, fMonth - 1, fDay);
-
-        let firstMissingDateStr = null;
-
-        // 4. Scan forward from Day 0 to Today, looking for any gaps!
-        while (checkDate <= todayDateObj) {
-          const checkStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}-${String(checkDate.getDate()).padStart(2, '0')}`;
-          
-          if (!submittedDates.has(checkStr)) {
-            firstMissingDateStr = checkStr; // 🚨 WE FOUND A GAP!
-            break; // Stop the scanner!
-          }
-          checkDate.setDate(checkDate.getDate() + 1); // Move to the next day
-        }
-
-        if (firstMissingDateStr) {
-          // They missed a day! Lock them to this exact missing date.
-          setLockedDate(firstMissingDateStr);
-          setIsAllCaughtUp(false);
-          setFd(prev => ({ ...prev, dateFrom: firstMissingDateStr, dateTo: firstMissingDateStr }));
-        } else {
-          // No gaps found at all! They are fully caught up! 🥂
-          setLockedDate(todayStr); // Just to keep the UI looking normal
-          setIsAllCaughtUp(true);
-          setFd(prev => ({ ...prev, dateFrom: todayStr, dateTo: todayStr }));
-        }
-      } else {
-        // First time ever submitting! Unlock so they can pick their start date.
-        setLockedDate(null);
-        setIsAllCaughtUp(false);
-        setFd(prev => ({ ...prev, dateFrom: todayStr, dateTo: todayStr }));
+      // 2. Calculate the exact next day chronologically
+      const nextDateObj = new Date(latestReport.date_to);
+      nextDateObj.setDate(nextDateObj.getDate() + 1);
+      
+      // 3. Format strictly to YYYY-MM-DD
+      const year = nextDateObj.getFullYear();
+      const month = String(nextDateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(nextDateObj.getDate()).padStart(2, '0');
+      const nextDateStr = `${year}-${month}-${day}`;
+      
+      // 🚨 GATEKEEPER WALL: Prevent filling tomorrow's report today!
+      if (nextDateStr > getISTDate()) {
+        setIsAllCaughtUp(true);
+        return;
       }
-    };
-    fetchMissingDates();
-  }, [userProfile.site]);
 
-  // Safely calculate today's date for our max attribute below
-  const maxAllowedDate = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
+      // 4. Auto-increment the Serial Number across the entire site roster! 💅
+      const nextSrNo = parseInt(latestReport.sr_no || 0) + 1;
+
+      setIsAllCaughtUp(false);
+      setFd(prev => ({ 
+        ...prev, 
+        dateFrom: nextDateStr, 
+        dateTo: nextDateStr, 
+        srNo: nextSrNo.toString() 
+      }));
+    } else {
+      // 🍼 Brand new site pool! First entry starts at Sr No. 1 for yesterday
+      setIsAllCaughtUp(false);
+      setFd(prev => ({ ...prev, dateFrom: getISTDate(-1), dateTo: getISTDate(-1), srNo: '1' }));
+    }
+  }, [weeklyReports]);
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); setIsSubmitting(true);
-    // ✨ ARCHITECTURE TRICK: We force date_to to equal date_from so we don't break your existing Supabase schema!
+    e.preventDefault(); 
+    setIsSubmitting(true);
     const finalDateTo = fd.dateTo || fd.dateFrom; 
     const newReport = {
       site: userProfile.site, date_from: fd.dateFrom, date_to: finalDateTo, sr_no: fd.srNo, disp_solid: fd.dispSolid, disp_gas: fd.dispGas, disp_scrap: fd.dispScrap,
@@ -4012,33 +3985,40 @@ const [isAllCaughtUp, setIsAllCaughtUp] = useState(false); // 🛡️ The realit
     </td>
   );
 
+  // 🥂 THE "ALL CAUGHT UP" UI INTERCEPT WALL
+  if (isAllCaughtUp) {
+    return (
+      <div className="flex flex-col items-center justify-center p-10 mt-10 text-center animate-in zoom-in-95 duration-500">
+        <div className="w-24 h-24 bg-emerald-100 dark:bg-emerald-900/40 rounded-full flex items-center justify-center mb-6 shadow-[0_0_50px_rgba(16,185,129,0.2)]">
+          <CheckCircle size={48} className="text-emerald-500" />
+        </div>
+        <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">All Caught Up! 🥂</h2>
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest leading-relaxed">Today's daily ledger for <span className="text-emerald-500">{userProfile.site}</span> is already secured in the vault. Come back tomorrow!</p>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="p-4 space-y-6">
       <div className="bg-emerald-50 dark:bg-emerald-500/10 p-5 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 shadow-sm">
         <h3 className="font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest text-xs mb-3 flex items-center gap-2"><Calendar size={16}/> {t.mis.selectDates}</h3>
-        {/* ✨ THE SMART CHRONO-LOCK UI: Adapts its message based on their status! */}
-        <div className="w-full relative">
-          <label className="block text-[9px] font-black text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-widest mb-1 flex justify-between">
-            {t.mis.dateFrom} 
-            {!isAllCaughtUp && lockedDate && lockedDate < todayMax && <span className="text-rose-500 dark:text-rose-400 animate-pulse">(PENDING BACKLOG 🔒)</span>}
-            {!isAllCaughtUp && lockedDate === todayMax && <span className="text-emerald-600 dark:text-emerald-400">(TODAY'S REPORT 🔒)</span>}
-          </label>
-          <input 
-            type="date" 
-            required 
-            readOnly={!!lockedDate || isAllCaughtUp} 
-            max={todayMax} 
-            value={fd.dateFrom} 
-            onChange={(e) => { if(!lockedDate && !isAllCaughtUp) setFd({...fd, dateFrom: e.target.value, dateTo: e.target.value}) }} 
-            className={`w-full bg-white dark:bg-slate-900 border rounded-lg py-2.5 px-3 text-sm font-bold outline-none text-emerald-800 dark:text-emerald-200 [color-scheme:light] dark:[color-scheme:dark] transition-all ${lockedDate || isAllCaughtUp ? 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 cursor-not-allowed opacity-80' : 'border-emerald-200 dark:border-emerald-500/30 focus:border-emerald-400'} ${(!isAllCaughtUp && lockedDate && lockedDate < todayMax) ? '!border-rose-200 dark:!border-rose-500/30 !bg-rose-50/50 dark:!bg-rose-900/10' : ''}`} 
-          />
+        <div className="grid grid-cols-2 gap-3 relative">
+          <div className="relative group cursor-not-allowed">
+            <label className="block text-[9px] font-black text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-widest mb-1">{t.mis.dateFrom}</label>
+            <input type="date" required readOnly value={fd.dateFrom} className="w-full bg-emerald-100/50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/30 rounded-lg py-2.5 px-3 text-sm font-bold outline-none text-emerald-800 dark:text-emerald-200 pointer-events-none opacity-80" />
+            <Lock size={12} className="absolute right-3 top-[28px] text-emerald-600/50" />
+          </div>
+          <div className="relative group cursor-not-allowed">
+            <label className="block text-[9px] font-black text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-widest mb-1">{t.mis.dateTo}</label>
+            <input type="date" required readOnly value={fd.dateTo} className="w-full bg-emerald-100/50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/30 rounded-lg py-2.5 px-3 text-sm font-bold outline-none text-emerald-800 dark:text-emerald-200 pointer-events-none opacity-80" />
+            <Lock size={12} className="absolute right-3 top-[28px] text-emerald-600/50" />
+          </div>
         </div>
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
         <div className="p-4 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700"><h4 className="font-black text-slate-700 dark:text-slate-300 text-xs uppercase tracking-widest flex items-center gap-2"><FileText size={16}/> {t.mis.register}</h4></div>
         <div className="overflow-x-auto custom-scrollbar p-2">
-          {/* Note: Table headers are kept in English as they are standardized global tags/acronyms (RMGP, NRGP, etc) */}
           <table className="w-max border-collapse border border-slate-300 dark:border-slate-700 text-center text-[10px] font-black uppercase tracking-widest">
             <thead>
               <tr className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
@@ -4074,7 +4054,9 @@ const [isAllCaughtUp, setIsAllCaughtUp] = useState(false); // 🛡️ The realit
             </thead>
             <tbody>
               <tr className="bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                <td className="border border-slate-300 dark:border-slate-700 p-0"><input type="text" required value={fd.srNo} onChange={(e) => setFd({...fd, srNo: e.target.value})} className="w-16 sm:w-20 bg-transparent text-center py-3 text-base font-bold outline-none" /></td>
+                <td className="border border-slate-300 dark:border-slate-700 p-0 bg-slate-100 dark:bg-slate-800/50 relative">
+                  <input type="text" required readOnly value={fd.srNo} className="w-16 sm:w-20 bg-transparent text-center py-3 text-base font-black text-slate-500 outline-none pointer-events-none" title="Auto-Generated Sequence" />
+                </td>
                 <td className="border border-slate-300 dark:border-slate-700 p-3 text-xs font-black text-slate-400">{userProfile.site}</td>
                 {renderInput('dispSolid')}{renderInput('dispGas')}{renderInput('dispScrap')}
                 {renderInput('recCompany')}{renderInput('recContractor')}
@@ -4090,19 +4072,14 @@ const [isAllCaughtUp, setIsAllCaughtUp] = useState(false); // 🛡️ The realit
         </div>
       </div>
 
-      {/* ✨ THE SUCCESS SHIELD: Hides the submit button if they are done for the day! */}
-      {isAllCaughtUp ? (
-        <div className="w-full py-4 rounded-xl font-black text-sm bg-slate-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 flex justify-center items-center gap-2 uppercase tracking-widest mt-6 shadow-sm">
-          <CheckCircle size={18} /> All Caught Up For Today!
-        </div>
-      ) : (
-        <button type="submit" disabled={isSubmitting} className="w-full py-4 rounded-xl font-black text-base bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-900/20 flex justify-center items-center gap-2 uppercase tracking-widest mt-6 active:scale-95 transition-transform">
-          {isSubmitting ? t.mis.syncing : <><BookOpen size={18} /> {t.mis.submit}</>}
-        </button>
-      )}
+      <button type="submit" disabled={isSubmitting} className="w-full py-4 rounded-xl font-black text-base bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-900/20 flex justify-center items-center gap-2 uppercase tracking-widest mt-6 active:scale-95 transition-transform">
+        {isSubmitting ? t.mis.syncing : <><BookOpen size={18} /> {t.mis.submit}</>}
+      </button>
     </form>
   );
 }
+
+
 // ==========================================
 // 📋 WEEKLY LEDGER REPORT MODULE (PREMIUM iOS VIEW + 24H LOCK 🔒)
 // ==========================================
