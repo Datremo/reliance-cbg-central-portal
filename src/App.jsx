@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
+import html2canvas from 'html2canvas';
 import { 
   Plus, Trash2, Calendar, MapPin, Users, Shield, LogOut, ShieldCheck, Droplet, Wind,Globe2, Truck,
   Filter, CheckCircle, Smartphone, Monitor, Activity,  Leaf, Zap,Eye, EyeOff, Clock,BarChart2, PieChart, TrendingUp, Target, Megaphone, Send, Radio, BellRing, CheckCheck, 
@@ -27,8 +28,7 @@ const calculateLeaveDays = (startDate, endDate) => {
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 includes the start day
   return diffDays;
 };
-// ==========================================
-// 🌍 THE MULTI-LINGUAL TRANSLATION BRAIN (UPGRADED FOR V2.0!)
+
 // ==========================================
 // 🌍 THE MULTI-LINGUAL TRANSLATION BRAIN
 // ==========================================
@@ -4036,7 +4036,7 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab, langu
               <tr className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400">
                 <th className="border border-slate-300 dark:border-slate-700 p-2">SOLID</th>
                 <th className="border border-slate-300 dark:border-slate-700 p-2">GAS</th>
-                <th className="border border-slate-300 dark:border-slate-700 p-2">SCRAP</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2">LFOM/SCRAP </th>
                 <th className="border border-slate-300 dark:border-slate-700 p-2">COMPANY</th>
                 <th className="border border-slate-300 dark:border-slate-700 p-2">CONTRACTOR</th>
                 <th className="border border-slate-300 dark:border-slate-700 p-2">NRGP</th>
@@ -4084,19 +4084,59 @@ function WeeklyMobileForm({ userProfile, fetchWeeklyReports, setActiveTab, langu
 // 📋 WEEKLY LEDGER REPORT MODULE (PREMIUM iOS VIEW + 24H LOCK 🔒)
 // ==========================================
 function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
+  // 💖 Auto-magically gets today's date in IST for you!
+  const getISTDate = () => {
+    const d = new Date();
+    const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+    const ist = new Date(utc + (3600000 * 5.5));
+    return ist.toISOString().split('T')[0];
+  };
+
   const [viewingRep, setViewingRep] = useState(null);
-  const [filterDate, setFilterDate] = useState(''); // ✨ THE NEW FILTER STATE
+  
+  // ✨ Initializes to TODAY'S date by default!
+  const [filterDate, setFilterDate] = useState(getISTDate()); 
 
-  // Apply the filter dynamically before rendering!
-  const filteredReports = filterDate ? weeklyReports.filter(rep => rep.date_from === filterDate) : weeklyReports;
+  // ✨ Sorts so the newest ones are ALWAYS at the top!
+  const filteredReports = (filterDate ? weeklyReports.filter(rep => rep.date_from === filterDate) : weeklyReports)
+    .sort((a, b) => new Date(b.date_from) - new Date(a.date_from));
 
-  // ✨ THE TIMELOCK BRAIN: Checks if the report is older than 24 hours! 🧠
   const checkIsEditable = (createdAt) => {
     if (!createdAt) return false;
     const recordTime = new Date(createdAt).getTime();
     const currentTime = new Date().getTime();
     const hoursPassed = (currentTime - recordTime) / (1000 * 60 * 60);
-    return hoursPassed <= 24; // If it's been less than 24 hours, they can edit!
+    return hoursPassed <= 24; 
+  };
+
+  const handleDownloadImage = async () => {
+    const element = document.getElementById('mis-report-table-wrapper');
+    if (!element) return;
+    
+    try {
+      const originalWidth = element.style.width;
+      const originalOverflow = element.style.overflow;
+      
+      element.style.width = 'max-content';
+      element.style.overflow = 'visible';
+      
+      const canvas = await html2canvas(element, { 
+        scale: 2, 
+        useCORS: true,
+        backgroundColor: document.documentElement.classList.contains('dark') ? '#0B1120' : '#ffffff' 
+      });
+      
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      const link = document.createElement('a');
+      link.download = `MIS_Report_${viewingRep.site}_${viewingRep.date_from}.jpg`;
+      link.href = dataUrl;
+      link.click();
+
+      element.style.width = originalWidth;
+      element.style.overflow = originalOverflow;
+    } catch (err) {
+      alert("Oopsie! Screenshot failed: " + err.message);
+    }
   };
 
   if (isLoading) return <div className="p-8 text-center text-emerald-500 font-bold animate-pulse uppercase tracking-widest text-[10px]">Decrypting Ledgers...</div>;
@@ -4104,7 +4144,6 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
   return (
     <div className="p-4 space-y-5 pb-24">
       
-      {/* ✨ THE NEW DATE FILTER BAR */}
       <div className="bg-white dark:bg-[#0f172a] p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex items-end justify-between gap-3">
         <div className="flex-1">
           <label className="block text-[9px] font-black text-indigo-500 uppercase tracking-widest mb-1.5 flex items-center gap-1"><Search size={10}/> Filter by Date</label>
@@ -4116,12 +4155,11 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
       </div>
 
       {filteredReports.map(rep => {
-        const canEdit = checkIsEditable(rep.created_at); // 🔒 Check the lock status!
+        const canEdit = checkIsEditable(rep.created_at);
 
         return (
           <div key={rep.id} onClick={() => setViewingRep(rep)} className="bg-white dark:bg-[#0f172a] p-5 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-2 border-slate-100 dark:border-slate-800 relative cursor-pointer active:scale-[0.98] transition-transform group overflow-hidden">
             
-            {/* Aesthetic Side Ribbon */}
             <div className={`absolute top-0 left-0 w-1.5 h-full ${canEdit ? 'bg-emerald-500' : 'bg-slate-400 dark:bg-slate-600'}`}></div>
 
             <div className="absolute top-5 right-5 bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400 font-black text-[9px] uppercase tracking-widest px-2.5 py-1.5 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">Sr. {rep.sr_no}</div>
@@ -4132,18 +4170,16 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
                 <Calendar size={12}/> Date: {rep.date_from}
               </p>
               
-              {/* Sleek Data Grid */}
               <div className="grid grid-cols-3 gap-3 text-[10px] font-bold text-center border-t border-slate-100 dark:border-slate-800 pt-4 mb-5">
                 <div className="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm"><span className="text-slate-400 block mb-1 uppercase tracking-widest text-[8px]">Dispatch</span><span className="text-slate-800 dark:text-slate-200 text-sm">{(parseInt(rep.disp_solid||0) + parseInt(rep.disp_gas||0) + parseInt(rep.disp_scrap||0))}</span></div>
                 <div className="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm"><span className="text-slate-400 block mb-1 uppercase tracking-widest text-[8px]">Receipt</span><span className="text-slate-800 dark:text-slate-200 text-sm">{(parseInt(rep.rec_company||0) + parseInt(rep.rec_contractor||0))}</span></div>
                 <div className="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm"><span className="text-slate-400 block mb-1 uppercase tracking-widest text-[8px]">Footfall</span><span className="text-slate-800 dark:text-slate-200 text-sm">{(parseInt(rep.foot_contractor||0) + parseInt(rep.foot_ril||0) + parseInt(rep.foot_visitor||0) + parseInt(rep.foot_gov||0))}</span></div>
               </div>
 
-              {/* ✨ THE TIMELOCKED BUTTONS */}
               <div className="grid grid-cols-2 gap-3">
                 {canEdit ? (
                   <button onClick={(e) => { e.stopPropagation(); onEditWeekly(rep); }} className="w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 flex justify-center items-center gap-1.5 hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200 dark:border-indigo-500/30">
-                     <Edit2 size={14}/> Edit / Resend
+                     <Edit2 size={14}/> Edit
                   </button>
                 ) : (
                   <div className="w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-slate-100 text-slate-400 dark:bg-slate-800/50 dark:text-slate-500 flex justify-center items-center gap-1.5 border border-slate-200 dark:border-slate-700/50 cursor-not-allowed shadow-inner">
@@ -4160,48 +4196,55 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
       })}
       {filteredReports.length === 0 && <p className="text-center text-slate-500 text-sm mt-10 font-bold italic">No daily ledgers found for this selection.</p>}
 
-      {/* ✨ CYBER-GLASS MOBILE MODAL FOR SUPERVISORS */}
       {viewingRep && (
-        <div className="fixed inset-0 bg-slate-900/40 dark:bg-black/70 backdrop-blur-md z-[150] flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in duration-200" onClick={() => setViewingRep(null)}>
+        <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md z-[150] flex flex-col sm:items-center justify-end sm:justify-center sm:p-4 animate-in fade-in duration-200" onClick={() => setViewingRep(null)}>
           
-          <div className="bg-white/90 dark:bg-[#0B1120]/80 backdrop-blur-3xl border border-white/50 dark:border-emerald-500/20 w-full sm:max-w-5xl max-h-[85vh] sm:max-h-[90vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_0_80px_-15px_rgba(16,185,129,0.2)] overflow-hidden flex flex-col relative animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-500" onClick={e => e.stopPropagation()}>
+          <div className="bg-slate-50 dark:bg-[#0B1120] w-full sm:max-w-7xl max-h-[90vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_0_80px_-15px_rgba(16,185,129,0.2)] flex flex-col relative animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-500 border border-slate-200 dark:border-slate-800 overflow-hidden" onClick={e => e.stopPropagation()}>
             
-            <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/20 rounded-full blur-[60px] pointer-events-none"></div>
-
-            <div className="h-1.5 w-12 bg-slate-300/50 dark:bg-slate-700/50 rounded-full mx-auto mt-3 sm:hidden shrink-0 relative z-20"></div>
-            
-            {/* Sleek Header */}
-            <div className="p-5 sm:p-6 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-start relative z-10">
-               <div>
-                 <span className="text-[9px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 backdrop-blur-md shadow-sm">Sr No. {viewingRep.sr_no}</span>
-                 <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-3 uppercase tracking-tight leading-none drop-shadow-sm">{viewingRep.site}</h2>
-                 <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1.5 flex items-center gap-1.5"><Calendar size={12}/> Reported: {viewingRep.date_from}</p>
-               </div>
-               <button onClick={() => setViewingRep(null)} className="p-2.5 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 bg-white/50 dark:bg-black/40 backdrop-blur-md rounded-full shadow-sm border border-white/50 dark:border-slate-700/50 transition-colors active:scale-95"><X size={18} /></button>
+            <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center relative z-20 bg-white dark:bg-slate-900 shrink-0">
+               <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+                 <FileText size={18} className="text-emerald-500" /> Master Table
+               </h2>
+               <button onClick={() => setViewingRep(null)} className="p-2 text-slate-500 hover:text-rose-500 bg-slate-100 dark:bg-slate-800 rounded-full shadow-inner transition-colors active:scale-95"><X size={18} /></button>
             </div>
             
-            {/* 📊 THE HIGH-CONTRAST CRISP TABLE WRAPPER */}
-            <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar relative z-10">
-               <div className="overflow-x-auto border-2 border-slate-300 dark:border-slate-600 rounded-[1.5rem] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] bg-white dark:bg-[#0B1120] custom-scrollbar pb-2">
-                 
-                 <table className="w-max min-w-full border-collapse text-center text-[10px] font-black uppercase tracking-widest">
+            <div className="flex-1 overflow-auto bg-slate-100 dark:bg-[#0B1120] p-4 relative hide-scrollbar custom-scrollbar">
+              
+              <div id="mis-report-table-wrapper" className="bg-white dark:bg-[#0B1120] rounded-[1.5rem] p-4 border border-slate-200 dark:border-slate-800 shadow-sm inline-block min-w-full">
+                
+                <div className="flex justify-between items-end mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+                   <div>
+                     <span className="text-[9px] font-black px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 uppercase tracking-widest mb-1 inline-block border border-emerald-200 dark:border-emerald-500/30">Sr No. {viewingRep.sr_no}</span>
+                     <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase leading-none tracking-tight">{viewingRep.site}</h2>
+                   </div>
+                   <div className="text-right">
+                     <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest block mb-0.5">Date</span>
+                     <span className="text-sm font-black text-indigo-600 dark:text-indigo-400">{viewingRep.date_from}</span>
+                   </div>
+                </div>
+
+                <table className="w-max min-w-full border-collapse text-center text-[10px] font-black uppercase tracking-widest">
                    <thead>
+                     {/* ✨ ROW 1: NO ROWSPANS! Just perfectly styled blank colored blocks on top! */}
                      <tr className="bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-white">
-                       <th rowSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3 min-w-[60px]">Sr. No.</th>
-                       <th rowSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3 min-w-[100px]">SITE</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-3 min-w-[60px] bg-slate-100 dark:bg-slate-800"></th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-3 min-w-[100px] bg-slate-100 dark:bg-slate-800"></th>
                        <th colSpan="3" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-900 dark:text-emerald-400">DISPATCH</th>
                        <th colSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-900 dark:text-indigo-400">RECEIPT</th>
                        <th colSpan="3" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-400">OGP</th>
                        <th colSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-blue-100 dark:bg-blue-900/40 text-blue-900 dark:text-blue-400">VEHICLE</th>
                        <th colSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-purple-100 dark:bg-purple-900/40 text-purple-900 dark:text-purple-400">CON/RIL STAFF</th>
-                       <th rowSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400">VISITOR</th>
-                       <th rowSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400">GOV.<br/>OFF.</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-rose-50 dark:bg-rose-900/20"></th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-rose-50 dark:bg-rose-900/20"></th>
                        <th colSpan="4" className="border-2 border-slate-300 dark:border-slate-700 p-3 bg-slate-300 dark:bg-slate-700/80 text-slate-900 dark:text-white">DEPLOYMENT</th>
                      </tr>
+                     {/* ✨ ROW 2: The actual labels! Screenshot tool will literally love this layout! */}
                      <tr className="bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-300">
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2 bg-slate-100 dark:bg-slate-800">SR. NO.</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2 bg-slate-100 dark:bg-slate-800">SITE</th>
                        <th className="border-2 border-slate-300 dark:border-slate-700 p-2">SOLID</th>
                        <th className="border-2 border-slate-300 dark:border-slate-700 p-2">GAS</th>
-                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">SCRAP</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">LFOM/SCRAP </th>
                        <th className="border-2 border-slate-300 dark:border-slate-700 p-2">COMPANY</th>
                        <th className="border-2 border-slate-300 dark:border-slate-700 p-2">CONTRACTOR</th>
                        <th className="border-2 border-slate-300 dark:border-slate-700 p-2">NRGP</th>
@@ -4211,6 +4254,8 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
                        <th className="border-2 border-slate-300 dark:border-slate-700 p-2 px-1">CO.<br/>VEH</th>
                        <th className="border-2 border-slate-300 dark:border-slate-700 p-2 px-1">CON.<br/>WORKER</th>
                        <th className="border-2 border-slate-300 dark:border-slate-700 p-2 px-1">RIL<br/>EMP.</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400">VISITOR</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400">GOV.<br/>OFF.</th>
                        <th className="border-2 border-slate-300 dark:border-slate-700 p-2">Day SS</th>
                        <th className="border-2 border-slate-300 dark:border-slate-700 p-2">Day SG</th>
                        <th className="border-2 border-slate-300 dark:border-slate-700 p-2">Night SS</th>
@@ -4219,8 +4264,8 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
                    </thead>
                    <tbody>
                      <tr className="text-slate-900 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black">{viewingRep.sr_no}</td>
-                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black text-emerald-700 dark:text-emerald-400">{viewingRep.site}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black bg-slate-100 dark:bg-slate-800/40">{viewingRep.sr_no}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black text-emerald-700 dark:text-emerald-400 bg-slate-100 dark:bg-slate-800/40">{viewingRep.site}</td>
                        <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.disp_solid || 0}</td>
                        <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.disp_gas || 0}</td>
                        <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black text-rose-600 dark:text-rose-400">{viewingRep.disp_scrap || 0}</td>
@@ -4233,8 +4278,8 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
                        <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.veh_company || 0}</td>
                        <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.foot_contractor || 0}</td>
                        <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.foot_ril || 0}</td>
-                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black text-purple-600 dark:text-purple-400">{viewingRep.foot_visitor || 0}</td>
-                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black text-purple-600 dark:text-purple-400">{viewingRep.foot_gov || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black text-purple-600 dark:text-purple-400 bg-rose-50 dark:bg-rose-900/10">{viewingRep.foot_visitor || 0}</td>
+                       <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-black text-purple-600 dark:text-purple-400 bg-rose-50 dark:bg-rose-900/10">{viewingRep.foot_gov || 0}</td>
                        <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.dep_day_ss || 0}</td>
                        <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.dep_day_sg || 0}</td>
                        <td className="border-2 border-slate-300 dark:border-slate-700 p-4 font-bold">{viewingRep.dep_night_ss || 0}</td>
@@ -4242,12 +4287,19 @@ function WeeklyMobileHistory({ weeklyReports, isLoading, onEditWeekly }) {
                      </tr>
                    </tbody>
                  </table>
-               </div>
+              </div>
+            </div>
+
+            <div className="p-4 sm:p-6 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 relative z-20">
+               <button onClick={handleDownloadImage} className="w-full py-4 rounded-2xl text-xs font-black bg-emerald-500 hover:bg-emerald-600 text-white flex justify-center items-center gap-2 transition-all shadow-lg shadow-emerald-500/30 uppercase tracking-widest active:scale-95">
+                 <Camera size={18} /> Save Table as Image
+               </button>
             </div>
             
           </div>
         </div>
       )}
+
     </div>
   );
 }
@@ -4523,38 +4575,44 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
   const [showComparator, setShowComparator] = useState(false); 
   const [showTrendModal, setShowTrendModal] = useState(false); 
 
+  // 👻 GHOST MODE: ADMIN FORSAKE STATES
+  const [showForsakeModal, setShowForsakeModal] = useState(false);
+  const [forsakeSite, setForsakeSite] = useState('');
+  const [forsakeDate, setForsakeDate] = useState(getISTDate());
+  const [isForsaking, setIsForsaking] = useState(false); 
+
   // ✨ THE TIME-WARP MODAL STATES (Safely declared at the top level!)
   const [isComparing, setIsComparing] = useState(false);
   const [primaryStart, setPrimaryStart] = useState(getISTDate());
   const [primaryEnd, setPrimaryEnd] = useState(getISTDate());
+  const [primarySite, setPrimarySite] = useState('All'); // ✨ NEW: Primary Site Select!
   const [compareStart, setCompareStart] = useState(getISTDate());
   const [compareEnd, setCompareEnd] = useState(getISTDate());
+  const [compareSite, setCompareSite] = useState('All'); // ✨ NEW: Compare Site Select!
 
   // ✨ THE GPS TRACKER & BACKGROUND LOCK! 📍
   const [scrollPos, setScrollPos] = useState(0);
   
   React.useEffect(() => {
-    // If ANY modal is open, lock the screen!
-    if (viewingRep || showComparator) {
-       // Find the closest scrolling parent! (In your dashboard, it's usually the <main> or the container with 'custom-scrollbar')
-       // Since this component is injected inside a scrollable div, window.scrollY might be 0. We need the actual container's scroll!
-       const scrollContainer = document.querySelector('.custom-scrollbar'); 
-       setScrollPos(scrollContainer ? scrollContainer.scrollTop : window.scrollY); 
+    const isModalOpen = viewingRep || showComparator || showForsakeModal || showTrendModal;
+    
+    if (isModalOpen) {
+       // ✨ FIX: Safely grab the scroll position to anchor the modal flawlessly!
+       const scrollY = window.scrollY || document.documentElement.scrollTop;
+       setScrollPos(scrollY); 
        
        document.body.style.overflow = 'hidden'; 
-       if(scrollContainer) scrollContainer.style.overflow = 'hidden'; // Lock the container too!
+       document.documentElement.style.overflow = 'hidden'; 
     } else {
-       document.body.style.overflow = 'auto';
-       const scrollContainer = document.querySelector('.custom-scrollbar'); 
-       if(scrollContainer) scrollContainer.style.overflow = 'auto';
+       document.body.style.overflow = '';
+       document.documentElement.style.overflow = '';
     }
     
     return () => { 
-      document.body.style.overflow = 'auto'; 
-      const scrollContainer = document.querySelector('.custom-scrollbar'); 
-      if(scrollContainer) scrollContainer.style.overflow = 'auto';
+      document.body.style.overflow = ''; 
+      document.documentElement.style.overflow = '';
     }; 
-  }, [viewingRep, showComparator]);
+  }, [viewingRep, showComparator, showForsakeModal, showTrendModal]);
 
   // ✨ OPERATIONAL FILTER MAGIC: We ONLY want operational/commissioned sites in this dropdown!
   const baseSites = filterState === "All" ? SITES : SITES_BY_STATE[filterState] || [];
@@ -4566,8 +4624,8 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
   );
 
   const filtered = weeklyReports.filter(r => {
-    // ✨ MAGIC: Filter MIS Reports by the date they were SUBMITTED to the vault!
-    const rDate = getISTDateString(r.created_at); 
+    // ✨ MAGIC: Filter MIS Reports by the ACTUAL date of the data (date_from)!
+    const rDate = r.date_from; 
     const dMatch = (!filterStartDate || rDate >= filterStartDate) && (!filterEndDate || rDate <= filterEndDate);
     const safeSiteName = (r.site || "").toUpperCase();
     const stMatch = filterState === "All" || (SITES_BY_STATE[filterState] && SITES_BY_STATE[filterState].includes(safeSiteName));
@@ -4794,6 +4852,10 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
           </button>
           <button onClick={exportMasterAudit} className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 active:scale-95 border border-emerald-400/50">
             <Download size={16} /> Export Master Audit
+          </button>
+          {/* 👻 THE NEW ADMIN FORSAKE BUTTON */}
+          <button onClick={() => setShowForsakeModal(true)} className="px-6 py-2.5 bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-rose-500/10 text-xs font-black uppercase tracking-widest rounded-xl shadow-sm transition-all flex items-center gap-2 active:scale-95 border border-slate-200 dark:border-slate-700 hover:border-rose-200 dark:hover:border-rose-500/30">
+            <Trash2 size={16} /> Forsake Ledger
           </button>
         </div>
         </div>
@@ -5381,12 +5443,12 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
         })}
       </div>
 
-      {/* 📄 CYBER-GLASS DEEP DIVE MODAL (BULLETPROOF FIXED POSITIONING) */}
+      {/* 📄 CYBER-GLASS DEEP DIVE MODAL (BULLETPROOF ABSOLUTE TRACKING) */}
       {viewingRep && (
         <div 
-          // ✨ CHANGED: z-[9999] ensures it beats absolutely everything else on the DOM. 
-          // Removed `items-end` for mobile because it sometimes forces tall content off-screen.
-          className="fixed inset-0 z-[9999] bg-slate-900/60 dark:bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300" 
+          // ✨ THE FIX: Switched to absolute positioning with dynamic top tracking! Breaks out of parent transform traps.
+          className="absolute left-0 w-full z-[9999] bg-slate-900/60 dark:bg-black/80 backdrop-blur-md flex items-start pt-10 sm:pt-0 sm:items-center justify-center p-4 animate-in fade-in duration-300" 
+          style={{ top: `${scrollPos}px`, height: '100dvh' }}
           onClick={() => setViewingRep(null)}
         >
           {/* ✨ The Premium Floating Glass Container */}
@@ -5436,7 +5498,7 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
                      <tr className="bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-300">
                        <th className="border-2 border-slate-300 dark:border-slate-700 p-2">SOLID</th>
                        <th className="border-2 border-slate-300 dark:border-slate-700 p-2">GAS</th>
-                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">SCRAP</th>
+                       <th className="border-2 border-slate-300 dark:border-slate-700 p-2">LFOM/SCRAP </th>
                        <th className="border-2 border-slate-300 dark:border-slate-700 p-2">COMPANY</th>
                        <th className="border-2 border-slate-300 dark:border-slate-700 p-2">CONTRACTOR</th>
                        <th className="border-2 border-slate-300 dark:border-slate-700 p-2">NRGP</th>
@@ -5478,6 +5540,12 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
                    </tbody>
                  </table>
                </div>
+               {/* ✨ THE "FILLED ON" TIMESTAMP STAMP */}
+               {viewingRep.created_at && (
+                 <div className="text-right mt-3 mr-2 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                   Log Initially Filled On: <span className="text-indigo-500 dark:text-indigo-400">{new Date(viewingRep.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })}</span>
+                 </div>
+               )}
              </div>
 
              {/* 🕹️ Translucent Footer */}
@@ -5548,8 +5616,8 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
       {/* ✨ RENDER THE FAANG COMPARATOR MODAL */}
       {showComparator && (
         <div 
-          className="absolute left-0 w-full z-[200] animate-in fade-in duration-300"
-          style={{ top: `${scrollPos}px`, height: '100%' }}
+          className="absolute left-0 w-full z-[9999] animate-in fade-in duration-300"
+          style={{ top: `${scrollPos}px`, height: '100dvh' }}
         >
           <MisComparatorModal 
             reports={weeklyReports} 
@@ -5559,11 +5627,58 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
         </div>
       )}
 
+      {/* 👻 ADMIN GHOST LEDGER (FORSAKE) MODAL */}
+      {showForsakeModal && (
+        <div className="absolute left-0 w-full z-[9999] bg-slate-900/60 dark:bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300" style={{ top: `${scrollPos}px`, height: '100dvh' }} onClick={() => setShowForsakeModal(false)}>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl relative animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+            <div className="absolute top-4 right-4"><button onClick={() => setShowForsakeModal(false)} className="text-slate-400 hover:text-rose-500"><X size={18}/></button></div>
+            <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase mb-2 flex items-center gap-2"><Trash2 size={18} className="text-rose-500" /> Forsake Site Ledger</h2>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-6 leading-relaxed">Admin Override: This will inject a sterile, zeroed-out ghost record to bypass compliance locks for inactive days.</p>
+            
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Target Site</label>
+                <select value={forsakeSite} onChange={e => setForsakeSite(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-bold text-slate-700 dark:text-slate-300 outline-none">
+                  <option value="" disabled>Select a site...</option>
+                  {availableSites.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Ghost Date</label>
+                <input type="date" value={forsakeDate} onChange={e => setForsakeDate(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-bold text-slate-700 dark:text-slate-300 outline-none" />
+              </div>
+            </div>
 
-{/* ✨ RENDER THE FAANG COMPARATOR MODAL */}
-      {showComparator && (
-        <div className="fixed inset-0 z-[200] animate-in fade-in duration-300">
-          <MisComparatorModal reports={weeklyReports} availableSites={availableSites} onClose={() => setShowComparator(false)} />
+            <button disabled={isForsaking || !forsakeSite} onClick={async () => {
+              setIsForsaking(true);
+              
+              // ✨ DUPLICATE CHECK: Prevent double-forsaking the same site and date!
+              const alreadyExists = weeklyReports.find(r => (r.site || "").toUpperCase() === forsakeSite.toUpperCase() && r.date_from === forsakeDate);
+              if (alreadyExists) {
+                alert(`🚨 Hold up! A ledger already exists for ${forsakeSite} on ${forsakeDate}. You cannot forsake a day that is already logged!`);
+                setIsForsaking(false);
+                return;
+              }
+
+              // Auto-calculate the exact next serial number for this specific site!
+              const siteReports = weeklyReports.filter(r => (r.site || "").toUpperCase() === forsakeSite.toUpperCase()).sort((a, b) => new Date(b.date_to) - new Date(a.date_to));
+              const nextSrNo = siteReports.length > 0 ? parseInt(siteReports[0].sr_no || 0) + 1 : 1;
+              
+              const ghostReport = { site: forsakeSite, date_from: forsakeDate, date_to: forsakeDate, sr_no: nextSrNo.toString(), disp_solid: 0, disp_gas: 0, disp_scrap: 0, rec_company: 0, rec_contractor: 0, ogp_nrgp: 0, ogp_rmgp: 0, ogp_rmgp_in: 0, veh_contractor: 0, veh_company: 0, foot_contractor: 0, foot_ril: 0, foot_visitor: 0, foot_gov: 0, dep_day_ss: 0, dep_day_sg: 0, dep_night_ss: 0, dep_night_sg: 0 };
+              
+              try {
+                const { error } = await supabase.from('weekly_reports').insert([ghostReport]);
+                if (error) throw error;
+                alert(`✨ Successfully executed admin override for ${forsakeSite} on ${forsakeDate}!`);
+                window.location.reload(); // Instantly refreshes the admin dashboard to show the new record!
+              } catch (err) { 
+                  alert("Error: " + err.message); 
+                  setIsForsaking(false); 
+              }
+            }} className="w-full py-3.5 rounded-xl text-xs font-black uppercase tracking-widest text-white bg-rose-600 hover:bg-rose-500 shadow-lg shadow-rose-500/20 active:scale-95 transition-all flex justify-center items-center gap-2 disabled:opacity-50">
+              {isForsaking ? 'Processing...' : 'Execute Override'}
+            </button>
+          </div>
         </div>
       )}
 
@@ -5573,20 +5688,35 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
           <div className="bg-white/95 dark:bg-[#0B1120]/95 backdrop-blur-3xl border border-white/50 dark:border-indigo-500/20 rounded-[2.5rem] shadow-[0_0_80px_-15px_rgba(99,102,241,0.3)] w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-500" onClick={e => e.stopPropagation()}>
             
             {/* Header */}
-            <div className="p-5 sm:p-6 border-b border-slate-200/50 dark:border-slate-700/50 flex flex-wrap gap-4 justify-between items-center relative z-10 bg-slate-50/50 dark:bg-slate-900/50">
+            <div className="p-5 sm:p-6 border-b border-slate-200/50 dark:border-slate-700/50 flex flex-wrap gap-4 justify-between items-center relative z-10 bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
               <div>
                 <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2"><TrendingUp size={20} className="text-indigo-500"/> Time-Warp Analytics</h2>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Cross-examine historical production timelines</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Cross-examine historical production timelines & sites</p>
               </div>
-              <button onClick={() => setShowTrendModal(false)} className="p-2.5 bg-white dark:bg-slate-800 rounded-full hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-slate-700 transition-colors text-slate-500 shadow-sm border border-slate-200 dark:border-slate-700"><X size={16}/></button>
+              <div className="flex items-center gap-3">
+                <button onClick={async () => {
+                  const element = document.getElementById('trend-export-wrapper');
+                  if (!element) return;
+                  try {
+                    const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: document.documentElement.classList.contains('dark') ? '#0B1120' : '#ffffff' });
+                    const link = document.createElement('a');
+                    link.download = `Trend_Analytics_${primaryStart}.jpg`;
+                    link.href = canvas.toDataURL('image/jpeg', 0.9);
+                    link.click();
+                  } catch(err) { alert("Oopsie! Screenshot failed: " + err.message); }
+                }} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-indigo-500/20 transition-all flex items-center gap-2 active:scale-95">
+                  <Camera size={14} /> Save Chart
+                </button>
+                <button onClick={() => setShowTrendModal(false)} className="p-2.5 bg-white dark:bg-slate-800 rounded-full hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-slate-700 transition-colors text-slate-500 shadow-sm border border-slate-200 dark:border-slate-700"><X size={16}/></button>
+              </div>
             </div>
 
             {/* Sub-Header: Side-by-Side Date Selectors */}
             {(() => {
               // Reusable Graph Generator!
-              const renderGraph = (start, end, title, isGhost = false) => {
+              const renderGraph = (start, end, targetSiteFilter, title, isGhost = false) => {
                 const targetData = weeklyReports
-                  .filter(r => r.date_from >= start && r.date_from <= end && (filterSite === "All" || (r.site || "").toUpperCase() === filterSite.toUpperCase()))
+                  .filter(r => r.date_from >= start && r.date_from <= end && (targetSiteFilter === "All" || (r.site || "").toUpperCase() === targetSiteFilter.toUpperCase()))
                   .reduce((acc, r) => {
                     const existing = acc.find(x => x.date === r.date_from);
                     if (existing) {
@@ -5600,35 +5730,77 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
                 if (targetData.length === 0) return <div className="h-full flex items-center justify-center text-slate-400 text-xs font-bold uppercase tracking-widest border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">No Data in Window</div>;
 
                 const maxTrend = Math.max(...targetData.map(d => Math.max(d.solid, d.gas, d.lfom, 10)), 10) * 1.2; 
-                const getX = (i) => targetData.length > 1 ? (i / (targetData.length - 1)) * 100 : 50;
+                // ✨ FIX: Offset X to start at 8 so we have room for the beautiful Y-Axis Labels!
+                const getX = (i) => targetData.length > 1 ? 8 + (i / (targetData.length - 1)) * 92 : 54;
                 const getPoints = (key) => targetData.map((d, i) => `${getX(i)},${100 - (d[key] / maxTrend) * 100}`).join(' ');
-                const solidArea = `${getPoints('solid')} 100,100 0,100`;
+                const solidArea = `${getPoints('solid')} 100,100 8,100`;
 
                 return (
                   <div className={`flex flex-col h-full bg-white dark:bg-[#0f172a] rounded-3xl p-6 border ${isGhost ? 'border-dashed border-slate-300 dark:border-slate-700 opacity-90' : 'border-slate-200 dark:border-slate-800 shadow-lg'}`}>
-                    <div className="flex justify-between items-end mb-6">
+                    <div className="flex justify-between items-end mb-6 shrink-0">
                        <div>
-                         <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{title}</h3>
+                         <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{title} <span className="text-indigo-400">({targetSiteFilter})</span></h3>
                          <p className="text-sm font-black text-slate-900 dark:text-white uppercase mt-1">{start} <span className="text-indigo-500">➔</span> {end}</p>
                        </div>
                     </div>
-                    <div className="flex-1 relative w-full flex flex-col min-h-[250px]">
-                      <svg viewBox="0 -5 100 105" className="absolute inset-0 w-full h-full overflow-visible" preserveAspectRatio="none">
+                    <div className="flex-1 relative w-full flex flex-col min-h-[250px] my-4">
+                      {/* ✨ FIXED: We separated the SVG scaling from the HTML overlay so dots & text NEVER squish! */}
+                      
+                      {/* 1. The SVG for flexible lines and areas */}
+                      <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full overflow-visible pointer-events-none" preserveAspectRatio="none">
                         <defs>
-                          <linearGradient id={`grad-${title.replace(/\\s/g,'')}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#6366F1" stopOpacity="0.4" />
+                          <linearGradient id={`grad-${title.replace(/\s/g,'')}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#6366F1" stopOpacity="0.3" />
                             <stop offset="100%" stopColor="#6366F1" stopOpacity="0" />
                           </linearGradient>
                         </defs>
-                        <line x1="0" y1="0" x2="100" y2="0" stroke="currentColor" className="text-slate-100 dark:text-slate-800" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-                        <line x1="0" y1="50" x2="100" y2="50" stroke="currentColor" className="text-slate-100 dark:text-slate-800" strokeDasharray="4 4" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-                        <line x1="0" y1="100" x2="100" y2="100" stroke="currentColor" className="text-slate-200 dark:text-slate-700" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
 
-                        <polygon points={solidArea} fill={`url(#grad-${title.replace(/\\s/g,'')})`} vectorEffect="non-scaling-stroke" />
-                        <polyline points={getPoints('solid')} fill="none" stroke="#6366F1" strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
-                        <polyline points={getPoints('gas')} fill="none" stroke="#10B981" strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
-                        <polyline points={getPoints('lfom')} fill="none" stroke="#A855F7" strokeWidth="3" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
+                        {/* ✨ GRID LINES (Shifted right to start at x=8) */}
+                        <line x1="8" y1="0" x2="100" y2="0" stroke="currentColor" className="text-slate-100 dark:text-slate-800" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+                        <line x1="8" y1="50" x2="100" y2="50" stroke="currentColor" className="text-slate-100 dark:text-slate-800" strokeDasharray="4 4" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+                        <line x1="8" y1="100" x2="100" y2="100" stroke="currentColor" className="text-slate-200 dark:text-slate-700" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+
+                        {/* Paths */}
+                        <polygon points={solidArea} fill={`url(#grad-${title.replace(/\s/g,'')})`} vectorEffect="non-scaling-stroke" />
+                        <polyline points={getPoints('solid')} fill="none" stroke="#6366F1" strokeWidth="2.5" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
+                        <polyline points={getPoints('gas')} fill="none" stroke="#10B981" strokeWidth="2.5" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
+                        <polyline points={getPoints('lfom')} fill="none" stroke="#A855F7" strokeWidth="2.5" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
+
+                      {/* 2. The HTML Overlay for perfect text and crisp circles! */}
+                      <div className="absolute inset-0 pointer-events-none">
+                        {/* ✨ PERFECT Y-AXIS LABELS */}
+                        <div className="absolute left-0 top-[0%] -translate-y-1/2 text-[10px] font-black text-slate-400">{Math.round(maxTrend)}</div>
+                        <div className="absolute left-0 top-[50%] -translate-y-1/2 text-[10px] font-black text-slate-400">{Math.round(maxTrend / 2)}</div>
+                        <div className="absolute left-0 top-[100%] -translate-y-1/2 text-[10px] font-black text-slate-400">0</div>
+
+                        {/* ✨ CRISP INTERACTIVE DOTS */}
+                        {targetData.map((d, i) => {
+                          const x = getX(i);
+                          const ySolid = 100 - (d.solid / maxTrend) * 100;
+                          const yGas = 100 - (d.gas / maxTrend) * 100;
+                          const yLfom = 100 - (d.lfom / maxTrend) * 100;
+                          
+                          const renderDot = (y, color, val) => (
+                            <div className="absolute w-2.5 h-2.5 rounded-full border border-white dark:border-slate-900 group pointer-events-auto cursor-crosshair z-10 hover:z-50 transition-transform hover:scale-150" 
+                                 style={{ left: `${x}%`, top: `${y}%`, backgroundColor: color, transform: 'translate(-50%, -50%)' }}>
+                                {/* Sleek HTML Tooltip! */}
+                                <div className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-slate-800 text-white p-1.5 rounded-lg flex flex-col items-center pointer-events-none transition-opacity duration-200 shadow-xl border border-slate-600 min-w-[40px]">
+                                  <span className="font-black text-[10px] leading-none mb-0.5">{val}</span>
+                                  <span className="text-[7px] text-slate-400 font-bold uppercase tracking-widest">{d.date.substring(5)}</span>
+                                </div>
+                            </div>
+                          );
+                          
+                          return (
+                            <React.Fragment key={i}>
+                              {renderDot(ySolid, "#6366F1", d.solid)}
+                              {renderDot(yGas, "#10B981", d.gas)}
+                              {renderDot(yLfom, "#A855F7", d.lfom)}
+                            </React.Fragment>
+                          )
+                        })}
+                      </div>
                     </div>
                     <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                       <span className="flex items-center gap-1.5 text-[9px] font-black text-slate-500 uppercase"><div className="w-2.5 h-2.5 rounded-full bg-indigo-500"></div> Solid</span>
@@ -5640,17 +5812,21 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
               };
 
               return (
-                <div className="flex-1 flex flex-col p-4 sm:p-6 overflow-y-auto custom-scrollbar bg-slate-50 dark:bg-[#0B1120]">
+                <div id="trend-export-wrapper" className="flex-1 flex flex-col p-4 sm:p-6 overflow-y-auto custom-scrollbar bg-slate-50 dark:bg-[#0B1120]">
                   
                   {/* Cockpit Controls */}
-                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm mb-6 flex flex-col sm:flex-row gap-6 justify-between items-center z-20 relative">
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm mb-6 flex flex-col xl:flex-row gap-6 justify-between items-center z-20 relative overflow-visible">
                     
-                    {/* Primary Date Range */}
-                    <div className="flex flex-col gap-2 w-full sm:w-auto">
-                      <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Primary Window</span>
-                      <div className="flex gap-2">
-                        <input type="date" value={primaryStart} onChange={e => setPrimaryStart(e.target.value)} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 p-2 rounded-xl outline-none" />
-                        <input type="date" value={primaryEnd} onChange={e => setPrimaryEnd(e.target.value)} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 p-2 rounded-xl outline-none" />
+                    {/* Primary Selection Area */}
+                    <div className="flex flex-col gap-2 w-full xl:w-auto">
+                      <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Primary Data Source</span>
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <select value={primarySite} onChange={e => setPrimarySite(e.target.value)} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 p-2.5 h-10 w-full sm:w-36 rounded-xl outline-none shrink-0 cursor-pointer">
+                          <option value="All">All Sites</option>
+                          {availableSites.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                        <input type="date" value={primaryStart} onChange={e => setPrimaryStart(e.target.value)} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 p-2.5 h-10 w-full sm:w-32 rounded-xl outline-none shrink-0" />
+                        <input type="date" value={primaryEnd} onChange={e => setPrimaryEnd(e.target.value)} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 p-2.5 h-10 w-full sm:w-32 rounded-xl outline-none shrink-0" />
                       </div>
                     </div>
 
@@ -5662,12 +5838,16 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
                        </button>
                     </div>
 
-                    {/* Secondary Date Range (Only visible if comparing) */}
-                    <div className={`flex flex-col gap-2 w-full sm:w-auto transition-all duration-500 ${isComparing ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'}`}>
-                      <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Comparison Window</span>
-                      <div className="flex gap-2">
-                        <input type="date" disabled={!isComparing} value={compareStart} onChange={e => setCompareStart(e.target.value)} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 p-2 rounded-xl outline-none disabled:opacity-50" />
-                        <input type="date" disabled={!isComparing} value={compareEnd} onChange={e => setCompareEnd(e.target.value)} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 p-2 rounded-xl outline-none disabled:opacity-50" />
+                    {/* Secondary Selection Area (Only visible if comparing) */}
+                    <div className={`flex flex-col gap-2 w-full xl:w-auto transition-all duration-500 ${isComparing ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 absolute pointer-events-none xl:static xl:hidden'}`}>
+                      <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Comparison Data Source</span>
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <select disabled={!isComparing} value={compareSite} onChange={e => setCompareSite(e.target.value)} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 p-2.5 h-10 w-full sm:w-36 rounded-xl outline-none disabled:opacity-50 shrink-0 cursor-pointer">
+                          <option value="All">All Sites</option>
+                          {availableSites.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                        <input type="date" disabled={!isComparing} value={compareStart} onChange={e => setCompareStart(e.target.value)} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 p-2.5 h-10 w-full sm:w-32 rounded-xl outline-none disabled:opacity-50 shrink-0" />
+                        <input type="date" disabled={!isComparing} value={compareEnd} onChange={e => setCompareEnd(e.target.value)} className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 p-2.5 h-10 w-full sm:w-32 rounded-xl outline-none disabled:opacity-50 shrink-0" />
                       </div>
                     </div>
 
@@ -5675,8 +5855,8 @@ function AdminWeeklyView({ weeklyReports, isLoading, COMMISSIONED_SITES = [], SI
 
                   {/* The Side-By-Side Visuals Matrix! */}
                   <div className={`flex-1 grid gap-6 transition-all duration-700 ${isComparing ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 lg:w-2/3 lg:mx-auto'}`}>
-                     {renderGraph(primaryStart, primaryEnd, "Primary Timeline", false)}
-                     {isComparing && renderGraph(compareStart, compareEnd, "Comparison Timeline", true)}
+                     {renderGraph(primaryStart, primaryEnd, primarySite, "Primary Timeline", false)}
+                     {isComparing && renderGraph(compareStart, compareEnd, compareSite, "Comparison Timeline", true)}
                   </div>
 
                 </div>
@@ -6116,162 +6296,118 @@ function AdminSettingsView({ userProfile, globalSites, STATE_NAMES, onAddSite, o
 // ==========================================
 // ✏️ WEEKLY LEDGER EDIT MODAL
 // ==========================================
-function WeeklyEditModal({ record, onClose, onSave, userProfile }) {
-  const [fd, setFd] = useState({
-    srNo: record?.sr_no ?? '',
-    dateFrom: record?.date_from ?? getISTDate(),
-    dateTo: record?.date_to ?? record?.date_from ?? getISTDate(),
-    dispSolid: record?.disp_solid ?? '',
-    dispGas: record?.disp_gas ?? '',
-    dispScrap: record?.disp_scrap ?? '',
-    recCompany: record?.rec_company ?? '',
-    recContractor: record?.rec_contractor ?? '',
-    ogpNRGP: record?.ogp_nrgp ?? '',
-    ogpRmgp: record?.ogp_rmgp ?? '',
-    ogpRmgpIn: record?.ogp_rmgp_in ?? '',
-    vehContractor: record?.veh_contractor ?? '',
-    vehCompany: record?.veh_company ?? '',
-    footContractor: record?.foot_contractor ?? '',
-    footRil: record?.foot_ril ?? '',
-    footVisitor: record?.foot_visitor ?? '',
-    footGov: record?.foot_gov ?? '',
-    depDaySS: record?.dep_day_ss ?? '',
-    depDaySG: record?.dep_day_sg ?? '',
-    depNightSS: record?.dep_night_ss ?? '',
-    depNightSG: record?.dep_night_sg ?? '',
-  });
-
+function WeeklyEditModal({ record, onClose, onSave }) {
+  // ✨ MAGIC: By spreading the record, we perfectly match Supabase's snake_case column names!
+  const [fd, setFd] = useState({...record});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [lockedDate, setLockedDate] = useState(null);
-  const [isAllCaughtUp, setIsAllCaughtUp] = useState(false); // ✨ NEW: Tracks if they are done for today!
-
-  if (!userProfile?.site) return;
-
-  // ✨ THE CHRONO-LOCK BRAIN: Forces sequential entries but STOPS at today! 🛑
-  React.useEffect(() => {
-    const fetchLastDate = async () => {
-      const { data, error } = await supabase
-        .from('weekly_reports')
-        .select('date_from')
-        .eq('site', userProfile.site)
-        .order('date_from', { ascending: false })
-        .limit(1);
-      
-      // Safely get today's date in YYYY-MM-DD
-      const d = new Date();
-      const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-
-      if (data && data.length > 0 && data[0].date_from) {
-        // Calculate exactly +1 day safely without timezone glitches
-        const [year, month, day] = data[0].date_from.split('-').map(Number);
-        const lastDateObj = new Date(year, month - 1, day);
-        lastDateObj.setDate(lastDateObj.getDate() + 1);
-        
-        const nextDateStr = `${lastDateObj.getFullYear()}-${String(lastDateObj.getMonth() + 1).padStart(2, '0')}-${String(lastDateObj.getDate()).padStart(2, '0')}`;
-        
-        if (nextDateStr <= todayStr) {
-          // They missed days OR need to fill today! Lock it to the next required day!
-          setLockedDate(nextDateStr);
-          setIsAllCaughtUp(false);
-          setFd(prev => ({ ...prev, dateFrom: nextDateStr, dateTo: nextDateStr }));
-        } else {
-          // They already filled today! They are completely caught up! 🥂
-          setLockedDate(todayStr); // Just to keep the UI looking normal
-          setIsAllCaughtUp(true);
-          setFd(prev => ({ ...prev, dateFrom: todayStr, dateTo: todayStr }));
-        }
-      } else {
-        // First time ever submitting! Unlock so they can pick their start date.
-        setLockedDate(null);
-        setIsAllCaughtUp(false);
-        setFd(prev => ({ ...prev, dateFrom: todayStr, dateTo: todayStr }));
-      }
-    };
-    fetchLastDate();
-  }, [userProfile.site]);
-
-  // Safe max date for the HTML input
-  const todayMax = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    await onSave(fd);
+    await onSave(fd); // Passes the pristine data straight back to App.jsx!
     setIsSubmitting(false);
   };
 
   const renderInput = (valKey) => (
-    <td className="border border-slate-300 dark:border-slate-700 p-0">
-      <input type="number" required value={fd[valKey] || ''} onChange={(e) => setFd({...fd, [valKey]: e.target.value})} className="w-14 sm:w-20 bg-transparent text-center py-3 text-base font-bold text-slate-900 dark:text-white outline-none focus:bg-indigo-50 dark:focus:bg-indigo-900/30 transition-colors" />
+    <td className="border-2 border-slate-300 dark:border-slate-700 p-0 relative group">
+      <input 
+        type="number" 
+        required 
+        value={fd[valKey] ?? ''} 
+        onChange={(e) => setFd({...fd, [valKey]: e.target.value})} 
+        className="w-16 sm:w-20 bg-transparent text-center py-3.5 text-base font-black text-slate-900 dark:text-white outline-none focus:bg-indigo-50 dark:focus:bg-indigo-900/30 focus:text-indigo-600 dark:focus:text-indigo-400 transition-colors" 
+      />
     </td>
   );
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[120] flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200" onClick={onClose}>
+      <div className="bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-800 rounded-3xl shadow-[0_20px_80px_-15px_rgba(79,70,229,0.3)] w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col animate-in zoom-in-[0.95] duration-300" onClick={e => e.stopPropagation()}>
         
-        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-indigo-50 dark:bg-indigo-950/30 shrink-0">
-          <div>
-            <h3 className="font-black text-indigo-700 dark:text-indigo-400 flex items-center gap-2 uppercase tracking-widest text-base sm:text-base"><Edit2 size={18} /> Edit & Resend Report</h3>
-            <p className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">{record.site} • Sr No. {record.sr_no}</p>
+        {/* Sleek Modal Header */}
+        <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-indigo-50/50 dark:bg-indigo-900/10 shrink-0 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 blur-2xl rounded-full pointer-events-none"></div>
+          <div className="relative z-10">
+            <h3 className="font-black text-indigo-700 dark:text-indigo-400 flex items-center gap-2 uppercase tracking-tight text-lg sm:text-xl"><Edit2 size={20} /> Edit & Resend Daily Ledger</h3>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 ml-1 flex items-center gap-1.5"><Calendar size={12}/> {record.date_from} <span className="text-slate-300 dark:text-slate-700 mx-1">|</span> {record.site}</p>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-800 rounded-full shadow-sm"><X size={18} /></button>
+          <button type="button" onClick={onClose} className="relative z-10 p-2 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full shadow-sm transition-all active:scale-95"><X size={18} /></button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-          <div className="p-4 overflow-y-auto overflow-x-auto custom-scrollbar flex-1 bg-slate-50/50 dark:bg-slate-950/50">
-            <table className="w-max min-w-full border-collapse border border-slate-300 dark:border-slate-700 text-center text-[10px] font-black uppercase tracking-widest bg-white dark:bg-slate-900">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden relative">
+          
+          <div className="p-4 sm:p-6 overflow-y-auto overflow-x-auto custom-scrollbar flex-1 bg-slate-50/30 dark:bg-slate-900/20">
+            <table className="w-max min-w-full border-collapse text-center text-[10px] font-black uppercase tracking-widest bg-white dark:bg-slate-900 shadow-sm rounded-2xl overflow-hidden border border-slate-300 dark:border-slate-700">
               <thead>
                 <tr className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                  <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 min-w-[60px]">Sr. No.</th>
-                  <th colSpan="3" className="border border-slate-300 dark:border-slate-700 p-2 bg-emerald-100/50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-400">DISPATCH</th>
-                  <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 bg-indigo-100/50 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-400">RECEIPT</th>
-                  <th colSpan="3" className="border border-slate-300 dark:border-slate-700 p-2 bg-amber-100/50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400">OGP</th>
-                  <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 bg-blue-100/50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400">VEHICLE</th>
-                  <th colSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 bg-purple-100/50 dark:bg-purple-900/20 text-purple-800 dark:text-purple-400">CON/RIL STAFF</th>
-                  <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 text-rose-600 dark:text-rose-400">VISITOR</th>
-                  <th rowSpan="2" className="border border-slate-300 dark:border-slate-700 p-2 text-rose-600 dark:text-rose-400">GOV.<br/>OFF.</th>
-                  <th colSpan="4" className="border border-slate-300 dark:border-slate-700 p-2 bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white">DEPLOYMENT</th>
+                  <th rowSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-2 min-w-[60px]">Sr. No.</th>
+                  <th rowSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-2 min-w-[100px]">SITE</th>
+                  <th colSpan="3" className="border-2 border-slate-300 dark:border-slate-700 p-2 bg-emerald-100/50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-400">DISPATCH</th>
+                  <th colSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-2 bg-indigo-100/50 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-400">RECEIPT</th>
+                  <th colSpan="3" className="border-2 border-slate-300 dark:border-slate-700 p-2 bg-amber-100/50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400">OGP</th>
+                  <th colSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-2 bg-blue-100/50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400">VEHICLE</th>
+                  <th colSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-2 bg-purple-100/50 dark:bg-purple-900/20 text-purple-800 dark:text-purple-400">CON/RIL STAFF</th>
+                  <th rowSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-2 text-rose-600 dark:text-rose-400">VISITOR</th>
+                  <th rowSpan="2" className="border-2 border-slate-300 dark:border-slate-700 p-2 text-rose-600 dark:text-rose-400">GOV.<br/>OFF.</th>
+                  <th colSpan="4" className="border-2 border-slate-300 dark:border-slate-700 p-2 bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white">DEPLOYMENT</th>
                 </tr>
                 <tr className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400">
-                  <th className="border border-slate-300 dark:border-slate-700 p-2">SOLID</th>
-                  <th className="border border-slate-300 dark:border-slate-700 p-2">GAS</th>
-                  <th className="border border-slate-300 dark:border-slate-700 p-2">SCRAP</th>
-                  <th className="border border-slate-300 dark:border-slate-700 p-2">COMPANY</th>
-                  <th className="border border-slate-300 dark:border-slate-700 p-2">CONTRACTOR</th>
-                  <th className="border border-slate-300 dark:border-slate-700 p-2">NRGP</th>
-                  <th className="border border-slate-300 dark:border-slate-700 p-2">RMGP</th>
-                  <th className="border border-slate-300 dark:border-slate-700 p-2">RMGP IN</th>
-                  <th className="border border-slate-300 dark:border-slate-700 p-2 px-1">CON.<br/>VEH</th>
-                  <th className="border border-slate-300 dark:border-slate-700 p-2 px-1">CO.<br/>VEH</th>
-                  <th className="border border-slate-300 dark:border-slate-700 p-2 px-1">CON.<br/>WORKER</th>
-                  <th className="border border-slate-300 dark:border-slate-700 p-2 px-1">RIL<br/>EMP.</th>
-                  <th className="border border-slate-300 dark:border-slate-700 p-2">Day SS</th>
-                  <th className="border border-slate-300 dark:border-slate-700 p-2">Day SG</th>
-                  <th className="border border-slate-300 dark:border-slate-700 p-2">Night SS</th>
-                  <th className="border border-slate-300 dark:border-slate-700 p-2">Night SG</th>
+                  <th className="border-2 border-slate-300 dark:border-slate-700 p-2">SOLID</th>
+                  <th className="border-2 border-slate-300 dark:border-slate-700 p-2">GAS</th>
+                  <th className="border-2 border-slate-300 dark:border-slate-700 p-2">LFOM</th>
+                  <th className="border-2 border-slate-300 dark:border-slate-700 p-2">COMPANY</th>
+                  <th className="border-2 border-slate-300 dark:border-slate-700 p-2">CONTRACTOR</th>
+                  <th className="border-2 border-slate-300 dark:border-slate-700 p-2">NRGP</th>
+                  <th className="border-2 border-slate-300 dark:border-slate-700 p-2">RMGP</th>
+                  <th className="border-2 border-slate-300 dark:border-slate-700 p-2">RMGP IN</th>
+                  <th className="border-2 border-slate-300 dark:border-slate-700 p-2 px-1">CON.<br/>VEH</th>
+                  <th className="border-2 border-slate-300 dark:border-slate-700 p-2 px-1">CO.<br/>VEH</th>
+                  <th className="border-2 border-slate-300 dark:border-slate-700 p-2 px-1">CON.<br/>WORKER</th>
+                  <th className="border-2 border-slate-300 dark:border-slate-700 p-2 px-1">RIL<br/>EMP.</th>
+                  <th className="border-2 border-slate-300 dark:border-slate-700 p-2">Day SS</th>
+                  <th className="border-2 border-slate-300 dark:border-slate-700 p-2">Day SG</th>
+                  <th className="border-2 border-slate-300 dark:border-slate-700 p-2">Night SS</th>
+                  <th className="border-2 border-slate-300 dark:border-slate-700 p-2">Night SG</th>
                 </tr>
               </thead>
               <tbody>
-                <tr className="bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
-                  <td className="border border-slate-300 dark:border-slate-700 p-0"><input type="text" required value={fd.sr_no || ''} onChange={(e) => setFd({...fd, sr_no: e.target.value})} className="w-16 sm:w-20 bg-transparent text-center py-3 text-base font-bold outline-none focus:bg-indigo-50 dark:focus:bg-indigo-900/30" /></td>
-                  {renderInput('disp_solid')}{renderInput('disp_gas')}{renderInput('disp_scrap')}
-                  {renderInput('rec_company')}{renderInput('rec_contractor')}
-                  {renderInput('ogp_nrgp')}{renderInput('ogp_rmgp')}{renderInput('ogp_rmgp_in')}
-                  {renderInput('veh_contractor')}{renderInput('veh_company')}
-                  {renderInput('foot_contractor')}{renderInput('foot_ril')}
-                  {renderInput('foot_visitor')}{renderInput('foot_gov')}
-                  {renderInput('dep_day_ss')}{renderInput('dep_day_sg')}
-                  {renderInput('dep_night_ss')}{renderInput('dep_night_sg')}
+                <tr className="bg-white dark:bg-[#0f172a] hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                  <td className="border-2 border-slate-300 dark:border-slate-700 p-0 bg-slate-100 dark:bg-slate-800/50 relative">
+                    <input type="text" readOnly value={fd.sr_no} className="w-16 sm:w-20 bg-transparent text-center py-3 text-base font-black text-slate-500 outline-none pointer-events-none" />
+                  </td>
+                  <td className="border-2 border-slate-300 dark:border-slate-700 p-3 text-xs font-black text-slate-400">{record.site}</td>
+                  
+                  {/* ✨ PERFECT MAPPING TO SUPABASE COLUMNS! */}
+                  {renderInput('disp_solid')}
+                  {renderInput('disp_gas')}
+                  {renderInput('disp_scrap')} {/* LFOM data maps to disp_scrap column */}
+                  {renderInput('rec_company')}
+                  {renderInput('rec_contractor')}
+                  {renderInput('ogp_nrgp')}
+                  {renderInput('ogp_rmgp')}
+                  {renderInput('ogp_rmgp_in')}
+                  {renderInput('veh_contractor')}
+                  {renderInput('veh_company')}
+                  {renderInput('foot_contractor')}
+                  {renderInput('foot_ril')}
+                  {renderInput('foot_visitor')}
+                  {renderInput('foot_gov')}
+                  {renderInput('dep_day_ss')}
+                  {renderInput('dep_day_sg')}
+                  {renderInput('dep_night_ss')}
+                  {renderInput('dep_night_sg')}
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex gap-3 shrink-0">
-            <button type="button" onClick={onClose} className="flex-1 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 transition-colors">Cancel</button>
-            <button type="submit" disabled={isSubmitting} className="flex-1 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest bg-indigo-600 text-white flex items-center justify-center gap-2 hover:bg-indigo-700 shadow-lg shadow-indigo-900/20 transition-all">
-              {isSubmitting ? <RefreshCw className="animate-spin" size={16} /> : <><Save size={40} /> Update MIS Report</>}
+          {/* 🕹️ Translucent Footer Controls */}
+          <div className="p-4 sm:p-6 border-t border-slate-200/50 dark:border-slate-700/50 bg-white/40 dark:bg-black/40 backdrop-blur-xl flex justify-end gap-3 shrink-0 rounded-b-[1.5rem]">
+            <button type="button" onClick={onClose} className="py-3.5 px-6 rounded-2xl text-[11px] font-black uppercase tracking-widest bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shadow-sm border border-slate-200 dark:border-slate-700 active:scale-95">Cancel</button>
+            
+            <button type="submit" disabled={isSubmitting} className="py-3.5 px-8 rounded-2xl text-[11px] font-black uppercase tracking-widest bg-indigo-600 text-white flex items-center justify-center gap-2 hover:bg-indigo-500 shadow-lg shadow-indigo-600/30 active:scale-95 transition-all overflow-hidden relative group">
+              <div className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/30 dark:via-white/20 to-transparent animate-button-shine pointer-events-none"></div>
+              {isSubmitting ? <RefreshCw className="animate-spin relative z-10" size={16} /> : <><Save size={16} className="relative z-10" /> <span className="relative z-10">Update Ledger</span></>}
             </button>
           </div>
         </form>
